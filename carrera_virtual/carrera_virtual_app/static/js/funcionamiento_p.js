@@ -78,54 +78,39 @@ updateConnectionStatus = () => {
 
 
 connectWebSocket = async () => {
-  
-  if (navigator.onLine) { // Solo intenta conectar si está online
+
+    if (navigator.onLine) { // Solo intenta conectar si está online
+        
+        Swal.close()
+        let latestTimestamp = 0;
+
+        let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/games/${gameId}/countdown/`);
+        
+        websocket.onmessage = (event) => {
+            
+            const data = JSON.parse(event.data);
+            // console.log(data['seconds_left'], data)
+
+            if(!data['can_sell']) borrar_bets(), $('#cuerpo_carga').addClass('sombra')
+            
+            tiempo = data
+            $('#tiempo_regresivo').val(tiempo['seconds_left']);
+
+ 
+
+        };
+
+        websocket.onclose = () => setTimeout(connectWebSocket, 1000); // Intenta reconectar automáticamente
+
+        websocket.onerror = () => websocket.close();
+     
+        return new Promise((resolve, reject)=>{
     
-    if(!internet) {
-      location.reload()  
-      internet = true
-      
+            setTimeout(()=> resolve(), 2000)
+          
+        })
     }
-    
-    Swal.close()
-    let latestTimestamp = 0;
 
-    let websocket = new WebSocket('wss://time.varmanex.com');
-
-    websocket.onmessage = (event) => {
-    
-      const data = JSON.parse(event.data);
-      const messageTimestamp = parseFloat(data.timestamp);
-
-      if (messageTimestamp > latestTimestamp) {
-    
-        latestTimestamp = messageTimestamp;  // Actualiza la marca de tiempo más reciente
-        
-        const date = new Date(data.time);
-        
-        horas    = date.getHours()
-        minutos  = date.getMinutes()
-        segundos = date.getSeconds()
-        dia      = date.getDate()
-        mes      = date.getMonth()
-        year     = date.getFullYear()
-
-      }
-    
-    };
-
-    websocket.onclose = () => setTimeout(connectWebSocket, 1000); // Intenta reconectar automáticamente
-
-    websocket.onerror = () => websocket.close();
-
-    return new Promise((resolve, reject)=>{
-    
-      setTimeout(()=> resolve(), 2000)
-    
-    })
-    
-  }
-  
 }
 
 // Manejadores de eventos para cambios en el estado de la conexión
@@ -446,33 +431,33 @@ video_race.addEventListener('error', async () => {
 
 
 
-var actualizando_seg = (mint, seg) => {
+// var actualizando_seg = (mint, seg) => {
 
-    const t = (mint * 60) + seg;  // segundos dentro de la hora (0–3599)
-    let segundos_res;
+//     const t = (mint * 60) + seg;  // segundos dentro de la hora (0–3599)
+//     let segundos_res;
 
-    // 1. Antes del primer cierre de la hora
-    if (t < seg_intro[0]) segundos_res = seg_intro[0] - t; // Cuenta regresiva hasta el primer cierre (230 = 3:50)
+//     // 1. Antes del primer cierre de la hora
+//     if (t < seg_intro[0]) segundos_res = seg_intro[0] - t; // Cuenta regresiva hasta el primer cierre (230 = 3:50)
 
-    else {
+//     else {
 
-        // 2. Buscar el próximo cierre dentro de esta misma hora
-        let proximo_cierre = seg_intro.find(c => c > t);
+//         // 2. Buscar el próximo cierre dentro de esta misma hora
+//         let proximo_cierre = seg_intro.find(c => c > t);
 
-        if (proximo_cierre) segundos_res = proximo_cierre - t; // Hay un cierre por delante en esta hora
+//         if (proximo_cierre) segundos_res = proximo_cierre - t; // Hay un cierre por delante en esta hora
         
-        else {
-            // 3. Ya pasamos el ÚLTIMO cierre (3530 = 58:50)
-            // Próximo cierre = PRIMER cierre de la SIGUIENTE hora
-            // 3600 (fin de la hora) + 230 (primer cierre)
-            proximo_cierre = DURACION_HORA + seg_intro[0]; // 3600 + 230
-            segundos_res = proximo_cierre - t;
-        }
-    }
+//         else {
+//             // 3. Ya pasamos el ÚLTIMO cierre (3530 = 58:50)
+//             // Próximo cierre = PRIMER cierre de la SIGUIENTE hora
+//             // 3600 (fin de la hora) + 230 (primer cierre)
+//             proximo_cierre = DURACION_HORA + seg_intro[0]; // 3600 + 230
+//             segundos_res = proximo_cierre - t;
+//         }
+//     }
 
-    $('#tiempo_regresivo').text( new Date(segundos_res * 1000).toISOString().slice(14, 19) );
+//     $('#tiempo_regresivo').text( new Date(segundos_res * 1000).toISOString().slice(14, 19) );
 
-};
+// };
 
 
 
@@ -515,7 +500,7 @@ const allinfo = async()=> await Consulta_Tabla()
 setInterval( async ()=> {
   
 
-  actualizando_seg(minutos, segundos)
+  // actualizando_seg(minutos, segundos)
   
   if( seg_intro.includes( (minutos * 60) + segundos ) && vd && entra_intro){
       
