@@ -12,7 +12,9 @@ urlpatterns=[
     path('carreras_virtual_c',	views.carreras_virtual_c,	name="carreras_virtual_c"),
     path('roulette',	        views.roulette,	            name="roulette"),
     path('gallos',	            views.gallos,	            name="gallos"),
-    path('',	                views.login,	            name="login"),
+    path('login',	                views.login,	            name="login"),
+    path('',                    views.configuration,                name="configuration"),
+    
 
 
 ]

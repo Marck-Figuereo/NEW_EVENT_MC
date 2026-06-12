@@ -5,10 +5,58 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from decouple import config
+from urllib.parse import urlencode
 
 # Configuraciones de entorno
 API_URL = config('API_URL')
 version = "v7.0.0" 
+
+@csrf_exempt
+def configuration(request):
+    if request.method == "POST":
+
+        datos = json.load(request)
+
+        if datos['realizar']=='activacion':
+
+
+	        response = requests.post(f"{API_URL}/display/pairing/start/",)
+
+	        data = response.json()
+
+	        activation_url = (
+	            "http://localhost:5173/juegos-virtuales/device/activacion?"
+	            + urlencode({
+	                "pairing_code": data["pairing_code"]
+	            })
+	        )
+
+	        return JsonResponse({
+	            "device_token": data["device_token"],
+	            "pairing_code": data["pairing_code"],
+	            "qr_url": activation_url
+	        })
+
+
+        if datos['realizar']=='status_activacion':
+
+        	response = requests.get(f"{API_URL}/display/pairing/status/",params={'device_token':datos['device_token']})
+        	data = response.json()
+        	print(data)
+        	return JsonResponse(data)
+
+
+
+    return render(request, "configuration.html")
+
+
+
+
+
+
+
+
+
 
 def login(request):
 

@@ -42,7 +42,7 @@
       </div>
 
       <div class="terminal-code">
-        <small>Código de terminal</small>
+        <small>Código de visor</small>
         <strong id="terminalCode"></strong>
       </div>
 
@@ -84,92 +84,63 @@
    
 
 
-let reconnectTimeout = null;
-let websocket = null;
+var reconnectTimeout = null;
 
-function connectWebSocket(activationId) {
-
-    websocket = new WebSocket(
-        `ws://localhost:8500/ws/terminal-activation/${activationId}/`
-    );
-
-    websocket.onopen = () => {
-        console.log("Conectado");
-    };
-
-    websocket.onmessage = (event) => {
+const peticion = async () => {
 
 
-        let info = JSON.parse(event.data)
+    const datos_re = {'realizar':'status_activacion', "device_token": localStorage.getItem('dkg')};
+    
+    const response = await fetch("/",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+    
+    const data = await response.json() 
 
-        console.log(event.data);
+    if(data['config'] != null){ 
+        clearInterval(reconnectTimeout)
+        window.location.href = "/" + data['config']
+    }
 
-        localStorage.setItem('uss',  info['terminal_id'])
-        localStorage.setItem('dkg', info['device_token'])
+    
 
-        window.location.href = "/login";
-        
-        // detener reconexión
-        if (reconnectTimeout) {
-            clearTimeout(reconnectTimeout);
-            reconnectTimeout = null;
-        }
-
-        // cerrar socket si quieres
-        websocket.close();
-    };
-
-    websocket.onclose = () => {
-        console.log("Cerrado");
-
-        // volver a intentar
-        reconnectTimeout = setTimeout(() => {
-            connectWebSocket();
-        }, 1000);
-    };
 }
 
- 
+ function generarQR(qrUrl, color = "231-63-44", bgcolor = "255-255-255") {
+
+    return "https://api.qrserver.com/v1/create-qr-code/?" + new URLSearchParams({
+        size: "230x230",
+        color: color,
+        bgcolor: bgcolor,
+        data: qrUrl
+    }).toString();
+}
+
 
 $(document).ready(async () => {
 
-    function generarQR(qrUrl, color = "231-63-44", bgcolor = "255-255-255") {
-        return "https://api.qrserver.com/v1/create-qr-code/?" + new URLSearchParams({
-            size: "230x230",
-            color: color,
-            bgcolor: bgcolor,
-            data: qrUrl
-        }).toString();
-    }
 
-    if (localStorage.getItem('uss') == null || localStorage.getItem('dkg') == null) {
+    await fetch("/", { method: "POST", body:JSON.stringify({'realizar' : 'activacion'}), headers: { "X-CSRFToken": getCookie2("csrftoken") }
+    }).then(res => res.json()) .then(data => {
 
-        fetch("", {
-            method: "POST",
-            headers: {
-                "X-CSRFToken": getCookie2("csrftoken")
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            $("#activation_id").text(data.activation_id);
-            $("#terminalCode").text(data.activation_code);
-            $("#qr_url").val(data.qr_url);
 
-            const qrSrc = generarQR(data.qr_url, "231-63-44", "255-255-255");
+        $("#activation_id").text(data.device_token);
+        $("#terminalCode").text(data.pairing_code);
+        $("#qr_url").val(data.qr_url);
 
-            $("#qr_image").attr("src", qrSrc);
+        localStorage.setItem('dkg', data.device_token)
+        const qrSrc = generarQR(data.qr_url, "231-63-44", "255-255-255");
 
-            $('body').css('opacity', 1);
+        $("#qr_image").attr("src", qrSrc);
 
-            reconnectTimeout = setTimeout(() => connectWebSocket(data.activation_id), 1000);
-        })
-        .catch(error => {
-            console.error("Error obteniendo datos de activación:", error);
-        });
+        $('body').css('opacity', 1);
 
-    } else window.location.href = "/login";
+
+    }).catch(error => console.error("Error obteniendo datos de activación:", error) )
     
+
+    reconnectTimeout = setInterval(peticion, 4000);
+        
+
+
 });
 
 
