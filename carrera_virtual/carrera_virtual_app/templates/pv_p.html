@@ -1,0 +1,478 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Racing Virtual Dogs</title>
+
+    <link href="static/bootstrap.min.css?v={{version1}}" rel="stylesheet">
+
+    <link rel="stylesheet" href="static/css/all.min.css?v={{version1}}">
+    <link rel="stylesheet" type="text/css" href="static/css/style_p.css?v={{version1}}">
+    
+    <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css?v={{version1}}">
+
+
+
+  </head>
+  <body>    
+    
+    <video id="intro" playsinline></video>
+    <video id="race" playsinline></video>
+
+    <main id="cuerpo">
+
+      <div class="container-fluid themed-container container1">
+        
+        
+
+        <div class="row d-flex justify-content-between align-items-center caja-logo">
+          
+
+          <div class="col-md-3 themed-grid-col d-flex justify-content-end align-items-center caja-logo">
+            <img class="img-logo" src='static/img/logodogs.png'>      
+            <div class="banner_lgr"><label class="txt_lgr"></label></div>                   
+          </div>
+
+          <div class="col-md-3 themed-grid-col">
+
+
+
+            <div class="caja_race">  
+
+              <span class="span_cj">
+                <label class="nombre_jac_rc">CARRERA </label><label id="id_sorteos_c_id" class="label-jk-rc" style="margin-top: 5px !important;"></label>                         
+              </span>
+              <span class="span_er">
+                <label id="tiempo_regresivo"></label>
+              </span>
+            
+            </div>
+            
+            
+            
+            <div class="caja_jack">
+              <label class="nombre_jac_rc">JACKPOT </label><label id="jp_global" class="label-jk-rc"></label>                         
+            </div>
+
+            
+          </div>
+
+        </div>
+
+      </div>
+
+
+      
+
+
+
+
+      <div class="container-fluid themed-container container2">
+          
+        <div class="row">
+
+          <div class="col-md-4" id="container-ulti-result">
+
+            <div class="body-result">
+                <div class="row row-title">HISTORIAL DE CARRERAS</div>
+                
+                <!--Carrera 1-->
+                <div class="row row-body">
+
+                  <div class="row">
+                    <div class="id_utl br-g"><label id="numero_race0"></label></div>
+                    <div><img id="lugarimg_1er0" width="40px"></div>
+                    <div><label id="lugarprc_1er0"></label></div>                
+                  </div>
+
+                  <div class="row">
+                    <div class="id_utl br-g" style="text-align: center;"><img id="bns0" width="40px"></div>
+                    <div><img id="lugarimg_pls_1er0" width="40px"></div>
+                    <div><img id="lugarimg_pls_2do0" width="40px"></div>
+                    <div ><label id="lugarprc_pls0"></label></div>
+                  </div>
+
+                </div>
+
+
+                <!--Carrera 2-->
+                <div class="row row-body">
+
+                  <div class="row">
+                    <div class="id_utl br-g"><label id="numero_race1"></label></div>
+                    <div><img id="lugarimg_1er1" width="40px"></div>
+                    <div><label id="lugarprc_1er1"></label></div>                
+                  </div>
+
+                  <div class="row row-border">
+                    <div class="id_utl br-g" style="text-align: center;"><img id="bns1" width="40px"></div>
+                    <div><img id="lugarimg_pls_1er1" width="40px"></div>
+                    <div><img id="lugarimg_pls_2do1" width="40px"></div>
+                    <div><label id="lugarprc_pls1"></label></div>
+                  </div>
+
+                </div>
+
+
+                <!--Carrera 3-->
+                <div class="row row-body">
+
+                  <div class="row">
+                    <div class="id_utl br-g"><label id="numero_race2"></label></div>
+                    <div><img id="lugarimg_1er2" width="40px"></div>
+                    <div><label id="lugarprc_1er2"></label></div>                
+                  </div> 
+
+                  <div class="row row-border">
+                    <div class="id_utl br-g" style="text-align: center;"><img id="bns2" width="40px"></div>
+                    <div><img id="lugarimg_pls_1er2" width="40px"></div>
+                    <div><img id="lugarimg_pls_2do2" width="40px"></div>
+                    <div ><label id="lugarprc_pls2"></label></div>
+                  </div>
+
+                </div>
+
+                <!--Carrera 4-->
+                <div class="row row-body">
+
+                  <div class="row">
+                    <div class="id_utl br-g"><label id="numero_race3"></label></div>
+                    <div><img id="lugarimg_1er3" width="40px"></div>
+                    <div><label id="lugarprc_1er3"></label></div>                
+                  </div>
+                  
+                  <div class="row row-border">
+                    <div class="id_utl br-g" style="text-align: center;"><img id="bns3" width="40px"></div>
+                    <div><img id="lugarimg_pls_1er3" width="40px"></div>
+                    <div><img id="lugarimg_pls_2do3" width="40px"></div>
+                    <div ><label id="lugarprc_pls3"></label></div>
+                  </div>
+                
+                </div>
+
+
+                <!--Carrera 5-->
+                <div class="row row-body">
+
+                  <div class="row">
+                    <div class="id_utl br-g"><label id="numero_race4"></label></div>
+                    <div><img id="lugarimg_1er4" width="40px"></div>
+                    <div><label id="lugarprc_1er4"></label></div>                
+                  </div>
+
+                  <div class="row row-border">
+                    <div class="id_utl br-g" style="text-align: center;"><img id="bns4" width="40px"></div>
+                    <div><img id="lugarimg_pls_1er4" width="40px"></div>
+                    <div><img id="lugarimg_pls_2do4" width="40px"></div>
+                    <div ><label id="lugarprc_pls4"></label></div>
+                  </div>
+                
+                </div>
+              
+              
+              </div>
+          </div>
+
+          <div class="col-md-8 themed-grid-col d-flex justify-content-start" id="container-directas-pales">
+            
+        
+             <div class="box-table">
+                <div class="row row-1er" style="border-radius:20px 20px 0px 0px; border-bottom: 1px solid #db5959;">
+                  <div class="th-1er-1er"></div>
+                  <div class="th-1er"><span>1</span><img src="static/img/linea/p6/np1.png"></div>
+                  <div class="th-1er"><span>2</span><img src="static/img/linea/p6/np2.png"></div>
+                  <div class="th-1er"><span>3</span><img src="static/img/linea/p6/np3.png"></div>
+                  <div class="th-1er"><span>4</span><img src="static/img/linea/p6/np4.png"></div>
+                  <div class="th-1er"><span>5</span><img src="static/img/linea/p6/np5.png"></div>
+                  <div class="th-1er" style="border-radius:0px 20px 0px 0px;"><span>6</span><img src="static/img/linea/p6/np6.png"></div>
+                </div>
+               
+                <div class="row row-body">
+                  <div class="th-2do br-g"><span>1</span><img src="static/img/linea/p6/np1.png"></div>
+                  <div class="precios_tbl td-1er" id="p1_p1"></div>
+                  <div class="precios_tbl td_pls" id="p1_p2"></div>
+                  <div class="precios_tbl td_pls" id="p1_p3"></div>
+                  <div class="precios_tbl td_pls" id="p1_p4"></div>
+                  <div class="precios_tbl td_pls" id="p1_p5"></div>
+                  <div class="precios_tbl td_pls" id="p1_p6"></div>
+                </div>
+                <div class="row row-body">
+                  <div class="th-2do br-g"><span>2</span><img src="static/img/linea/p6/np2.png"></div>
+                  <div class="precios_tbl td_pls" id="p2_p1"></div>
+                  <div class="precios_tbl td-1er" id="p2_p2"></div>
+                  <div class="precios_tbl td_pls" id="p2_p3"></div>
+                  <div class="precios_tbl td_pls" id="p2_p4"></div>
+                  <div class="precios_tbl td_pls" id="p2_p5"></div>
+                  <div class="precios_tbl td_pls" id="p2_p6"></div>
+                </div>
+                <div class="row row-body">
+                  <div class="th-2do br-g"><span>3</span><img src="static/img/linea/p6/np3.png"></div>
+                  <div class="precios_tbl td_pls" id="p3_p1"></div>
+                  <div class="precios_tbl td_pls" id="p3_p2"></div>
+                  <div class="precios_tbl td-1er" id="p3_p3"></div>
+                  <div class="precios_tbl td_pls" id="p3_p4"></div>
+                  <div class="precios_tbl td_pls" id="p3_p5"></div>
+                  <div class="precios_tbl td_pls" id="p3_p6"></div>
+                </div>
+                <div class="row row-body">
+                  <div class="th-2do br-g"><span>4</span><img src="static/img/linea/p6/np4.png"></div>
+                  <div class="precios_tbl td_pls" id="p4_p1"></div>
+                  <div class="precios_tbl td_pls" id="p4_p2"></div>
+                  <div class="precios_tbl td_pls" id="p4_p3"></div>
+                  <div class="precios_tbl td-1er" id="p4_p4"></div>
+                  <div class="precios_tbl td_pls" id="p4_p5"></div>
+                  <div class="precios_tbl td_pls" id="p4_p6"></div>
+                </div>
+                <div class="row row-body">
+                  <div class="th-2do br-g"><span>5</span><img src="static/img/linea/p6/np5.png"></div>
+                  <div class="precios_tbl td_pls" id="p5_p1"></div>
+                  <div class="precios_tbl td_pls" id="p5_p2"></div>
+                  <div class="precios_tbl td_pls" id="p5_p3"></div>
+                  <div class="precios_tbl td_pls" id="p5_p4"></div>
+                  <div class="precios_tbl td-1er" id="p5_p5"></div>
+                  <div class="precios_tbl td_pls" id="p5_p6"></div>
+                </div>
+                <div class="row row-body">
+                  <div class="th-2do br-g"><span>6</span><img src="static/img/linea/p6/np6.png"></div>
+                  <div class="precios_tbl td_pls" id="p6_p1"></div>
+                  <div class="precios_tbl td_pls" id="p6_p2"></div>
+                  <div class="precios_tbl td_pls" id="p6_p3"></div>
+                  <div class="precios_tbl td_pls" id="p6_p4"></div>
+                  <div class="precios_tbl td_pls" id="p6_p5"></div>
+                  <div class="precios_tbl td-1er" id="p6_p6"></div>
+                </div> 
+
+            </div>
+          
+
+          </div>
+        </div>
+
+
+
+    </div>
+
+    
+
+    <div class="container-fluid themed-container container_j">
+
+      <div class="row d-flex  justify-content-center align-items-center" id="fila_1">
+
+        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #a85454;">
+          <label class="tipo_info">ULTIMO JACKPOT</label>
+        </div>
+
+        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #a85454;">
+          <label id="id_tk_info"></label>
+        </div>
+        
+        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #a85454;">
+          <label id="monto_info"></label>
+        </div>
+        
+        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #a85454;">
+          <label id="lugar_info"></label>     
+        </div>
+        
+        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center">
+          <label id="date_info"></label>
+        </div>
+      
+      </div>
+
+    </div>
+
+
+
+
+
+ 
+         
+
+
+
+
+
+    {{version1}}  
+
+
+  
+    </main>
+    
+
+
+
+
+    
+
+    <div id="ganador-bono" class="ganador-bono">
+
+      <div id="titulow" ><label id="tiu_label">GANADOR DEL BONO</label></div>
+
+      <input type="text" id="id_bns" readonly>
+      <input type="text" id="mnt_bns" readonly>
+      
+      
+            
+    </div>
+  
+
+
+
+     <div class="container-fluid themed-container container4" id="container-jackpots">
+
+      <div class="row">
+        <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+          <div class="banner-jp">
+            <a href="#"><p>GANADOR JACKPOT</p></a>
+          </div>
+        </div>
+
+      </div>
+      
+      
+
+    </div>
+
+
+    
+
+
+
+
+
+   
+
+    <div class="container-fluid themed-container container2" id="container-resultado-carrera">
+          
+      <div class="row">
+
+      
+
+
+        <div class="col-md-12 themed-grid-col" >
+          
+          
+          <div class="row">
+
+           
+            <div class="col-md-5 themed-grid-col d-flex justify-content-end">
+              <table class="table-info-result numero-carrera">
+                <tbody>
+                  <tr>
+                    <td style="border-radius: 20px;">
+                      <p><span>CARRERA NO.</span> <i id="n_race"> </i></p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md-7 themed-grid-col d-flex justify-content-between">
+              <table class="table-info-result">
+                <tbody>
+                  <tr>
+                    <td  style="border-radius: 20px !important;" width="70%" style="padding:35px;">
+                      <img id="img_win" width="55%">
+                    </td>
+                    <td style="border-radius: 20px !important;" width="50%" style="font-size:100px;" id="p_win"></td>
+                    
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+          
+          <div class="row fila_2">
+            
+
+            
+            <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+
+
+
+              <table class="table-info-result">
+                
+                <tbody>
+                  <tr>
+                    <td style="padding:80px 30px; border-radius: 15px;" class="d-flex justify-content-evenly">
+                        <img width="35%" id="img1_ext">
+                        <img width="35%" id="img2_ext">
+                    </td>
+                    <td style="border-radius: 20px !important;" id="p_ext"></td>
+                  </tr>
+                </tbody>
+              </table>
+                
+            
+            
+            </div>
+              
+
+            
+        
+          </div>
+          
+        </div>
+
+        
+      </div>
+
+
+
+
+
+    </div>
+
+
+
+
+
+    
+
+  <div class="container themed-container" id="container-resultado-bonos">
+
+    <div class="row">
+      <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+        <img id="pos_bono" style="width: 150px;">
+      </div>
+
+    </div>
+    
+    
+
+  </div>
+
+  <div class="container_race" id="container-resultado-race"><p id="nm_race">CARRERA</p><p id="race_n"></p></div> 
+  <div class="container_race_rest" id="container-resultado-odds"><p id="n_directa"></p><p id="n_pale"></p></div> 
+
+      
+
+
+    <input id="gmt2" type="hidden" value="{{gmt1}}">
+    <input id="formato_hora2"    type="hidden" value="{{formato_hora1}}">
+
+    <input id="id_cons2"          type="hidden" value="{{id_cons1}}">
+
+    
+  </body>
+
+  <script src="static/js/moment.min.js"></script>
+
+  <script src="static/js/sweetalert2@11.js"></script>
+  
+  <script src="static/js/jquery.3.6.0.min.js?v={{version1}}"></script>
+  <script src="../static/js/jquery.loadingModal.js?v={{version1}}"></script>
+
+  <script src="static/js/bootstrap.bundle.min.js?v={{version1}}"></script>
+    
+  <script src="static/js/cone_db_p.js?v={{version1}}"></script>
+
+  <script src="static/js/funcionamiento_p.js?v={{version1}}"></script>
+  
+
+
+</html>

@@ -1,0 +1,480 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>LIGHTNING ROULETTE</title>
+
+    <link href="static/bootstrap.min.css" rel="stylesheet">
+
+     <link rel="stylesheet" type="text/css" href="../static/css/style_roulette.css">
+    
+    <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css">
+
+
+  </head>
+  <body>    
+    
+  <video id="intro" playsinline></video>
+  <video id="race" playsinline></video> 
+
+
+  <main id="cuerpo">
+
+    <div class="container-fluid themed-container container1 mt-3">
+      
+      <div class="row d-flex align-items-center caja-logo">
+
+        <div class="col-md-2 themed-grid-col d-flex justify-content-end align-items-center caja-logo">
+          <img class="img-logo" src='static/img/logo2s.png'>                       
+        </div>
+        
+        <div class="col-md-7"></div>
+        <div class="col-md-2 themed-grid-col caja_total">
+
+          <div>  
+
+            <span class="span_cj">
+              <label class="nombre_jac_rc">RONDA </label><label id="id_sorteos_c_id" class="label-jk-rc"></label>                         
+            </span>
+            <span class="span_er">
+              <label id="tiempo_regresivo"></label>
+            </span>
+          
+          </div>
+          
+          <div class="caja_jack">
+            <label class="nombre_jac_rc">JACKPOT </label><label id="jp_global" class="label-jk-rc"></label>                         
+          </div>
+
+          
+        </div>
+
+      </div>
+
+    </div>
+
+
+
+
+
+
+
+    <div class="container-fluid themed-container container2">
+          
+      <div class="row mt-2">
+
+        <div class="col-md-5 themed-grid-col d-flex justify-content-start" id="container-ulti-result"> 
+
+      
+          <div class="container">
+
+            <div class="wrap wrap-34 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-6 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-27 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-13 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-36 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-11 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-30 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-8 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-23 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-10 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-5 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-24 wblack"><div class="slice"></div></div>
+          
+            <div class="wrap wrap-16 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-33 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-1 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-20 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-14 wred"><div class="slice"></div></div>
+          
+            <div class="wrap wrap-31 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-9 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-22 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-18 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-29 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-7 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-28 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-12 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-35 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-3 wred"><div class="slice"></div></div>
+          
+          
+            <div class="wrap wrap-26 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-0"><div class="slice"></div></div>
+            <div class="wrap wrap-32 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-15 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-19 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-4 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-21 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-2 wblack"><div class="slice"></div></div>
+            <div class="wrap wrap-25 wred"><div class="slice"></div></div>
+            <div class="wrap wrap-17 wblack"><div class="slice"></div></div>
+          </div>
+
+          <div class="cuerpo-txt">
+            <div class="num-0">0</div>
+            <div class="num-32">32</div>
+            <div class="num-15">15</div>
+            <div class="num-19">19</div>
+            <div class="num-4">4</div>
+            <div class="num-21">21</div>
+            <div class="num-2">2</div>
+            <div class="num-25">25</div>
+            <div class="num-17">17</div>
+            <div class="num-34">34</div>
+            <div class="num-6">6</div>
+            <div class="num-27">27</div>
+            <div class="num-13">13</div>
+            <div class="num-36">36</div>
+            <div class="num-11">11</div>
+            <div class="num-30">30</div>
+            <div class="num-8">8</div>
+            <div class="num-23">23</div>
+            <div class="num-10">10</div>
+            <div class="num-5">5</div>
+            <div class="num-24">24</div>
+            <div class="num-16">16</div>
+            <div class="num-33">33</div>
+            <div class="num-1">1</div>
+            <div class="num-20">20</div>
+            <div class="num-14">14</div>
+            <div class="num-31">31</div>
+            <div class="num-9">9</div>
+            <div class="num-22">22</div>
+            <div class="num-18">18</div>
+            <div class="num-29">29</div>
+            <div class="num-7">7</div>
+            <div class="num-28">28</div>
+            <div class="num-12">12</div>
+            <div class="num-35">35</div>
+            <div class="num-3">3</div>
+            <div class="num-26">26</div>  
+          </div>
+
+          <div class="cuerpo-txt2"></div>
+            
+          <div class="round3"></div>
+          <div class="round2"></div>
+
+          <div class="round1"></div>
+          
+          <hr class="raya_1">
+          <hr class="raya_2">
+          <hr class="raya_3">
+          <hr class="raya_4">
+          
+          <div class="round11"></div>
+
+        </div>
+
+        <div class="col-md-7 themed-grid-col" id="container-tabla">  
+
+          <div class="row title_nm">
+            <div class="hot">HOT</div>
+            <div class="cold">COLD</div>
+          </div>
+
+          <div class="row">
+            <div id="nm-hot-1" class="themed-grid-col num-hot" style="border-radius:10px 0px 0px 10px;"></div>
+            <div id="nm-hot-2" class="themed-grid-col num-hot"></div>
+            <div id="nm-hot-3" class="themed-grid-col num-hot"></div>
+            <div id="nm-hot-4" class="themed-grid-col num-hot"></div>
+            <div id="nm-hot-5" class="themed-grid-col num-hot"></div>
+            <div id="nm-hot-6" class="themed-grid-col num-hot"></div>
+
+            <div id="nm-cold-1" class="themed-grid-col num-cold"></div>
+            <div id="nm-cold-2" class="themed-grid-col num-cold"></div>
+            <div id="nm-cold-3" class="themed-grid-col num-cold"></div>
+            <div id="nm-cold-4" class="themed-grid-col num-cold"></div>
+            <div id="nm-cold-5" class="themed-grid-col num-cold"></div>
+            <div id="nm-cold-6" class="themed-grid-col num-cold" style="border-radius: 0px 10px 10px 0px;"></div>
+          </div>
+            
+          <div class="row mt-4">
+            <div class=" themed-grid-col num-red"><span class="name_b">ROJO</span> <label>|</label> <span id="porcj-red" class="porcentaje"></span></div>
+            <div class=" themed-grid-col num-green"><span class="name_b">VERDE</span> <label>|</label> <span id="porcj-green" class="porcentaje"></span></div>
+            <div class=" themed-grid-col num-black"><span class="name_b">NEGRO</span> <label>|</label> <span id="porcj-black" class="porcentaje"></span></div>
+          </div>
+
+          <div class="row filas-bets mt-5">
+            <div class="themed-grid-col num-1-18"><span class="name_b">1-18</span><label>|</label><span id="porcj-cols-1-18" class="porcentaje"></span></div>
+            <div class="themed-grid-col num-19-36"><span class="name_b">19-36</span><label>|</label><span id="porcj-cols-19-36" class="porcentaje"></span></div>
+          </div>  
+
+          <div class="row filas-bets mt-4">
+            <div class="themed-grid-col num-odd"><span class="name_b">IMPAR</span><label>|</label><span id="porcj-cols-odd" class="porcentaje"></span></div>
+            <div class="themed-grid-col num-even"><span class="name_b">PAR</span><label>|</label><span id="porcj-cols-even" class="porcentaje"></span></div>
+          </div> 
+
+          <div class="row filas-bets mt-5"> 
+            <div class="themed-grid-col num-1-12"><span class="name_b">1-12</span><label>|</label><span id="porcj-cols-1-12" class="porcentaje"></span></div>
+            <div class="themed-grid-col num-13-24"><span class="name_b">13-24</span><label>|</label><span id="porcj-cols-13-24" class="porcentaje"></span></div>
+            <div class="themed-grid-col num-24-36"><span class="name_b">24-36</span><label>|</label><span id="porcj-cols-25-36" class="porcentaje"></span></div>
+          </div>
+
+          <div class="row filas-bets mt-4">  
+            <div class="themed-grid-col num-1er-row"><span class="name_b">1ER FILA</span><label>|</label><span id="porcj-row1" class="porcentaje"></span></div>
+            <div class="themed-grid-col num-2da-row"><span class="name_b">2DA FILA</span><label>|</label><span id="porcj-row2" class="porcentaje"></span></div>
+            <div class="themed-grid-col num-3ra-row"><span class="name_b">3RA FILA</span><label>|</label><span id="porcj-row3" class="porcentaje"></span></div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+    
+
+    <div class="container-fluid themed-container mt-5">
+      
+
+      <div class="row">
+
+        <div class=" themed-grid-col d-flex justify-content-around container_j">
+
+          <div class="col-md-3 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:1px solid #fff;">
+            <label>ULTIMO JACKPOT</label>
+          </div>
+
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:1px solid #fff;">
+            <label id="id_tk_info"></label>
+          </div>
+          
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:1px solid #fff;">
+            <label id="monto_info"></label>
+          </div>
+          
+          <div class="col-md-3 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:1px solid #fff;">
+            <label id="lugar_info"></label>     
+          </div>
+          
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center">
+            <label id="date_info"></label>
+          </div>
+
+        </div>
+
+        <div class="themed-grid-col d-flex align-items-center justify-content-around container_r"></div>
+
+
+         
+
+      </div>
+
+
+
+
+    </div>
+
+
+    {{version1}}  
+
+
+  
+  </main>
+    
+
+ 
+
+  <div class="container_mult mt-5" id="container-resultado-multiplicados"></div> 
+
+  <div id="ganador-bono" class="ganador-bono">
+
+    <div id="titulow" ><label id="tiu_label">GANADOR DEL BONO</label></div>
+
+    <input type="text" id="id_bns" readonly>
+    <input type="text" id="mnt_bns" readonly>
+            
+  </div>
+
+
+
+
+  <div class="container-fluid themed-container container4" id="container-jackpots">
+
+    <div class="row">
+      <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+        <div class="banner-jp">
+          <a href="#"><p>GANADOR JACKPOT</p></a>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+ 
+    
+  <div class="container-fluid themed-container container2" id="container-resultado-carrera">
+          
+    <div class="row">
+      <div class="col-md-5 themed-grid-col rulet_sorteo">
+
+        <div class="row fila-ronda">
+          <div class="col-md-12 themed-grid-col num-ronda">RONDA <label id="id_sort_win"></label></div>
+        </div>
+        <div class="row mt-5">
+          <div class="col-md-12  themed-grid-col result-rulett" style="height: 600px;">
+            
+
+            <div id="results" class="container">
+
+
+              <div class="wrap result-wrap-34 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-6 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-27 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-13 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-36 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-11 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-30 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-8 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-23 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-10 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-5 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-24 wblack"><div class="slice"></div></div>
+            
+              <div class="wrap result-wrap-16 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-33 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-1 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-20 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-14 wred"><div class="slice"></div></div>
+            
+              <div class="wrap result-wrap-31 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-9 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-22 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-18 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-29 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-7 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-28 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-12 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-35 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-3 wred"><div class="slice"></div></div>
+            
+            
+              <div class="wrap result-wrap-26 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-0"><div class="slice"></div></div>
+              <div class="wrap result-wrap-32 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-15 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-19 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-4 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-21 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-2 wblack"><div class="slice"></div></div>
+              <div class="wrap result-wrap-25 wred"><div class="slice"></div></div>
+              <div class="wrap result-wrap-17 wblack"><div class="slice"></div></div>
+            
+            
+            </div>
+            <div class="cuerpo-txt">
+            
+              <div class="num-0">0</div>
+              <div class="num-32">32</div>
+              <div class="num-15">15</div>
+              <div class="num-19">19</div>
+              <div class="num-4">4</div>
+              <div class="num-21">21</div>
+              <div class="num-2">2</div>
+              <div class="num-25">25</div>
+              <div class="num-17">17</div>
+              <div class="num-34">34</div>
+              <div class="num-6">6</div>
+              <div class="num-27">27</div>
+              <div class="num-13">13</div>
+              <div class="num-36">36</div>
+              <div class="num-11">11</div>
+              <div class="num-30">30</div>
+              <div class="num-8">8</div>
+              <div class="num-23">23</div>
+              <div class="num-10">10</div>
+              <div class="num-5">5</div>
+              <div class="num-24">24</div>
+              <div class="num-16">16</div>
+              <div class="num-33">33</div>
+              <div class="num-1">1</div>
+              <div class="num-20">20</div>
+              <div class="num-14">14</div>
+              <div class="num-31">31</div>
+              <div class="num-9">9</div>
+              <div class="num-22">22</div>
+              <div class="num-18">18</div>
+              <div class="num-29">29</div>
+              <div class="num-7">7</div>
+              <div class="num-28">28</div>
+              <div class="num-12">12</div>
+              <div class="num-35">35</div>
+              <div class="num-3">3</div>
+              <div class="num-26">26</div>
+            
+            
+            
+            </div>
+            
+          <div class="round3"></div>
+          <div class="round2"></div>
+
+          <div class="round1_1"><label id="win_nm"></label></div>
+
+          </div>
+        </div>
+
+      </div>
+      <div class="col-md-6 themed-grid-col info_result"></div>
+    </div>
+
+
+
+  </div>
+
+
+
+
+<!-- 
+<div class="container themed-container" id="container-resultado-en-carrera">
+  <div class="row">
+   
+    <div class="col-md-6 themed-grid-col d-flex justify-content-evenly">
+      <img id="pos_img_1">
+    </div>
+    
+    <div class="col-md-6 themed-grid-col d-flex justify-content-evenly">
+      <img id="pos_img_2">
+    </div>
+    
+
+  </div>
+</div>
+
+ 
+    container-jackpots
+
+-->
+    
+
+
+
+
+ 
+
+
+      
+
+  </body>
+
+
+  <script src="static/js/moment.min.js"></script>
+
+  <script src="static/js/sweetalert2@11.js"></script>
+
+  <script src="static/js/jquery.3.6.0.min.js?v={{version1}}"></script>
+  <script src="../static/js/jquery.loadingModal.js?v={{version1}}"></script>
+
+  <script src="static/js/bootstrap.bundle.min.js?v={{version1}}"></script>
+  
+  <script src="../static/js/funcionamiento_roulette.js"></script>
+  <script src="../static/js/cone_db_roulette.js"></script>
+  
+ 
+
+</html>

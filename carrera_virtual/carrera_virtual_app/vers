@@ -1,0 +1,42 @@
+v1.1.5
+    - Error de mostrar la misma cuota en place y show en resultados
+    - Eliminar tabla de Doble chance y not Doble chance
+    - Agrandar las exactas y colocar las directas del 1er lugar en dicha tabla
+    - Eliminar las directas en 1er lugar de las tablas directas  
+    - Mostrar cuales son las cuotas que menos y mas pagan en exactas, directas y tripletas
+    - Se elimino boton de recargar la pagina cuando presente error de conexion
+    - Cambiar de 25s a 20s tiempo de recargar en los modal de errores
+    - Error corregido de mostrar coutas que paguen menos de 1
+    - Se agrego cuadro de WIN en exactas para espesificar las directas 1er lugar
+    
+    
+v1.1.6
+    - Las letras en los textinput de las informaciones de las carreras se agrandaron 
+    - Area de Quiniela se elimino
+    - Conteo regresivo de 30 para cada pantalla fue agregado
+    - Programa Allen Iverson
+    - Ultimo resultado de carrera agregando a la pantalla principal 
+
+
+v1.1.7 
+    - Eliminar pantalla de tripletas
+    - Eliminar conteo regresivo en pantalla
+
+v1.1.8
+    - Eliminar Apuestas 7.5, 10.5, Win 2, win 3, place y show, not place, not show
+    - Eliminar solo que solo muestre la ultima carrera y colocar ultimas 9 en la pantalla principal  
+    
+v1.1.9
+    - Cambio en el conteo regresivo de solo segundos a minutos/segundos 
+    - Combio a los resultados  correspondientes de cada juego.
+
+v1.2.0
+    - Cambiar a formato UTC
+    - Hacer traduciones al formato correspondiente de region logeada
+    - Eliminar el jackpot local
+    - Colocar intro de bonos x2 y x3
+    - Cambiar formato de las peticiones API
+    - Ocultar los primeros 6 digitos en ID grandes ganadores y Jackpot
+    - Eliminar apuestas "no a ganar" para agregar Place y Show
+    - Mostrar solo del id_sorteo 3 digitos en ultimos sorteos
+    

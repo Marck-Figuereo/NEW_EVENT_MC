@@ -1,0 +1,451 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>GALLOS</title>
+
+    <link href="static/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="../static/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/style_g.css">
+    
+    <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css">
+ 
+
+  </head>
+  <body>    
+    
+    <video id="intro" playsinline></video>
+    <video id="round1" playsinline></video>
+    
+
+    <main id="cuerpo">
+
+      <div class="container-fluid themed-container container1">
+        
+        
+
+        <div class="row d-flex justify-content-between align-items-start caja-logo">
+          
+
+          <div class="col-md-3 themed-grid-col d-flex justify-content-end align-items-center caja-logo">
+            <img class="img-logo" src='static/img/logococks.png'>      
+            <div class="banner_lgr"><label class="txt_lgr"></label></div>                   
+          </div>
+
+          <div class="col-md-3 themed-grid-col">
+
+
+
+            <div class="caja_race">  
+              <span class="span_cj">
+                <label class="nombre_jac_rc">TORNEO </label><label id="id_sorteos_c_id" class="label-jk-rc"></label>                         
+              </span>
+              <span class="span_er">
+                <label id="tiempo_regresivo"></label>
+              </span>
+            
+            </div>
+            
+            
+            
+            <div class="caja_jack">
+              <label class="nombre_jac_rc">JACKPOT </label><label id="jp_global" class="label-jk-rc"></label>                         
+            </div>
+
+            
+          </div>
+
+        </div>
+
+      </div>
+
+
+      
+
+
+
+
+      <div class="container-fluid themed-container container2">
+          
+        <div class="row">
+
+            <div class="col-md-12 themed-grid-col  d-flex justify-content-center" style="display: flex;">
+    
+                <div class="sidebar_ult"></div>
+            
+            
+                <!-- <div class="layouts"> -->
+
+                    <div class="sidebar">
+                      <div class="banner">
+                        <h5>TORNEO AZUL</h5>
+                        <div class="stats"><label class="name_bet_b">PELEA #1:</label><label id="ods_11" class="ods mn_bet_b"></label></div>
+                        <div class="stats"><label class="name_bet_b">PELEA #2:</label><label id="ods_12" class="ods mn_bet_b"></label></div>
+                        <div class="stats"><label class="name_bet_b">PELEA #3:</label><label id="ods_13" class="ods mn_bet_b"></label></div>
+                      </div>
+                      <div class="image-box-b">
+                        <img src="static/img/gazul.png" alt="Gallo Azul">
+                        <div class="win_b">GANADOR <labal class="ods" id="ods_1"></labal></div>
+                      </div>
+                    </div>
+                
+                    
+                    
+                        <div class="tbl_game_blue">
+                          <div class="row row-title">
+                            <div>NO.</div>
+                            <div>P #1</div>
+                            <div>P #2</div>
+                            <div>P #3</div>
+                            <div>CUOTAS</div>
+                          </div>
+                           
+                          <div class="row row-b">
+                            <div class="code">111</div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_111" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">112</div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/white.png"></div>
+                            <div id="ods_112" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">110</div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div id="ods_110" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">121</div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/white.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_121" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">101</div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_101" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">100</div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div id="ods_100" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">211</div>
+                            <div><img src="static/img/numeros/g/white.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_211" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">210</div>
+                            <div><img src="static/img/numeros/g/white.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div id="ods_210" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">201</div>
+                            <div><img src="static/img/numeros/g/white.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_201" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">011</div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_011" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">010</div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div id="ods_010" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">021</div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/white.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_021" class="odds ods"></div>
+                          </div>
+                          <div class="row row-b">
+                            <div class="code">001</div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/x.png"></div>
+                            <div><img src="static/img/numeros/g/blue.png"></div>
+                            <div id="ods_001" class="odds ods"></div>
+                          </div>
+                        
+                        </div>
+                      
+                        <div class="tbl_game_white">
+                          <div class="row row-title">
+                            <div>NO.</div><div>P #1</div><div>P #2</div><div>P #3</div><div>CUOTAS</div>
+                          </div>
+                          
+                    
+                          <div class="row row-b"><div class="code">222</div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_222" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">221</div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/blue.png"></div><div id="ods_221" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">220</div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/x.png"></div><div id="ods_220" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">212</div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/blue.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_212" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">202</div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_202" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">200</div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/x.png"></div><div id="ods_200" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">122</div><div><img src="static/img/numeros/g/blue.png"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_122" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">120</div><div><img src="static/img/numeros/g/blue.png"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/x.png"></div><div id="ods_120" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">102</div><div><img src="static/img/numeros/g/blue.png"></div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_102" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">022</div><div><img src="static/img/numeros/g/x.png"  width="30"  height="6"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_022" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">020</div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/white.png"></div><div><img src="static/img/numeros/g/x.png"></div><div id="ods_020" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">012</div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/blue.png"></div><div><img src="static/img/numeros/g/white.png"></div><div id="ods_012" class="odds ods"></div></div>
+                          <div class="row row-b"><div class="code">002</div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/x.png"></div><div><img src="static/img/numeros/g/white.png" width="30" height="6"></div><div id="ods_002" class="odds ods"></div></div>
+                  
+                        </div>
+                      
+                    
+                        
+                    
+                    <div class="sidebar">
+                      
+                      <div class="banner">
+                        <h5>TORNEO BLANCO</h5>
+                        <div class="stats"><label class="name_bet_w">PELEA #1:</label><label id="ods_21" class="mn_bet_w ods"></label></div>
+                        <div class="stats"><label class="name_bet_w">PELEA #2:</label><label id="ods_22" class="mn_bet_w ods"></label></div>
+                        <div class="stats"><label class="name_bet_w">PELEA #3:</label><label id="ods_23" class="mn_bet_w ods"></label></div>
+                      </div>
+                      <div class="image-box-w">
+                        <img src="static/img/gblanco.png" alt="Gallo blanco">
+                        <div class="win_w">GANADOR <label id="ods_2" class="ods"></label></div>
+                      </div>
+                    </div>
+                   
+                  </div>
+        
+        
+                  
+        
+                  <div class="banner_e">
+    
+                    <div class="stats">
+                      
+                      <div class="win_e">EMPATE</div>
+                      <label class="name_bet_e" style="margin-left: 50px; ">PELEA #1:</label><label id="ods_01" class="mn_bet_e ods"></label> 
+                      <label class="name_bet_e">PELEA #2:</label><label id="ods_02" class="mn_bet_e ods"></label>
+                      <label class="name_bet_e">PELEA #3:</label><label id="ods_03" class="mn_bet_e ods" style="margin-right: 15px;"></label>
+                    </div> 
+                  </div>
+                  
+            
+            </div>
+
+          <!-- INFORMACION GALLOS -->
+
+          
+
+
+
+      </div>
+
+      
+
+      <div class="container-fluid themed-container container_j">
+
+        <div class="row d-flex  justify-content-center align-items-center" id="fila_1">
+
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
+            <label class="tipo_info">ULTIMO JACKPOT</label>
+          </div>
+
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
+            <label id="id_tk_info"></label>
+          </div>
+          
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
+            <label id="monto_info"></label>
+          </div>
+          
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
+            <label id="lugar_info"></label>     
+          </div>
+          
+          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center">
+            <label id="date_info"></label>
+          </div>
+        
+        </div>
+
+      </div>
+
+    
+    </main>
+    
+
+
+
+
+      
+
+    <div id="ganador-bono" class="ganador-bono">
+
+      <div id="titulow" ><label id="tiu_label">GANADOR DEL BONO</label></div>
+
+      <input type="text" id="id_bns" readonly>
+      <input type="text" id="mnt_bns" readonly>
+      
+      
+            
+    </div>
+    
+
+
+
+      <div class="container-fluid themed-container container4" id="container-jackpots">
+
+        <div class="row">
+          <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+            <div class="banner-jp">
+              <a href="#"><p>GANADOR JACKPOT</p></a>
+            </div>
+          </div>
+
+        </div>
+
+
+        <div class="row row_jp mt-5">
+                                            
+                <div class="col-md-7 themed-grid-col">
+                    <div class="form-group">
+                        <input class="input_info_jp" type="text" readonly value="LARIMAR SPOERT 23">
+                    </div>
+                </div>
+            
+                
+                <div class="col-md-5 themed-grid-col">
+                    <div class="form-group">
+                        <input class="input_info_jp" type="text" readonly value="******6845132">
+                    </div>
+                </div>
+
+            </div>
+            <div class="row row_jp">
+                
+                <div class="col-md-12 themed-grid-col mt-3">
+                    <div class="form-group">
+                        <input class="input_info_jp precio_jp" type="text" readonly value="$21,213.25">
+                    </div>
+                </div>
+            
+            </div>
+
+      </div>
+
+
+    
+
+
+
+
+
+   
+
+      <div class="container-fluid themed-container container2" id="container-resultado-carrera"></div>
+
+
+
+
+      
+      <div class="container themed-container" id="container-resultado-en-carrera">
+        
+          <div class="row d-flex justify-content-around">
+            <div class="div-result-n col-md-4">PELEA #1</div>
+            <div class="div-result-n col-md-4">PELEA #2</div>
+            <div class="div-result-n col-md-4">PELEA #3</div>  
+          </div>
+
+          <hr class="line-result">
+          <div class="row d-flex justify-content-around align-items-end mt-2">
+            <div class="col-md-4" id="div_result_1"><label class="txt_result_1"></label></div>
+            <div class="col-md-4" id="div_result_2"><label class="txt_result_2"></label></div>
+            <div class="col-md-4" id="div_result_3"><label class="txt_result_3"></label></div>
+          </div>
+      
+          
+      </div>
+
+
+
+      
+      
+      <div class="container themed-container" id="container-resultado-medio-carrera">
+        
+        <div class="row">
+          <div class="div-medio-n col-md-12"><label class="tt_medio"></label></div>  
+        </div>
+
+        <hr class="line-result">
+        <div class="row d-flex justify-content-around align-items-end mt-2">
+          <div class="col-md-4" id="div_medio_1"><label class="txt_medio_1"></label></div>
+        </div>
+    
+        
+    </div>
+
+ 
+    
+
+
+    
+ 
+
+      <div id="contador" style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        font-size: 40px;
+        color: white;
+        background: rgba(0,0,0,0.7);
+        padding: 10px 20px;
+        border-radius: 10px;
+        z-index: 9999;
+        display: none;
+      "></div>
+    
+  </body>
+
+  <script src="static/js/moment.min.js"></script>
+
+  <script src="static/js/sweetalert2@11.js"></script>
+
+  <script src="static/js/jquery.3.6.0.min.js"></script>
+  <script src="../static/js/jquery.loadingModal.js"></script>
+
+  <script src="static/js/bootstrap.bundle.min.js"></script>
+    
+
+  <script src="../static/js/cone_db_g.js"></script>
+  
+  <script src="../static/js/funcionamiento_g.js"></script>
+  
+
+  
+
+
+</html>
