@@ -107,23 +107,13 @@ def carreras_virtual_p(request):
 
 
 		if request.method =='POST' and datos['realizar'] =='consulta_jackpots':
-			lugar_jk = datos['id_jackpot']
-			jackpot_actual = cache.get(f'jackpot_actual_{lugar_jk}')
-
-
-			if jackpot_actual is None:
-				response = requests.post(f'{API_URL}/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
-				return JsonResponse(response.json(),safe=False,content_type='application/json')
-
-			else:
-				return JsonResponse(jackpot_actual,safe=False,content_type='application/json')
-
-
-
-		elif request.method =='POST' and datos['realizar'] =='consulta_grupo':
-
-			response = requests.post(f'{API_URL}/Consulta_Grupo_r/',data=datos,headers=headers)
-			return JsonResponse(response.json(),safe=False,content_type='application/json')
+			jackpot_id = datos['jackpot_id']
+			
+			jackpot_actual = get_display_jackpot(
+			    jackpot_id=jackpot_id
+			)
+			
+			return JsonResponse(jackpot_actual,safe=False,content_type='application/json')
 
 		
 
@@ -135,31 +125,21 @@ def carreras_virtual_p(request):
 
 
 
-
-
-			
-
-
 		elif request.method =='POST' and datos['realizar'] =='consulta_gandores_jack':
 
-			id_jack = datos['id_jackpot']
+			jackpot_id = datos['jackpot_id']
 
-			win_jak_r = cache.get(f'ganador_jackpot{id_jack}')
+			winner_event_payload = get_display_jackpot_winner_event(
+			    jackpot_id=jackpot_id,
+			)
 
-			if win_jak_r is None:
-
-				response = requests.post(f'{API_URL}/Ganadores_Jackpot/',data=datos,headers=headers)
-				return JsonResponse(response.content,content_type='application/json')
-
-				return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
-
-			else:
-				return JsonResponse(win_jak_r,safe=False,content_type='application/json')
+		
+			return JsonResponse(winner_event_payload,safe=False,content_type='application/json')
 
 
 		elif request.method =='POST' and datos['realizar'] =='consulta_resultados':
 			game_id = datos['game_id']
-			grupo_id = 1#datos['grupo_id']
+			grupo_id = 1 #datos['grupo_id']
 
 			video_payload = get_current_display_video(
 			    grupo_id=grupo_id,
@@ -172,7 +152,7 @@ def carreras_virtual_p(request):
 
 		elif request.method =='POST' and datos['realizar'] =='history_results':
 			game_id = datos['game_id']
-			grupo_id = 1#datos['grupo_id']
+			grupo_id = 1 #datos['grupo_id']
 
 			last_5_result = get_display_results(
 			    grupo_id=grupo_id,

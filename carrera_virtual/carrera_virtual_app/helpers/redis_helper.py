@@ -164,3 +164,89 @@ def get_paytable_for_display(
     )
 
     return payload
+
+
+
+
+
+
+def get_display_jackpot(
+    *,
+    jackpot_id,
+):
+    key = f"jackpot:display:{jackpot_id}"
+
+    payload = cache.get(key)
+
+    if payload:
+        return payload
+
+    try:
+        response = requests.get(
+            (
+                f"{API_URL}"
+                f"/api/jackpot/display/{jackpot_id}/"
+            ),
+            timeout=3,
+        )
+
+        response.raise_for_status()
+
+        payload = response.json()
+
+        cache.set(
+            key,
+            payload,
+            None,
+        )
+
+        return payload
+
+    except Exception:
+        return None
+
+
+
+def get_display_jackpot_winner_event(
+    *,
+    jackpot_id,
+):
+    key = f"jackpot:winner_event:{jackpot_id}"
+
+    payload = cache.get(key)
+
+    if payload:
+        return {
+            "has_winner_event": True,
+            "event": payload,
+        }
+
+    try:
+        response = requests.get(
+            (
+                f"{API_URL}"
+                f"/api/jackpot/display/{jackpot_id}/winner-event/"
+            ),
+            timeout=3,
+        )
+
+        response.raise_for_status()
+
+        fallback_payload = response.json()
+
+        event = fallback_payload.get("event")
+
+        if event:
+            cache.set(
+                key,
+                event,
+                60 * 30,
+            )
+
+        return fallback_payload
+
+    except Exception:
+        return {
+            "has_winner_event": False,
+            "event": None,
+        }
