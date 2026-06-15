@@ -7,9 +7,17 @@ from django.core.cache import cache
 from decouple import config
 from urllib.parse import urlencode
 
+
 # Configuraciones de entorno
 API_URL = config('API_URL')
 version = "v7.0.0" 
+
+
+
+
+
+
+
 
 @csrf_exempt
 def configuration(request):
@@ -92,123 +100,108 @@ def login(request):
 
 @csrf_exempt
 def carreras_virtual_p(request):
-
-	if request.session.get('datos_token') !=None:
-		token_api = request.session.get('datos_token')['token']
-		headers = {'Authorization':f'Token {token_api}'} 
-		
-		if request.method == 'POST':
-
-			datos = json.load(request)
-
-
-			if request.method =='POST' and datos['realizar'] =='consulta_jackpots':
-				lugar_jk = datos['id_jackpot']
-				jackpot_actual = cache.get(f'jackpot_actual_{lugar_jk}')
-
-
-				if jackpot_actual is None:
-					response = requests.post(f'{API_URL}/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
-					return JsonResponse(response.json(),safe=False,content_type='application/json')
-
-				else:
-					return JsonResponse(jackpot_actual,safe=False,content_type='application/json')
-
-
-
-			elif request.method =='POST' and datos['realizar'] =='consulta_grupo':
 	
-				response = requests.post(f'{API_URL}/Consulta_Grupo_r/',data=datos,headers=headers)
+	if request.method == 'POST':
+
+		datos = json.load(request)
+
+
+		if request.method =='POST' and datos['realizar'] =='consulta_jackpots':
+			lugar_jk = datos['id_jackpot']
+			jackpot_actual = cache.get(f'jackpot_actual_{lugar_jk}')
+
+
+			if jackpot_actual is None:
+				response = requests.post(f'{API_URL}/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
 				return JsonResponse(response.json(),safe=False,content_type='application/json')
+
+			else:
+				return JsonResponse(jackpot_actual,safe=False,content_type='application/json')
+
+
+
+		elif request.method =='POST' and datos['realizar'] =='consulta_grupo':
+
+			response = requests.post(f'{API_URL}/Consulta_Grupo_r/',data=datos,headers=headers)
+			return JsonResponse(response.json(),safe=False,content_type='application/json')
+
+		
+
+		elif request.method =='POST' and datos['realizar'] =='consulta_tabla':
+
+
+			paytable = get_paytable_for_display(datos['table_odds_id'])
+			return JsonResponse(paytable,safe=False,content_type='application/json')
+
+
+
+
 
 			
 
-			elif request.method =='POST' and datos['realizar'] =='consulta_tabla':
-				juego = datos['juego']
-				id_grupo = datos['id_grupo']
 
-				tabla_sort = cache.get(f'Last_tabla_{datos["juego"]}_{id_grupo}')
+		elif request.method =='POST' and datos['realizar'] =='consulta_gandores_jack':
 
+			id_jack = datos['id_jackpot']
 
-				if tabla_sort is None:
+			win_jak_r = cache.get(f'ganador_jackpot{id_jack}')
 
-					response = requests.post(f'{API_URL}/Consulta_tabla/',data=datos,headers=headers)
-					return JsonResponse(response.json(),safe=False,content_type='application/json')
+			if win_jak_r is None:
 
-				else:
-					return JsonResponse(tabla_sort,safe=False,content_type='application/json')
+				response = requests.post(f'{API_URL}/Ganadores_Jackpot/',data=datos,headers=headers)
+				return JsonResponse(response.content,content_type='application/json')
 
-				
+				return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
 
-
-			elif request.method =='POST' and datos['realizar'] =='consulta_gandores_jack':
-
-				id_jack = datos['id_jackpot']
-
-				win_jak_r = cache.get(f'ganador_jackpot{id_jack}')
-
-				if win_jak_r is None:
-
-					response = requests.post(f'{API_URL}/Ganadores_Jackpot/',data=datos,headers=headers)
-					return JsonResponse(response.content,content_type='application/json')
-
-					return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
-
-				else:
-					return JsonResponse(win_jak_r,safe=False,content_type='application/json')
+			else:
+				return JsonResponse(win_jak_r,safe=False,content_type='application/json')
 
 
-			elif request.method =='POST' and datos['realizar'] =='consulta_resultados':
-				juego = datos['juego']
-				id_grupo = datos['id_grupo']
+		elif request.method =='POST' and datos['realizar'] =='consulta_resultados':
+			game_id = datos['game_id']
+			grupo_id = 1#datos['grupo_id']
 
-				rsult = cache.get(f'resultados_{juego}_{id_grupo}')
-
-				if rsult is None:
-
-					response = requests.post(f'{API_URL}/Consulta_Resultados/',data=datos,headers=headers)
-					return JsonResponse(response.json(),safe=False,content_type='application/json')
-
-				else:
-					return JsonResponse(rsult,safe=False,content_type='application/json')
-
-				
+			video_payload = get_current_display_video(
+			    grupo_id=grupo_id,
+			    device_token=datos['device_token'],
+			    game_id=game_id,
+			)
+			return JsonResponse(result,safe=False,content_type='application/json')
+			
 
 
-			elif request.method =='POST' and datos['realizar'] =='consulta_ult_carreras':
-				juego = datos['juego']
-				id_grupo = datos['id_grupo']
+		elif request.method =='POST' and datos['realizar'] =='history_results':
+			game_id = datos['game_id']
+			grupo_id = 1#datos['grupo_id']
 
-				ult_result = cache.get(f'Ultimos_resultados_{juego}_{id_grupo}')
-
-
-				if ult_result is None:
-
-					response = requests.post(f'{API_URL}/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
-					return JsonResponse(response.json(),safe=False,content_type='application/json')
-
-				else:
-					print('find it in cache 2')
-					return JsonResponse(ult_result,safe=False,content_type='application/json')
+			last_5_result = get_display_results(
+			    grupo_id=grupo_id,
+			    device_token=datos['device_token'],
+			    game_id=game_id,
+			)
+			
+			return JsonResponse(last_5_result,safe=False,content_type='application/json')
 
 
-			elif request.method =='POST' and datos['realizar'] =='consulta_bonos':
-				lugar_b = datos['id_lugar']
-				juego = datos['juego']
-				bonos_red = cache.get(f'bonos_{lugar_b}_{juego}')
-
-				if bonos_red is None:
-
-					return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
-
-				else:
-					return JsonResponse(bonos_red,safe=False,content_type='application/json')
 
 
-		return render(request, "pv_p.html",{'version1': version})
 
-	else:
-		return redirect('/')
+
+		elif request.method =='POST' and datos['realizar'] =='consulta_bonos':
+			lugar_b = datos['id_lugar']
+			juego = datos['juego']
+			bonos_red = cache.get(f'bonos_{lugar_b}_{juego}')
+
+			if bonos_red is None:
+
+				return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
+
+			else:
+				return JsonResponse(bonos_red,safe=False,content_type='application/json')
+
+
+	return render(request, "pv_p.html",{'version1': version})
+
 
 
 

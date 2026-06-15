@@ -96,8 +96,16 @@ const peticion = async () => {
     const data = await response.json() 
 
     if(data['config'] != null){ 
-        clearInterval(reconnectTimeout)
-        window.location.href = "/" + data['config']
+        // clearInterval(reconnectTimeout)
+
+        if(data['config']['games'][1] == 2){
+            console.log("##ER$##5g$GTGTTG")
+
+            window.location.href = "/carreras_virtual_p"
+
+    
+    }
+    
     }
 
     

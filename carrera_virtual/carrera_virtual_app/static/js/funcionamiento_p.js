@@ -473,9 +473,10 @@ $(document).ready(async()=>{
   
   if (!navigator.onLine) cerrar_to()
 
-  else if(localStorage.getItem('usr') == null || localStorage.getItem('pss') == null){
+  else if(localStorage.getItem('dkg') == null){
 
-		window.location.href = "/";
+		
+    window.location.href = "/";
     	
   }else{ 
 
