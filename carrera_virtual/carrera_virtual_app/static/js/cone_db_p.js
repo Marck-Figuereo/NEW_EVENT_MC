@@ -16,6 +16,19 @@ function getCookie2(name) {
   } 
 
   
+
+function formatoTiempo(segundos) {
+  segundos = Number(segundos) || 0;
+
+  const min = Math.floor(segundos / 60);
+  const sec = segundos % 60;
+
+  return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+
+}
+
+
+
 const moneda = (number) => new Intl.NumberFormat('es-US', {style: 'currency',currency: 'USD', minimumFractionDigits: 2}).format(number);
 
 var  pc_tl = {};
@@ -113,32 +126,39 @@ const aumento_jack = (num_inicio, num_fn) =>{
 
 const Consultas_jackpot_carrera = async () =>{
 
-    console.log('Consultas_jackpot_carrera');
+   
     // try {
 
     //     const id_jackpt = localStorage.getItem('id_jackpot')
 
-    //     const datos_re = {'realizar':'consulta_jackpots', "id_jackpot": id_jackpt };
-    //     const response = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    //     const data     = await response.json() 
+        const datos_re = {'realizar':'consulta_jackpots', "jackpot_id": 1};
+        const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+        const data     = await response.json() 
+ 
 
-    //     const datoss = localStorage.getItem('datos_jack')
-    //     const jack = data['data'][0]['monto_actual']
-        
-
-    //     if(datoss == undefined){ 
+        $('#id_tk_info').text(`ID ${data['last_winner_ticket']}`)
+        $('#monto_info').text(moneda(data['last_winner_amount']))
+        $('#lugar_info').text(data['last_winner_lugar'])
+        $('#date_info').text(data['last_winner_at'])
             
-    //         localStorage.setItem('datos_jack', 	jack) 
-    //         $('#jp_global').text(moneda(jack))
-        
-    //     }else{
 
-    //         if(Number(datoss) > Number(jack)) document.querySelector('#jp_global').textContent = moneda(jack);            
-    //         else aumento_jack(Number(datoss), jack)
+        const datoss = localStorage.getItem('datos_jack')
+        const jack = data['current_amount']
         
-    //         localStorage.setItem('datos_jack', 	jack) 
+
+        if(datoss == undefined){ 
             
-    //     }
+            localStorage.setItem('datos_jack', 	jack) 
+            $('#jp_global').text(moneda(jack))
+        
+        }else{
+
+            if(Number(datoss) > Number(jack)) document.querySelector('#jp_global').textContent = moneda(jack);            
+            else aumento_jack(Number(datoss), jack)
+        
+            localStorage.setItem('datos_jack', 	jack) 
+            
+        }
         
 
 
@@ -151,6 +171,8 @@ const Consultas_jackpot_carrera = async () =>{
 
 
 }
+
+
 
 const Consulta_ganador_jack = async () => {
 
@@ -278,79 +300,41 @@ const Consulta_bonos = async () => {
 
 
 }
-console.log($('.precios_tbl').attr('id'));
 
 
 const Consulta_Tabla = async () => {
 
     console.log('Consulta_Tabla');
+
+    Consulta_ultimas_carreras()
+    Consultas_jackpot_carrera()
+
     // try {        
 
-    //     $('.precios_tbl').each(function() {  $(`#${$(this).attr('id')}`).text('- - -') });
+        $('.precios_tbl').each(function() {  $(`#${$(this).attr('id')}`).text('- - -') });
 
-    //     const datos_re = {'realizar':'consulta_tabla','juego':'PERROS_6', "id_grupo" : localStorage.getItem('grp')};
+        const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
 
-    //     var response = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    //     var data      = await response.json()         
-
-    //     var good = confirmacion_tabla(data['data'][0]['fecha'],  data['data'][0]['hora'])
-
-    //     var cnt = 0;
-                
-    //     while (good && cnt < 10){
-            
-    //         cnt +=1                 
-    //         response = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    //         data = await response.json()
-            
-    //         good = confirmacion_tabla(data['data'][0]['fecha'],  data['data'][0]['hora'])     
-            
-    //     }
+        var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+        var data      = await response.json()         
         
-        
-    //     if (cnt > 9) { Swal.fire({title: 'ADVERTENCIA!!', text: "PROBLEMA DE CONEXION", icon: 'warning', showConfirmButton: false, timer: 30000 }).then(() => location.reload() )}
+        const inf = data['items']
+ 
 
-    //     if(good == false){
+        for(let int in inf){
 
-    //         localStorage.setItem('fecha', 	data['data'][0]['fecha']) 
-    //         localStorage.setItem('hora', 	data['data'][0]['hora']) 
+            let cmb = inf[int]['selection_key']
 
-    //         let direct      = [[], [], []]
-    //         let pls         = [[], [], []]
-            
+            if(inf[int]['bet_type'] == 'WIN') $('#p'+cmb + '_p'+cmb).text(parseFloat(inf[int]['odds']).toFixed(1))
+            else                              $('#p'+cmb[0]+ '_p'+cmb[2]).text(parseFloat(inf[int]['odds']).toFixed(1))
 
-    //         try{
-    //             $('.td_pls').each(function(){  pls[0].push($(this).attr('id')) });          
-    //             $('.td-1er').each(function(){  direct[0].push($(this).attr('id')) });                
-                    
-    //         }catch(error){console.log("Error: ", error)}
-            
-    //         $('.precios_tbl').each(function() {  
+        }
+         
 
-    //             var x = $(this).attr('id');          
-
-    //             if(Number(data['data'][0][`${x}`]) >= 1){ 
-                    
-    //                 $(`#${x}`).text(Number(data['data'][0][`${x}`]))
-
-    //                 $(`#${x}`).css("color", "#ffffff"); 
-                    
-    //                 try{
-    //                     if(direct[0].includes(x)){direct[1].push(Number(data['data'][0][`${x}`])), direct[2].push(`${x}`) }   
-    //                     if(pls[0].includes(x)){pls[1].push(Number(data['data'][0][`${x}`])), pls[2].push(`${x}`)}
-                       
-    //                 }catch(error){console.log("Error: ", error)}
-                    
-    //             }else {
-                    
-    //                 $(`#${x}`).text('- - -')
-    //             }
-
-    //         });
-            
-
-    //         $('#id_sorteos_c_id').text(data['data'][0]['id_sorteos_c_id'].toString().substr(-3))
-
+        // if(direct[0].includes(x)){  direct[1].push(Number(data['data'][0][`${x}`])), direct[2].push(`${x}`) }   
+        // if(pls[0].includes(x)){pls[1].push(Number(data['data'][0][`${x}`])), pls[2].push(`${x}`)}
+       
+   
 
 
     //         try{
@@ -396,30 +380,27 @@ const Consulta_Tabla = async () => {
 const Consulta_resultados = async () => {
 
     console.log('Consulta_resultados');
-    // const datos_re = {'realizar':'consulta_resultados','juego':'PERROS_6', "id_grupo" : localStorage.getItem('grp')};
-    // const response = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    // const data     = await response.json()
-    
-    // let pos1 = parseInt(data['data'][0]['race_winner'].substr(0,1)) 
-    // let pos2 = parseInt(data['data'][0]['race_winner'].substr(2,1)) 
-    
-    // let pago_win  = data['data'][0]['pago_primer_lugar']
-    // let pago_pale = data['data'][0]['pago_pale']
+    const datos_re = {'realizar':'consulta_resultados' , 'game_id' : 2, "device_token" : localStorage.getItem('dkg')};
+    const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+    const data     = await response.json()
+    console.log(data)
 
-    // const vd_num  = data['data'][0]['race_winner'].split(",").join("")
+    let pos1 = data['settlement']['result_odds'][1]['selection_key'][0] 
+    let pos2 = data['settlement']['result_odds'][1]['selection_key'][2]
     
-    // const vd_num2 = data['data'][0]['bonos_race']
-   
-    // document.getElementById("n_race").innerHTML = data['data'][0]['id_sorteos_c'].toString().substr(-3);
+    let pago_win  = parseFloat(data['settlement']['result_odds'][0]['odds']).toFixed(1)
+    let pago_pale = parseFloat(data['settlement']['result_odds'][1]['odds']).toFixed(1)
 
-    // document.getElementById("img_win").src = `static/img/numeros/p6/n${pos1}.svg`;
-    // document.getElementById("p_win").innerHTML = Number(pago_win)
    
-    // document.getElementById("img1_ext").src = `static/img/numeros/p6/n${pos1}.svg`;
-    // document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
-    // document.getElementById("p_ext").innerHTML = Number(pago_pale);
-    
-    // return [vd_num, vd_num2]
+    document.getElementById("n_race").innerHTML = data['event_number']
+
+    document.getElementById("img_win").src = `static/img/numeros/p6/n${pos1}.svg`;
+    document.getElementById("p_win").innerHTML = pago_win
+   
+    document.getElementById("img1_ext").src = `static/img/numeros/p6/n${pos1}.svg`;
+    document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
+    document.getElementById("p_ext").innerHTML = pago_pale
+
 
 
 }
@@ -430,7 +411,7 @@ const Consulta_resultados = async () => {
 
 
 
-
+Consulta_resultados()
 
 
 
@@ -443,29 +424,32 @@ const Consulta_ultimas_carreras = async () => {
     console.log('Consulta_ultimas_carreras');
     // try{
 
-    //     const datos_re = {'realizar':'consulta_ult_carreras','juego':'PERROS_6', "id_grupo" : localStorage.getItem('grp')};
+        const datos_re = {'realizar':'history_results','game_id': 2, "device_token" : localStorage.getItem('dkg')};
 
-    //     const response  = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+        const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
         
-    //     const data      = await response.json()
-                  
-    //     data.map((races, cont)=>{
+        const data      = await response.json()
 
-    //         if(races[0]['bonos_race'] == 'X2' || races[0]['bonos_race'] == 'X3'){ document.getElementById(`bns${cont}`).src = `../static/img/${races[0]['bonos_race']}_V.png` 
+  
+                  
+        data['results'].map((races, cont)=>{
+   
+
+    //         if(races['bonos_race'] == 'X2' || races['bonos_race'] == 'X3'){ document.getElementById(`bns${cont}`).src = `../static/img/${races['bonos_race']}_V.png` 
     //         }else{document.getElementById(`bns${cont}`).src = '' }
 
             
-    //         document.getElementById(`numero_race${cont}`).innerHTML = races[0]['id_sorteos_c'].toString().substr(-3)
-    //         document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/p6/n${races[0]['race_winner'].substr(0,1)}.svg`
-    //         document.getElementById(`lugarprc_1er${cont}`).innerHTML = Number(races[0]['pago_primer_lugar']) 
+            document.getElementById(`numero_race${cont}`).innerHTML = races['event_number'] 
+            document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/p6/n${races['settlement']['result_odds'][0]['selection_key']}.svg`
+            document.getElementById(`lugarprc_1er${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][0]['odds']).toFixed(1) 
 
 
-    //         document.getElementById(`lugarimg_pls_1er${cont}`).src =  `static/img/numeros/p6/n${races[0]['race_winner'].substr(0,1)}.svg`
-    //         document.getElementById(`lugarimg_pls_2do${cont}`).src =  `static/img/numeros/p6/n${races[0]['race_winner'].substr(2,1)}.svg`
-    //         document.getElementById(`lugarprc_pls${cont}`).innerHTML = Number(races[0]['pago_pale']) 
+            document.getElementById(`lugarimg_pls_1er${cont}`).src =  `static/img/numeros/p6/n${races['settlement']['result_odds'][1]['selection_key'][0]}.svg`
+            document.getElementById(`lugarimg_pls_2do${cont}`).src =  `static/img/numeros/p6/n${races['settlement']['result_odds'][1]['selection_key'][2]}.svg`
+            document.getElementById(`lugarprc_pls${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][1]['odds']).toFixed(1) 
 
 
-    //     })
+        })
         
     //      return true
         
@@ -482,26 +466,3 @@ const Consulta_ultimas_carreras = async () => {
  
 
 
-
- 
-const Consulta_grupo = async () => {
-
-    console.log('Consulta_grupo');
-    // try{ 
-    //     const datos_re = {'realizar':'consulta_grupo', "id_lugar" : localStorage.getItem('id_lugar')};
-        
-    //     const response  = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    //     const data      = await response.json()
-        
-    //     localStorage.setItem('grp', data[0]['id_grupos']) 
-           
-    //     return true
-        
-    // } catch (error) {console.log("Error: ", error)
-        
-    //     return false
-
-    // }
-            
-
-}

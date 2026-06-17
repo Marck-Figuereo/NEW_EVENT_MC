@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.cache import cache
 from decouple import config
 from urllib.parse import urlencode
+from carrera_virtual_app.helpers.redis_helper import *
 
 
 # Configuraciones de entorno
@@ -99,7 +100,7 @@ def login(request):
 
 
 @csrf_exempt
-def carreras_virtual_p(request):
+def games(request):
 	
 	if request.method == 'POST':
 
@@ -120,7 +121,7 @@ def carreras_virtual_p(request):
 		elif request.method =='POST' and datos['realizar'] =='consulta_tabla':
 
 
-			paytable = get_paytable_for_display(datos['table_odds_id'])
+			paytable = get_paytable_for_display(table_odds_id = datos['table_odds_id'])
 			return JsonResponse(paytable,safe=False,content_type='application/json')
 
 
@@ -133,26 +134,28 @@ def carreras_virtual_p(request):
 			    jackpot_id=jackpot_id,
 			)
 
+			print(winner_event_payload)
+
 		
 			return JsonResponse(winner_event_payload,safe=False,content_type='application/json')
 
 
 		elif request.method =='POST' and datos['realizar'] =='consulta_resultados':
 			game_id = datos['game_id']
-			grupo_id = 1 #datos['grupo_id']
+			grupo_id = 2 #datos['grupo_id']
 
 			video_payload = get_current_display_video(
 			    grupo_id=grupo_id,
 			    device_token=datos['device_token'],
 			    game_id=game_id,
 			)
-			return JsonResponse(result,safe=False,content_type='application/json')
+			return JsonResponse(video_payload,safe=False,content_type='application/json')
 			
 
 
 		elif request.method =='POST' and datos['realizar'] =='history_results':
 			game_id = datos['game_id']
-			grupo_id = 1 #datos['grupo_id']
+			grupo_id = 2 #datos['grupo_id']
 
 			last_5_result = get_display_results(
 			    grupo_id=grupo_id,
@@ -163,8 +166,18 @@ def carreras_virtual_p(request):
 			return JsonResponse(last_5_result,safe=False,content_type='application/json')
 
 
+		elif request.method =='POST' and datos['realizar'] =='display_config':
+			device_token = datos['device_token']
+			
+			display_config = get_display_config(
+			    device_token=device_token,
+			)
+			
+			return JsonResponse(display_config,safe=False,content_type='application/json')
 
 
+
+			
 
 
 		elif request.method =='POST' and datos['realizar'] =='consulta_bonos':
@@ -178,6 +191,14 @@ def carreras_virtual_p(request):
 
 			else:
 				return JsonResponse(bonos_red,safe=False,content_type='application/json')
+
+
+	return render(request, "pv_p.html",{'version1': version})
+
+
+@csrf_exempt
+def carreras_virtual_p(request):
+	
 
 
 	return render(request, "pv_p.html",{'version1': version})

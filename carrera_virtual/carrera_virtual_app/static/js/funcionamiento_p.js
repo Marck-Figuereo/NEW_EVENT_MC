@@ -52,6 +52,10 @@ var entra_tabla = true;
 
 var internet = true
 
+var gameId = 2;
+
+var id_table = 0;
+
 cerrar_to = () =>{
 
   if (video_race.currentTime == 0 &&  screen_resultados.style.opacity == 0 && screen_bono.style.opacity == 0 && screen_jp.style.opacity == 0){
@@ -89,14 +93,15 @@ connectWebSocket = async () => {
         websocket.onmessage = (event) => {
             
             const data = JSON.parse(event.data);
-            // console.log(data['seconds_left'], data)
-
-            if(!data['can_sell']) borrar_bets(), $('#cuerpo_carga').addClass('sombra')
             
-            tiempo = data
-            $('#tiempo_regresivo').val(tiempo['seconds_left']);
+            id_table = data['table_odds_id']
 
- 
+            // console.log(data)            
+            $('#id_sorteos_c_id').text(data['event_number']);
+            
+
+            $('#tiempo_regresivo').text(formatoTiempo(data['seconds_left']));
+
 
         };
 
@@ -466,7 +471,7 @@ video_race.addEventListener('error', async () => {
 $(document).ready(async()=>{
 
   $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
-  Consulta_grupo()
+
 
   //Evitar que se pueda sombrar textos
   document.onselectstart = () => false;

@@ -134,10 +134,7 @@ def get_display_config_from_session_or_api(
 
 
 
-def get_paytable_for_display(
-    *,
-    table_odds_id,
-):
+def get_paytable_for_display(*,table_odds_id):
     key = f"table_odds:{table_odds_id}"
 
     payload = cache.get(key)
@@ -177,6 +174,7 @@ def get_display_jackpot(
     key = f"jackpot:display:{jackpot_id}"
 
     payload = cache.get(key)
+    print("primero",payload)
 
     if payload:
         return payload
@@ -193,6 +191,8 @@ def get_display_jackpot(
         response.raise_for_status()
 
         payload = response.json()
+
+        print("primero 2",payload)
 
         cache.set(
             key,
@@ -250,3 +250,45 @@ def get_display_jackpot_winner_event(
             "has_winner_event": False,
             "event": None,
         }
+
+
+
+
+
+def get_display_config(
+    *,
+    device_token,
+):
+    key = f"display:config:{device_token}"
+
+    payload = cache.get(key)
+
+    if payload:
+        return payload
+
+    try:
+        response = requests.get(
+            (
+                f"{API_URL}"
+                f"/api/core/display/config/"
+            ),
+            params={
+                "device_token": device_token,
+            },
+            timeout=3,
+        )
+
+        response.raise_for_status()
+
+        payload = response.json()
+
+        cache.set(
+            key,
+            payload,
+            None,
+        )
+
+        return payload
+
+    except Exception:
+        return None
