@@ -29,7 +29,7 @@ def configuration(request):
         if datos['realizar']=='activacion':
 
 
-	        response = requests.post(f"{API_URL}/display/pairing/start/",)
+	        response = requests.post(f"{API_URL}api/core/display/pairing/start/",)
 
 	        data = response.json()
 
@@ -49,7 +49,7 @@ def configuration(request):
 
         if datos['realizar']=='status_activacion':
 
-        	response = requests.get(f"{API_URL}/display/pairing/status/",params={'device_token':datos['device_token']})
+        	response = requests.get(f"{API_URL}api/core/display/pairing/status/",params={'device_token':datos['device_token']})
         	data = response.json()
         	print(data)
         	return JsonResponse(data)
@@ -67,7 +67,7 @@ def configuration(request):
 
 
 
-def login(request):
+"""def login(request):
 
 	if request.method == 'POST':
 
@@ -75,7 +75,7 @@ def login(request):
 
 		if request.method =='POST' and datos['realizar'] =='lg':
 
-			response = requests.post(f'{API_URL}/Login_operador/',data={'username':datos['username'],'password':datos['password'],'url_api':API_URL})
+			response = requests.post(f'{API_URL}api/core/Login_operador/',data={'username':datos['username'],'password':datos['password'],'url_api':API_URL})
 			datos_log = response.json()
 
 			if (datos_log['respuesta_api']!='operador deshabilitado' and datos_log['respuesta_api']!='usuario no encotrado' and datos_log['respuesta_api']!='constraseña incorrecta'):
@@ -94,7 +94,7 @@ def login(request):
 				return HttpResponse(response.content,content_type='application/json')
 
 
-	return render(request,"login.html")
+	return render(request,"login.html")"""
 
 
 
@@ -228,7 +228,7 @@ def carreras_virtual_p8(request):
 
 
 				if jackpot_actual is None:
-					response = requests.post(f'{API_URL}/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -238,7 +238,7 @@ def carreras_virtual_p8(request):
 
 			elif request.method =='POST' and datos['realizar'] =='consulta_grupo':
 	
-				response = requests.post(f'{API_URL}/Consulta_Grupo_r/',data=datos,headers=headers)
+				response = requests.post(f'{API_URL}api/core/Consulta_Grupo_r/',data=datos,headers=headers)
 				return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 			
@@ -252,7 +252,7 @@ def carreras_virtual_p8(request):
 
 				if tabla_sort is None:
 
-					response = requests.post(f'{API_URL}/Consulta_tabla/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_tabla/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -269,7 +269,7 @@ def carreras_virtual_p8(request):
 
 				if win_jak_r is None:
 
-					response = requests.post(f'{API_URL}/Ganadores_Jackpot/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Ganadores_Jackpot/',data=datos,headers=headers)
 					return JsonResponse(response.content,content_type='application/json')
 
 					return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
@@ -286,7 +286,7 @@ def carreras_virtual_p8(request):
 
 				if rsult is None:
 
-					response = requests.post(f'{API_URL}/Consulta_Resultados/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Resultados/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -303,7 +303,7 @@ def carreras_virtual_p8(request):
 
 
 				if ult_result is None:
-					response = requests.post(f'{API_URL}/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -350,7 +350,7 @@ def carreras_virtual_c(request):
 
 
 				if jackpot_actual is None:
-					response = requests.post(f'{API_URL}/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -374,7 +374,7 @@ def carreras_virtual_c(request):
 
 				if tabla_sort is None:
 
-					response = requests.post(f'{API_URL}/Consulta_tabla/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_tabla/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -391,7 +391,7 @@ def carreras_virtual_c(request):
 
 				if win_jak_r is None:
 
-					response = requests.post(f'{API_URL}/Ganadores_Jackpot/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Ganadores_Jackpot/',data=datos,headers=headers)
 					return JsonResponse(response.content,content_type='application/json')
 
 					return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
@@ -408,7 +408,7 @@ def carreras_virtual_c(request):
 
 				if rsult is None:
 
-					response = requests.post(f'{API_URL}/Consulta_Resultados/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Resultados/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -426,7 +426,7 @@ def carreras_virtual_c(request):
 
 				if ult_result is None:
 
-					response = requests.post(f'{API_URL}/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -474,7 +474,7 @@ def roulette(request):
 
 
 				if jackpot_actual is None:
-					response = requests.post(f'{API_URL}/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Jackpot_Carrera/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -484,7 +484,7 @@ def roulette(request):
 
 			elif request.method =='POST' and datos['realizar'] =='consulta_grupo':
 	
-				response = requests.post(f'{API_URL}/Consulta_Grupo_r/',data=datos,headers=headers)
+				response = requests.post(f'{API_URL}api/core/Consulta_Grupo_r/',data=datos,headers=headers)
 				return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 
@@ -497,7 +497,7 @@ def roulette(request):
 
 				if rsult is None:
 
-					response = requests.post(f'{API_URL}/Consulta_Resultados/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Resultados/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -517,7 +517,7 @@ def roulette(request):
 
 				if win_jak_r is None:
 
-					response = requests.post(f'{API_URL}/Ganadores_Jackpot/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Ganadores_Jackpot/',data=datos,headers=headers)
 					return JsonResponse(response.content,content_type='application/json')
 
 					return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
@@ -534,7 +534,7 @@ def roulette(request):
 
 				if rsult is None:
 
-					response = requests.post(f'{API_URL}/Consulta_Resultados/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Consulta_Resultados/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:
@@ -552,7 +552,7 @@ def roulette(request):
 				print(ult_result)
 				if ult_result is None:
 
-					response = requests.post(f'{API_URL}/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
+					response = requests.post(f'{API_URL}api/core/Ultimos_Resultados_Carrera/',data=datos,headers=headers)
 					return JsonResponse(response.json(),safe=False,content_type='application/json')
 
 				else:

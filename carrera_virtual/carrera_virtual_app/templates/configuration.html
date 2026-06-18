@@ -94,17 +94,21 @@ const peticion = async () => {
     const response = await fetch("/",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
     
     const data = await response.json() 
+    
+    console.log(data)
 
     if(data['config'] != null){ 
-        // clearInterval(reconnectTimeout)
+      
+      // clearInterval(reconnectTimeout)
 
-        if(data['config']['games'][1] == 2){
-            console.log("##ER$##5g$GTGTTG")
+      localStorage.setItem('game_id', data['config']['games']) 
+      localStorage.setItem('grupo', data['grupo']['id']) 
+      localStorage.setItem('version', data['config_version']) 
+      localStorage.setItem('lugar', data['lugar']['nombre'])
 
-            window.location.href = "/carreras_virtual_p"
-
-    
-    }
+      localStorage.setItem('jk', data['jackpot_id']) 
+      
+      window.location.href = "/" + data['config']['game_url']
     
     }
 

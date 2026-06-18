@@ -18,7 +18,7 @@ var screen_jp           = document.getElementById("container-jackpots");
 var screen_bono         = document.getElementById('ganador-bono')
 
 
- 
+
 
 video_race.style.width  = '100%'; 
 video_race.style.height = '100%'
@@ -51,8 +51,6 @@ var entra_race = true;
 var entra_tabla = true;
 
 var internet = true
-
-var gameId = 2;
 
 var id_table = 0;
 
@@ -87,8 +85,10 @@ connectWebSocket = async () => {
         
         Swal.close()
         let latestTimestamp = 0;
+        
+        console.log(localStorage.getItem('game_id'))
 
-        let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/games/${gameId}/countdown/`);
+        let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/games/${localStorage.getItem('game_id')}/countdown/`);
         
         websocket.onmessage = (event) => {
             
@@ -165,7 +165,7 @@ const sincronizacion = async () =>{
 
   const good = confirmacion_tabla(fecha, hora)
  
-  if (good) vd = await Consulta_Tabla() 
+  if (good) vd = await Consulta_Tabla(id_table) 
 
 }
 

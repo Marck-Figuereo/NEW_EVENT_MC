@@ -60,34 +60,6 @@ const sincronizacion_jack_sort = (fecha_t, hora_t)=> {
   
 
 
-function restar_fecha_hora(dates, time) {
-
-    const time_remp = new Date(`${dates.replace("/", " ")} ${time}`)
-    
-    time_remp.setHours(time_remp.getHours() + eval(localStorage.getItem('gmt')))
-    
-    let hora_t;
-  
-    if(eval(localStorage.getItem('apm'))){
-        
-        var am_pm = ""
-        hora_t = time_remp.getHours()
-    
-    }else{
-
-        var am_pm = time_remp.getHours() >= 12 ? ':PM' : ':AM';
-        hora_t = (time_remp.getHours() % 12) || 12;
-
-    }
-  
-    const time_remp_final = hora_t + ":" + time_remp.getMinutes() + ":" + time_remp.getSeconds() + am_pm
-    const date_remp_final = time_remp.getDate() + "/" + (time_remp.getUTCMonth()+1) + "/" + time_remp.getUTCFullYear()
-    
-    return [date_remp_final, time_remp_final]
-  
-  
-}
-
 const aumento_jack = (num_inicio, num_fn) =>{
 
 
@@ -131,7 +103,7 @@ const Consultas_jackpot_carrera = async () =>{
 
     //     const id_jackpt = localStorage.getItem('id_jackpot')
 
-        const datos_re = {'realizar':'consulta_jackpots', "jackpot_id": 1};
+        const datos_re = {'realizar':'consulta_jackpots', "jackpot_id": localStorage.getItem('jk')};
         const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
         const data     = await response.json() 
  
@@ -270,9 +242,9 @@ const Consulta_bonos = async () => {
     // try{
     //     const lugar = localStorage.getItem('id_lugar')
         
-    //     const datos_re = {'realizar':'consulta_bonos', "id_lugar" : lugar, "juego": 'PERROS_6'};
+    //     const datos_re = {'realizar':'consulta_bonos', "device_token" : localStorage.getItem('dkg')};
 
-    //     const response  = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
+    //     const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
     //     const data      = await response.json() 
 
     //     if(data['data'].length > 0){
@@ -302,9 +274,9 @@ const Consulta_bonos = async () => {
 }
 
 
-const Consulta_Tabla = async () => {
+const Consulta_Tabla = async (id_table) => {
 
-    console.log('Consulta_Tabla');
+    console.log('Consulta_Tabla', id_table);
 
     Consulta_ultimas_carreras()
     Consultas_jackpot_carrera()
@@ -374,16 +346,36 @@ const Consulta_Tabla = async () => {
 
 }
  
+
+const confirmar_configuracion = async () => {
+
+    console.log('confirmar_configuracion')
+
+    const datos_re = {'realizar':'display_config', "device_token" : localStorage.getItem('dkg')};
+    const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+    const data     = await response.json()
+
+
+    localStorage.setItem('game_id', data['config']['games']) 
+    localStorage.setItem('grupo', data['grupo']['id']) 
+    localStorage.setItem('version', data['config_version']) 
+    localStorage.setItem('lugar', data['lugar']['nombre'])
+    localStorage.setItem('jk', data['jackpot_id']) 
+
+    console.log(data)
+
+}
  
 
+confirmar_configuracion()
 
 const Consulta_resultados = async () => {
 
     console.log('Consulta_resultados');
-    const datos_re = {'realizar':'consulta_resultados' , 'game_id' : 2, "device_token" : localStorage.getItem('dkg')};
+    const datos_re = {'realizar':'consulta_resultados' , 'game_id' : localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
     const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
     const data     = await response.json()
-    console.log(data)
+
 
     let pos1 = data['settlement']['result_odds'][1]['selection_key'][0] 
     let pos2 = data['settlement']['result_odds'][1]['selection_key'][2]
@@ -424,7 +416,7 @@ const Consulta_ultimas_carreras = async () => {
     console.log('Consulta_ultimas_carreras');
     // try{
 
-        const datos_re = {'realizar':'history_results','game_id': 2, "device_token" : localStorage.getItem('dkg')};
+        const datos_re = {'realizar':'history_results','game_id': localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
 
         const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
         
