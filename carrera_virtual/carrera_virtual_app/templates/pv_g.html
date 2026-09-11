@@ -19,7 +19,7 @@
   <body>    
     
     <video id="intro" playsinline></video>
-    <video id="round1" playsinline></video>
+    <video id="evento" playsinline></video>
     
 
     <main id="cuerpo">
@@ -38,23 +38,35 @@
 
           <div class="col-md-3 themed-grid-col">
 
+          
+             <div class="caja_race">  
+
+                  <span class="span_cj">
+                      <label class="nombre_jac_rc">TORNEO</label>
+                      <label id="id_sorteos_c_id" class="label-jk-rc"></label>
+                  </span>
+
+                  <span class="span_er">
+                      <label id="tiempo_regresivo"></label>
+                  </span>
+
+              </div>
 
 
-            <div class="caja_race">  
-              <span class="span_cj">
-                <label class="nombre_jac_rc">TORNEO </label><label id="id_sorteos_c_id" class="label-jk-rc"></label>                         
-              </span>
-              <span class="span_er">
-                <label id="tiempo_regresivo"></label>
-              </span>
-            
-            </div>
-            
-            
-            
-            <div class="caja_jack">
-              <label class="nombre_jac_rc">JACKPOT </label><label id="jp_global" class="label-jk-rc"></label>                         
-            </div>
+              <!-- JACKPOT GLOBAL -->
+              <div class="caja_jack caja_jack_global">
+                <label class="nombre_jac_rc">GLOBAL</label>
+                <label id="jp_global" class="label-jk-rc">$11,391.96</label>
+              </div>
+
+
+              <!-- JACKPOT LOCAL -->
+              <div class="caja_jack caja_jack_local">
+                <label class="nombre_jac_rc">LOCAL</label>
+                <label id="jp_local" class="label-jk-rc">$5,250.00</label>
+              </div>
+
+
 
             
           </div>
@@ -75,7 +87,10 @@
 
             <div class="col-md-12 themed-grid-col  d-flex justify-content-center" style="display: flex;">
     
-                <div class="sidebar_ult"></div>
+                <div class="sidebar_ult">
+ 
+
+                </div>
             
             
                 <!-- <div class="layouts"> -->
@@ -317,45 +332,43 @@
 
 
 
-      <div class="container-fluid themed-container container4" id="container-jackpots">
+    <div class="container-fluid themed-container container4" id="container-jackpots">
 
-        <div class="row">
-          <div class="col-md-12 themed-grid-col d-flex justify-content-center">
-            <div class="banner-jp">
-              <a href="#"><p>GANADOR JACKPOT</p></a>
-            </div>
+      <div class="row">
+        <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+          <div class="banner-jp">
+            <a href="#"><p>GANADOR JACKPOT</p></a>
           </div>
-
         </div>
 
+      </div>
 
-        <div class="row row_jp mt-5">
-                                            
-                <div class="col-md-7 themed-grid-col">
-                    <div class="form-group">
-                        <input class="input_info_jp" type="text" readonly value="LARIMAR SPOERT 23">
-                    </div>
-                </div>
-            
-                
-                <div class="col-md-5 themed-grid-col">
-                    <div class="form-group">
-                        <input class="input_info_jp" type="text" readonly value="******6845132">
-                    </div>
-                </div>
 
+      <div class="row row_jp mt-5">
+                        
+        <div class="col-md-7 themed-grid-col">
+            <div class="form-group">
+                <input class="input_info_jp" type="text" readonly value="LARIMAR SPOERT 23">
             </div>
-            <div class="row row_jp">
-                
-                <div class="col-md-12 themed-grid-col mt-3">
-                    <div class="form-group">
-                        <input class="input_info_jp precio_jp" type="text" readonly value="$21,213.25">
-                    </div>
-                </div>
-            
+        </div>
+    
+        
+        <div class="col-md-5 themed-grid-col">
+            <div class="form-group">
+                <input class="input_info_jp" type="text" readonly value="******6845132">
             </div>
+        </div>
 
       </div>
+      <div class="row row_jp">
+        <div class="col-md-12 themed-grid-col mt-3">
+            <div class="form-group">
+                <input class="input_info_jp precio_jp" type="text" readonly value="$21,213.25">
+            </div>
+        </div>
+      </div>
+
+    </div>
 
 
     
@@ -366,7 +379,46 @@
 
    
 
-      <div class="container-fluid themed-container container2" id="container-resultado-carrera"></div>
+      <div class="container-fluid themed-container container2" id="container-resultado-carrera">
+
+        <div class="themed-grid-col row-win mt-4">
+
+          <div class="num_pelea_div">
+              <p class="pelea">TORNEO</p> 
+              <p class="body_div"></p> 
+          </div>
+          <div class="inf-win"><div id="div_color_win"><p>GANADOR</p></div></div>
+          <div class="win-odd"><p id="win-odd-text"></p></div>
+        </div>
+
+        <hr class="linea-result">
+        
+        <div class="themed-grid-col row-rounds">
+          <div class="div-name-round">
+            <p>PELEAS</p>
+          </div>
+
+          <div class="div-img-round1"><div id="div-color-round1"></div></div>
+          <div class="div-txt-round1"><p id="text-color-round1"></p></div>
+
+          <div class="div-img-round2"><div id="div-color-round2"></div></div>
+          <div class="div-txt-round2"><p id="text-color-round2"></p></div>
+          
+          <div class="div-img-round3"><div id="div-color-round3"></div></div>
+          <div class="div-txt-round3"><p id="text-color-round3"></p></div>
+        </div>      
+        
+        <hr class="linea-result">
+
+        <div class="themed-grid-col row-trpl mb-4">
+          <div class="div-trpl-no"><p id="text-result-trpl"></p></div>
+          <div class="div-trpl-1"><div id="div-result-trpl-1"></div></div>
+          <div class="div-trpl-2"><div id="div-result-trpl-2"></div></div>
+          <div class="div-trpl-3"><div id="div-result-trpl-3"></div></div>
+          <div class="div-trpl-odd"><p id="text-result-trpl-odd"></p></div>
+        </div>
+
+      </div>
 
 
 
@@ -406,7 +458,7 @@
         </div>
     
         
-    </div>
+      </div>
 
  
     
@@ -440,9 +492,9 @@
   <script src="static/js/bootstrap.bundle.min.js"></script>
     
 
-  <script src="../static/js/cone_db_g.js"></script>
+  <script src="../static/js/cone_db_p.js"></script>
   
-  <script src="../static/js/funcionamiento_g.js"></script>
+  <script src="../static/js/funcionamiento_p.js"></script>
   
 
   

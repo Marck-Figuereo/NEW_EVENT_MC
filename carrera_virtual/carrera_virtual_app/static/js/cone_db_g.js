@@ -369,41 +369,73 @@ const Consulta_resultados = async () => {
 
     const result = data['data'][0]['race_winner']
 
-    $("#container-resultado-carrera div").remove(); 
-    $("#container-resultado-carrera hr").remove(); 
+    $('#body_div').text(data['data'][0]['id_sorteos_c'].toString().substr(-3))
 
-    $("#container-resultado-carrera").append(`<div class="themed-grid-col row-win mt-4">`+
 
-        `<div class="num_pelea_div">`+
-            `<p class="pelea">TORNEO</p>`+ 
-            `<p class="body_div">${data['data'][0]['id_sorteos_c'].toString().substr(-3)}</p>`+ 
-        `</div>`+
-        `<div class="inf-win"><div class="result-${clr[result[0]]}"><p>GANADOR</p></div></div>`+
-        `<div class="win-odd"><p>${data['data'][0]['ganador_torneo']}</p></div>`+
-    `</div>`+
-    `<hr class="linea-result">`+
-    `<div class="themed-grid-col row-rounds">`+
-        `<div class="div-name-round">`+
-        `<p>PELEAS</p>`+
-        `</div>`+
-
-        `<div class="div-img-round1"><div class="result-${clr[result[2]]}"></div></div>`+
-        `<div class="div-txt-round1"><p>${data['data'][0]['ganador_r1']}</p></div>`+
-
-        `<div class="div-img-round2"><div class="result-${clr[result[3]]}"></div></div>`+
-        `<div class="div-txt-round2"><p>${data['data'][0]['ganador_r2']}</p></div>`+
-        
-        `<div class="div-img-round3"><div class="result-${clr[result[4]]}"></div></div>`+
-        `<div class="div-txt-round3"><p>${data['data'][0]['ganador_r3']}</p></div>`+
-    `</div>`+      
+    $('#div_color_win').attr('class', `result-${clr[result[0]]}`);
+    $('#win-odd-text').text(data['data'][0]['ganador_torneo']);
     
-    `<hr class="linea-result">`+
-    `<div class="themed-grid-col row-trpl mb-4">`+
-        `<div class="div-trpl-no"><p>No. ${result.substr(2,3)}</p></div>`+
-        `<div class="div-trpl-1"><div class="result-${clr[result[2]]}">${convtSegs(result.substr(7,2))}</div></div>`+
-        `<div class="div-trpl-2"><div class="result-${clr[result[3]]}">${convtSegs(result.substr(10,2))}</div></div>`+
-        `<div class="div-trpl-3"><div class="result-${clr[result[4]]}">${convtSegs(result.substr(13,2))}</div></div>`+
-        `<div class="div-trpl-odd"><p>${data['data'][0]['ganador_tripleta']}</p></div></div>`)
+
+    $('#div-color-round1').attr('class', `result-${clr[result[2]]}`);
+    $('#text-color-round1').text(data['data'][0]['ganador_r1']);
+
+    $('#div-color-round2').attr('class', `result-${clr[result[3]]}`);
+    $('#text-color-round2').text(data['data'][0]['ganador_r2']);
+
+    $('#div-color-round3').attr('class', `result-${clr[result[4]]}`);
+    $('#text-color-round3').text(data['data'][0]['ganador_r3']);
+
+
+    
+    $('#text-result-trpl').text(`No. ${result.substr(2,3)}`);
+    
+    $('#div-result-trpl-1').attr('class', `result-${clr[result[2]]}`);
+    $('#div-result-trpl-1').text( convtSegs(result.substr(7,2)) ); 
+
+    $('#div-result-trpl-2').attr('class', `result-${clr[result[3]]}`);
+    $('#div-result-trpl-2').text( convtSegs(result.substr(10,2)) );
+
+    $('#div-result-trpl-3').attr('class', `result-${clr[result[4]]}`);
+    $('#div-result-trpl-3').text( convtSegs(result.substr(13,2)) );
+
+    $('#text-result-trpl-odd').text(data['data'][0]['ganador_tripleta']);
+
+
+    // $("#container-resultado-carrera div").remove(); 
+    // $("#container-resultado-carrera hr").remove(); 
+
+    // $("#container-resultado-carrera").append(`<div class="themed-grid-col row-win mt-4">`+
+
+    //     `<div class="num_pelea_div">`+
+    //         `<p class="pelea">TORNEO</p>`+ 
+    //         // `<p class="body_div">${data['data'][0]['id_sorteos_c'].toString().substr(-3)}</p>`+ 
+    //     `</div>`+
+    //     `<div class="inf-win"><div class="result-${clr[result[0]]}"><p>GANADOR</p></div></div>`+
+    //     `<div class="win-odd"><p>${data['data'][0]['ganador_torneo']}</p></div>`+
+    // `</div>`+
+    // `<hr class="linea-result">`+
+    // `<div class="themed-grid-col row-rounds">`+
+    //     `<div class="div-name-round">`+
+    //     `<p>PELEAS</p>`+
+    //     `</div>`+
+
+    //     `<div class="div-img-round1"><div class="result-${clr[result[2]]}"></div></div>`+
+    //     `<div class="div-txt-round1"><p>${data['data'][0]['ganador_r1']}</p></div>`+
+
+    //     `<div class="div-img-round2"><div class="result-${clr[result[3]]}"></div></div>`+
+    //     `<div class="div-txt-round2"><p>${data['data'][0]['ganador_r2']}</p></div>`+
+        
+    //     `<div class="div-img-round3"><div class="result-${clr[result[4]]}"></div></div>`+
+    //     `<div class="div-txt-round3"><p>${data['data'][0]['ganador_r3']}</p></div>`+
+    // `</div>`+      
+    
+    // `<hr class="linea-result">`+
+    // `<div class="themed-grid-col row-trpl mb-4">`+
+    //     `<div class="div-trpl-no"><p>No. ${result.substr(2,3)}</p></div>`+
+    //     `<div class="div-trpl-1"><div class="result-${clr[result[2]]}">${convtSegs(result.substr(7,2))}</div></div>`+
+    //     `<div class="div-trpl-2"><div class="result-${clr[result[3]]}">${convtSegs(result.substr(10,2))}</div></div>`+
+    //     `<div class="div-trpl-3"><div class="result-${clr[result[4]]}">${convtSegs(result.substr(13,2))}</div></div>`+
+    //     `<div class="div-trpl-odd"><p>${data['data'][0]['ganador_tripleta']}</p></div></div>`)
 
 
 

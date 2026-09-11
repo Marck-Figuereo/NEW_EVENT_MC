@@ -35,7 +35,7 @@ def get_display_results(
         response = requests.get(
             (
                 f"{API_URL}"
-                f"/api/core/display/results/latest/"
+                f"api/core/display/results/latest/"
             ),
             params={
                 "device_token": device_token,
@@ -109,7 +109,7 @@ def get_display_config_from_session_or_api(
         return display_config
 
     response = requests.get(
-        f"{API_URL}/api/core/display/config/",
+        f"{API_URL}api/core/display/config/",
         params={
             "device_token": device_token,
         },
@@ -145,7 +145,7 @@ def get_paytable_for_display(*,table_odds_id):
     response = requests.get(
         (
             f"{API_URL}"
-            f"/api/core/table-odds/{table_odds_id}/"
+            f"api/core/table-odds/{table_odds_id}/"
         ),
         timeout=3,
     )
@@ -183,7 +183,7 @@ def get_display_jackpot(
         response = requests.get(
             (
                 f"{API_URL}"
-                f"/api/jackpot/display/{jackpot_id}/"
+                f"api/jackpot/display/{jackpot_id}/"
             ),
             timeout=3,
         )
@@ -225,7 +225,7 @@ def get_display_jackpot_winner_event(
         response = requests.get(
             (
                 f"{API_URL}"
-                f"/api/jackpot/display/{jackpot_id}/winner-event/"
+                f"api/jackpot/display/{jackpot_id}/winner-event/"
             ),
             timeout=3,
         )
@@ -270,7 +270,7 @@ def get_display_config(
         response = requests.get(
             (
                 f"{API_URL}"
-                f"/api/core/display/config/"
+                f"api/core/display/config/"
             ),
             params={
                 "device_token": device_token,

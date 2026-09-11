@@ -20,7 +20,7 @@
   <body>    
     
     <video id="intro" playsinline></video>
-    <video id="race" playsinline></video>
+    <video id="evento" playsinline></video>
 
     <main id="cuerpo">
 
@@ -38,28 +38,34 @@
 
           <div class="col-md-3 themed-grid-col">
 
+              <div class="caja_race">  
+
+                  <span class="span_cj">
+                      <label class="nombre_jac_rc">CARRERA</label>
+                      <label id="id_sorteos_c_id" class="label-jk-rc" style="margin-top: 5px !important;"></label>
+                  </span>
+
+                  <span class="span_er">
+                      <label id="tiempo_regresivo"></label>
+                  </span>
+
+              </div>
 
 
-            <div class="caja_race">  
+              <!-- JACKPOT GLOBAL -->
+              <div class="caja_jack caja_jack_global">
+                <label class="nombre_jac_rc">GLOBAL</label>
+                <label id="jp_global" class="label-jk-rc">$11,391.96</label>
+              </div>
 
-              <span class="span_cj">
-                <label class="nombre_jac_rc">CARRERA </label><label id="id_sorteos_c_id" class="label-jk-rc" style="margin-top: 5px !important;"></label>                         
-              </span>
-              <span class="span_er">
-                <label id="tiempo_regresivo"></label>
-              </span>
-            
-            </div>
-            
-            
-            
-            <div class="caja_jack">
-              <label class="nombre_jac_rc">JACKPOT </label><label id="jp_global" class="label-jk-rc"></label>                         
-            </div>
 
-            
+              <!-- JACKPOT LOCAL -->
+              <div class="caja_jack caja_jack_local">
+                <label class="nombre_jac_rc">LOCAL</label>
+                <label id="jp_local" class="label-jk-rc">$5,250.00</label>
+              </div>
+
           </div>
-
         </div>
 
       </div>
@@ -192,57 +198,57 @@
                
                 <div class="row row-body">
                   <div class="th-2do br-g"><span>1</span><img src="static/img/linea/p6/np1.png"></div>
-                  <div class="precios_tbl td-1er" id="p1_p1"></div>
-                  <div class="precios_tbl td_pls" id="p1_p2"></div>
-                  <div class="precios_tbl td_pls" id="p1_p3"></div>
-                  <div class="precios_tbl td_pls" id="p1_p4"></div>
-                  <div class="precios_tbl td_pls" id="p1_p5"></div>
-                  <div class="precios_tbl td_pls" id="p1_p6"></div>
+                  <div class="precios_tbl td-1er" id="1-1"></div>
+                  <div class="precios_tbl td_pls" id="1-2"></div>
+                  <div class="precios_tbl td_pls" id="1-3"></div>
+                  <div class="precios_tbl td_pls" id="1-4"></div>
+                  <div class="precios_tbl td_pls" id="1-5"></div>
+                  <div class="precios_tbl td_pls" id="1-6"></div>
                 </div>
                 <div class="row row-body">
                   <div class="th-2do br-g"><span>2</span><img src="static/img/linea/p6/np2.png"></div>
-                  <div class="precios_tbl td_pls" id="p2_p1"></div>
-                  <div class="precios_tbl td-1er" id="p2_p2"></div>
-                  <div class="precios_tbl td_pls" id="p2_p3"></div>
-                  <div class="precios_tbl td_pls" id="p2_p4"></div>
-                  <div class="precios_tbl td_pls" id="p2_p5"></div>
-                  <div class="precios_tbl td_pls" id="p2_p6"></div>
+                  <div class="precios_tbl td_pls" id="2-1"></div>
+                  <div class="precios_tbl td-1er" id="2-2"></div>
+                  <div class="precios_tbl td_pls" id="2-3"></div>
+                  <div class="precios_tbl td_pls" id="2-4"></div>
+                  <div class="precios_tbl td_pls" id="2-5"></div>
+                  <div class="precios_tbl td_pls" id="2-6"></div>
                 </div>
                 <div class="row row-body">
                   <div class="th-2do br-g"><span>3</span><img src="static/img/linea/p6/np3.png"></div>
-                  <div class="precios_tbl td_pls" id="p3_p1"></div>
-                  <div class="precios_tbl td_pls" id="p3_p2"></div>
-                  <div class="precios_tbl td-1er" id="p3_p3"></div>
-                  <div class="precios_tbl td_pls" id="p3_p4"></div>
-                  <div class="precios_tbl td_pls" id="p3_p5"></div>
-                  <div class="precios_tbl td_pls" id="p3_p6"></div>
+                  <div class="precios_tbl td_pls" id="3-1"></div>
+                  <div class="precios_tbl td_pls" id="3-2"></div>
+                  <div class="precios_tbl td-1er" id="3-3"></div>
+                  <div class="precios_tbl td_pls" id="3-4"></div>
+                  <div class="precios_tbl td_pls" id="3-5"></div>
+                  <div class="precios_tbl td_pls" id="3-6"></div>
                 </div>
                 <div class="row row-body">
                   <div class="th-2do br-g"><span>4</span><img src="static/img/linea/p6/np4.png"></div>
-                  <div class="precios_tbl td_pls" id="p4_p1"></div>
-                  <div class="precios_tbl td_pls" id="p4_p2"></div>
-                  <div class="precios_tbl td_pls" id="p4_p3"></div>
-                  <div class="precios_tbl td-1er" id="p4_p4"></div>
-                  <div class="precios_tbl td_pls" id="p4_p5"></div>
-                  <div class="precios_tbl td_pls" id="p4_p6"></div>
+                  <div class="precios_tbl td_pls" id="4-1"></div>
+                  <div class="precios_tbl td_pls" id="4-2"></div>
+                  <div class="precios_tbl td_pls" id="4-3"></div>
+                  <div class="precios_tbl td-1er" id="4-4"></div>
+                  <div class="precios_tbl td_pls" id="4-5"></div>
+                  <div class="precios_tbl td_pls" id="4-6"></div>
                 </div>
                 <div class="row row-body">
                   <div class="th-2do br-g"><span>5</span><img src="static/img/linea/p6/np5.png"></div>
-                  <div class="precios_tbl td_pls" id="p5_p1"></div>
-                  <div class="precios_tbl td_pls" id="p5_p2"></div>
-                  <div class="precios_tbl td_pls" id="p5_p3"></div>
-                  <div class="precios_tbl td_pls" id="p5_p4"></div>
-                  <div class="precios_tbl td-1er" id="p5_p5"></div>
-                  <div class="precios_tbl td_pls" id="p5_p6"></div>
+                  <div class="precios_tbl td_pls" id="5-1"></div>
+                  <div class="precios_tbl td_pls" id="5-2"></div>
+                  <div class="precios_tbl td_pls" id="5-3"></div>
+                  <div class="precios_tbl td_pls" id="5-4"></div>
+                  <div class="precios_tbl td-1er" id="5-5"></div>
+                  <div class="precios_tbl td_pls" id="5-6"></div>
                 </div>
                 <div class="row row-body">
                   <div class="th-2do br-g"><span>6</span><img src="static/img/linea/p6/np6.png"></div>
-                  <div class="precios_tbl td_pls" id="p6_p1"></div>
-                  <div class="precios_tbl td_pls" id="p6_p2"></div>
-                  <div class="precios_tbl td_pls" id="p6_p3"></div>
-                  <div class="precios_tbl td_pls" id="p6_p4"></div>
-                  <div class="precios_tbl td_pls" id="p6_p5"></div>
-                  <div class="precios_tbl td-1er" id="p6_p6"></div>
+                  <div class="precios_tbl td_pls" id="6-1"></div>
+                  <div class="precios_tbl td_pls" id="6-2"></div>
+                  <div class="precios_tbl td_pls" id="6-3"></div>
+                  <div class="precios_tbl td_pls" id="6-4"></div>
+                  <div class="precios_tbl td_pls" id="6-5"></div>
+                  <div class="precios_tbl td-1er" id="6-6"></div>
                 </div> 
 
             </div>
@@ -439,23 +445,14 @@
       <div class="col-md-12 themed-grid-col d-flex justify-content-center">
         <img id="pos_bono" style="width: 150px;">
       </div>
-
     </div>
-    
-    
 
   </div>
 
+
+
   <div class="container_race" id="container-resultado-race"><p id="nm_race">CARRERA</p><p id="race_n"></p></div> 
   <div class="container_race_rest" id="container-resultado-odds"><p id="n_directa"></p><p id="n_pale"></p></div> 
-
-      
-
-
-    <input id="gmt2" type="hidden" value="{{gmt1}}">
-    <input id="formato_hora2"    type="hidden" value="{{formato_hora1}}">
-
-    <input id="id_cons2"          type="hidden" value="{{id_cons1}}">
 
     
   </body>

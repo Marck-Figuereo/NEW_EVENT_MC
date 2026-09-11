@@ -79,7 +79,7 @@ const aumento_jack = (num_inicio, num_fn) =>{
         const currentNumber = (num_inicio + easedProgress * (num_fn - num_inicio)).toFixed(2)
         
         // Mostrar el número actual en el elemento HTML
-        document.querySelector('#jp_global').textContent = moneda(currentNumber.toLocaleString());
+        document.querySelector('#jp_mega').textContent = moneda(currentNumber.toLocaleString());
     
         // Verificar si la animación debe continuar
         if (progress < 1)  animationFrame = requestAnimationFrame(updateCount);
@@ -107,8 +107,8 @@ const Consultas_jackpot_carrera = async () =>{
         const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
         const data     = await response.json() 
  
-
-        $('#id_tk_info').text(`ID ${data['last_winner_ticket']}`)
+        console.log(data);
+        $('#id_tk_info').text(`****${data['last_winner_ticket_id']}`)
         $('#monto_info').text(moneda(data['last_winner_amount']))
         $('#lugar_info').text(data['last_winner_lugar'])
         $('#date_info').text(data['last_winner_at'])
@@ -274,56 +274,88 @@ const Consulta_bonos = async () => {
 }
 
 
-const Consulta_Tabla = async (id_table) => {
-
-    console.log('Consulta_Tabla', id_table);
-
-    Consulta_ultimas_carreras()
-    Consultas_jackpot_carrera()
-
-    // try {        
-
-        $('.precios_tbl').each(function() {  $(`#${$(this).attr('id')}`).text('- - -') });
-
-        const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
-
-        var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-        var data      = await response.json()         
-        
-        const inf = data['items']
- 
-
-        for(let int in inf){
-
-            let cmb = inf[int]['selection_key']
-
-            if(inf[int]['bet_type'] == 'WIN') $('#p'+cmb + '_p'+cmb).text(parseFloat(inf[int]['odds']).toFixed(1))
-            else                              $('#p'+cmb[0]+ '_p'+cmb[2]).text(parseFloat(inf[int]['odds']).toFixed(1))
-
-        }
-         
-
-        // if(direct[0].includes(x)){  direct[1].push(Number(data['data'][0][`${x}`])), direct[2].push(`${x}`) }   
-        // if(pls[0].includes(x)){pls[1].push(Number(data['data'][0][`${x}`])), pls[2].push(`${x}`)}
-       
-   
 
 
-    //         try{
-    //             $(`#${direct[2][direct[1].indexOf(Math.min(...direct[1]))]}`).css("color", "#09ff00");
-    //             $(`#${direct[2][direct[1].indexOf(Math.max(...direct[1]))]}`).css("color", "#ff0000");
+const Consulta_Tabla = async (id_table, game) => {
 
-    //             $(`#${pls[2][pls[1].indexOf(Math.min(...pls[1]))]}`).css("color", "#09ff00");
-    //             $(`#${pls[2][pls[1].indexOf(Math.max(...pls[1]))]}`).css("color", "#ff0000");
+    console.log('Consulta_Tabla', id_table, game);
+        $('.txt_lgr').text(localStorage.getItem('lugar'))
+
+        // try {        
+
             
-    //         }catch(error){console.log("Error: ", error)}
 
-    //         await Consulta_ultimas_carreras()
-    //         await Consultas_jackpot_carrera()
+        //     $('.precios_tbl').each(function() {  
+                
+        //         $(`#${$(this).attr('id')}`).css("color", "#fff")
+        //         $(`#${$(this).attr('id')}`).text('- - -') 
             
-    //         return true
+        //     });
+
+        //     const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
+    
+        //     var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+        //     var data      = await response.json()         
         
-    //     }else{return false}
+        //     console.log(data);
+        
+        //     Object.entries(data).forEach(([cmb, odds])=>{
+    
+        //         if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(parseFloat(odds).toFixed(1))
+        //         else if (game == 5)                                   $('#ods_' + cmb).text(odds);
+        //         else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(odds)
+    
+        //     }) 
+
+
+        //     try{
+    
+
+        //         const entradas = Object.entries(data);
+
+        //         const combinaciones = entradas.filter(([key]) => key.length === 3 );
+
+        //         const win = entradas.filter(([key]) => /^WIN \d+$/.test(key));
+
+        //         if (combinaciones.length) { 
+                    
+        //             const pcMayor = combinaciones.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b);
+        //             const pcMenor = combinaciones.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b);
+                
+        //             if(game == 5){
+        //                 $(`#ods_${pcMayor[0]}`).css("color", "#09ff00");
+        //                 $(`#ods_${pcMenor[0]}`).css("color", "#ff0000");
+
+        //             }else{
+        //                 $(`#${pcMayor[0]}`).css("color", "#09ff00");
+        //                 $(`#${pcMenor[0]}`).css("color", "#ff0000");
+        //             }
+        //         }
+
+
+        //         if (win.length) {
+
+        //             const winMayor = win.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b );
+
+        //             const winMenor = win.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b );
+
+        //             const mayorKey = winMayor[0].replace("WIN ", "");
+        //             const menorKey = winMenor[0].replace("WIN ", "");
+
+        //             $(`#${mayorKey}-${mayorKey}`).css("color", "#09ff00");
+        //             $(`#${menorKey}-${menorKey}`).css("color", "#ff0000");
+        //         }
+            
+        //     }catch(error){console.log("Error: ", error)}
+            
+        // }catch(error){console.log("Error: ", error)}
+
+
+        Consulta_ultimas_carreras()
+        Consultas_jackpot_carrera()
+        
+        return true
+        
     
     
     // } catch (error) {
@@ -334,8 +366,6 @@ const Consulta_Tabla = async (id_table) => {
     //         $(`#${$(this).attr('id')}`).text('- - -')
 
     //     });
-    
-    //     $('#id_sorteos_c_id').text(0)
 
     //     return false
 
@@ -355,28 +385,28 @@ const confirmar_configuracion = async () => {
     const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
     const data     = await response.json()
 
+    if(data['config_version'] != localStorage.getItem("version")){
 
-    localStorage.setItem('game_id', data['config']['games']) 
-    localStorage.setItem('grupo', data['grupo']['id']) 
-    localStorage.setItem('version', data['config_version']) 
-    localStorage.setItem('lugar', data['lugar']['nombre'])
-    localStorage.setItem('jk', data['jackpot_id']) 
-
-    console.log(data)
+        localStorage.setItem('game_id', data['config']['games']) 
+        localStorage.setItem('grupo', data['grupo']['id']) 
+        localStorage.setItem('version', data['config_version']) 
+        localStorage.setItem('lugar', data['lugar']['nombre'])
+        localStorage.setItem('jk', data['jackpot_id']) 
+    }
 
 }
  
 
-confirmar_configuracion()
+
 
 const Consulta_resultados = async () => {
 
     console.log('Consulta_resultados');
-    const datos_re = {'realizar':'consulta_resultados' , 'game_id' : localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
+    const datos_re = {'realizar':'consulta_resultados' ,  'grupo_id' : localStorage.getItem('grupo'), 'game_id' : localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
     const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
     const data     = await response.json()
-
-
+    console.log(response, data, 'Consulta_resultados');
+    
     let pos1 = data['settlement']['result_odds'][1]['selection_key'][0] 
     let pos2 = data['settlement']['result_odds'][1]['selection_key'][2]
     
@@ -393,51 +423,158 @@ const Consulta_resultados = async () => {
     document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
     document.getElementById("p_ext").innerHTML = pago_pale
 
-
+    return [data['selected_video'], 'X']
 
 }
 
 
 
 
+const consult_gallos = data => {
+
+    $('.sidebar_ult div').remove();
+
+    $('.sidebar_ult').append('<div class="row row-title">HISTORIAL DE TORNEO</div>');
+ 
+    data.results.forEach(dts => {
+
+        const result = dts.result;
+        const inf = dts.settlement.result_odds || [];
+
+        // ==========================================
+        // BUSCAR ODDS
+        // ==========================================
+
+        const getOdds = selection_key => {
+
+            const apuesta = inf.find(item => item.selection_key === selection_key);
+            return apuesta ? apuesta.odds : '';
+
+        };
 
 
+        // ==========================================
+        // RESULTADO
+        // ==========================================
 
-Consulta_resultados()
+        const order = (result.order_key || '').split('-');
+        const generalWinner = result.general_winner || '';
 
 
+        // ==========================================
+        // ODDS
+        // ==========================================
 
+        const ganadorTorneo = getOdds(result.order_key);
+        const ganadorGeneral = getOdds(`GENERAL:${generalWinner}`);
+        const ganadorR1 = getOdds(`FIGHT_1:${order[0]}`);
+        const ganadorR2 = getOdds(`FIGHT_2:${order[1]}`);
+        const ganadorR3 = getOdds(`FIGHT_3:${order[2]}`);
+
+
+        // ==========================================
+        // RESULT KEY
+        // ==========================================
+
+        const resultKey = result.result_key || '';
+
+
+        // ==========================================
+        // HTML
+        // ==========================================
+
+        $('.sidebar_ult').append(`
+
+            <div class="row row-body">
+
+                <!-- GANADOR -->
+
+                <div class="row row-b row-b-1">
+                    <div class="items-num">${dts.event_number ?? ''}</div>
+                    <div class="items-info">GANADOR</div>
+                    <div><span class="bg_${generalWinner || 'emp'}" style="color:transparent;"> - - -</span></div>
+                    <div class="odds-result">${ganadorGeneral}</div>
+                </div>
+
+
+                <!-- RONDAS -->
+
+                <div class="row row-b row-b-2">
+
+                    <div class="items-num"></div>
+                    <div class="items-info">RONDAS</div>
+
+                    <!-- RONDA 1 -->
+
+                    <div><span class="bg_${order[0] || 'emp'}" style="color:transparent;"> - - -</span></div>
+                    <div class="odds-result">${ganadorR1}</div>
+                    <div><span class="bg_${order[1] || 'emp'}"style="color:transparent;">- - -</span></div>
+                    <div class="odds-result">${ganadorR2}</div>
+                    <div><span class="bg_${order[2] || 'emp'}" style="color:transparent;">- - -</span></div>
+                    <div class="odds-result">${ganadorR3}</div>
+
+                </div>
+
+
+                <!-- NUMERO -->
+
+                <div class="row row-b row-b-3">
+
+                    <div class="items-num"></div>
+                    <div class="items-info">NO. ${resultKey}</div>
+                    <div><span class="bg_${order[0] || 'emp'}">${resultKey[0] ?? ''}</span></div>
+                    <div><span class="bg_${order[1] || 'emp'}">${resultKey[1] ?? ''}</span></div>
+                    <div><span class="bg_${order[2] || 'emp'}">${resultKey[2] ?? ''}</span></div>
+                    <div class="odds-result">${ganadorTorneo}</div>
+
+                </div>
+
+            </div>
+        `);
+    });
+};
 
 
 
 const Consulta_ultimas_carreras = async () => {
 
-
-    console.log('Consulta_ultimas_carreras');
+ 
     // try{
 
-        const datos_re = {'realizar':'history_results','game_id': localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
+        const datos_re = {'realizar':'history_results', 'grupo_id' : localStorage.getItem('grupo'), 'game_id': localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
 
         const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
         
         const data      = await response.json()
 
-  
-                  
+        console.log(data, "Consulta_ultimas_carreras");
+
+        if (localStorage.getItem('game_id') == 5){
+
+            consult_gallos(data)
+            return
+
+        }else if(localStorage.getItem('game_id') == 1){
+
+            
+            consult_ruleta(data)
+            return
+        }          
+
         data['results'].map((races, cont)=>{
-   
+
+            dc = { 2 : 'p6',3 : 'p8',4 : 'h7'}
 
     //         if(races['bonos_race'] == 'X2' || races['bonos_race'] == 'X3'){ document.getElementById(`bns${cont}`).src = `../static/img/${races['bonos_race']}_V.png` 
     //         }else{document.getElementById(`bns${cont}`).src = '' }
 
-            
             document.getElementById(`numero_race${cont}`).innerHTML = races['event_number'] 
-            document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/p6/n${races['settlement']['result_odds'][0]['selection_key']}.svg`
+            document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][0]['selection_key']}.svg`
             document.getElementById(`lugarprc_1er${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][0]['odds']).toFixed(1) 
 
 
-            document.getElementById(`lugarimg_pls_1er${cont}`).src =  `static/img/numeros/p6/n${races['settlement']['result_odds'][1]['selection_key'][0]}.svg`
-            document.getElementById(`lugarimg_pls_2do${cont}`).src =  `static/img/numeros/p6/n${races['settlement']['result_odds'][1]['selection_key'][2]}.svg`
+            document.getElementById(`lugarimg_pls_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][1]['selection_key'][0]}.svg`
+            document.getElementById(`lugarimg_pls_2do${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][1]['selection_key'][2]}.svg`
             document.getElementById(`lugarprc_pls${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][1]['odds']).toFixed(1) 
 
 

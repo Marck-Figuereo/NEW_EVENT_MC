@@ -465,7 +465,7 @@ $(document).ready(async()=>{
   console.log(!navigator.onLine);
   if (!navigator.onLine) cerrar_to()
 
-  else if(localStorage.getItem('usr') == null || localStorage.getItem('pss') == null) window.location.href = "/";
+  // else if(localStorage.getItem('usr') == null || localStorage.getItem('pss') == null) window.location.href = "/";
 
 
   await connectWebSocket();

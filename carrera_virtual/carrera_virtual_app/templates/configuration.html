@@ -99,14 +99,15 @@ const peticion = async () => {
 
     if(data['config'] != null){ 
       
-      // clearInterval(reconnectTimeout)
+      clearInterval(reconnectTimeout)
 
       localStorage.setItem('game_id', data['config']['games']) 
       localStorage.setItem('grupo', data['grupo']['id']) 
       localStorage.setItem('version', data['config_version']) 
       localStorage.setItem('lugar', data['lugar']['nombre'])
 
-      localStorage.setItem('jk', data['jackpot_id']) 
+      localStorage.setItem('jk', data['jackpot_id'])
+      localStorage.setItem('url', data['config']['game_url']) 
       
       window.location.href = "/" + data['config']['game_url']
     
@@ -118,18 +119,16 @@ const peticion = async () => {
 
  function generarQR(qrUrl, color = "231-63-44", bgcolor = "255-255-255") {
 
-    return "https://api.qrserver.com/v1/create-qr-code/?" + new URLSearchParams({
-        size: "230x230",
-        color: color,
-        bgcolor: bgcolor,
-        data: qrUrl
-    }).toString();
+    return "https://api.qrserver.com/v1/create-qr-code/?" + new URLSearchParams({ size: "230x230", color: color, bgcolor: bgcolor, data: qrUrl }).toString();
+
 }
 
 
-$(document).ready(async () => {
+$(document).ready(async () => {console.log(localStorage.getItem('url'));
 
+  if(localStorage.getItem('dkg') == null){
 
+    console.log("d");
     await fetch("/", { method: "POST", body:JSON.stringify({'realizar' : 'activacion'}), headers: { "X-CSRFToken": getCookie2("csrftoken") }
     }).then(res => res.json()) .then(data => {
 
@@ -151,7 +150,7 @@ $(document).ready(async () => {
 
     reconnectTimeout = setInterval(peticion, 4000);
         
-
+  }else window.location.href = "/" + localStorage.getItem('url')
 
 });
 

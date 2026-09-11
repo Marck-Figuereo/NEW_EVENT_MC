@@ -1,10 +1,3 @@
-const seg_intro   = [230, 530, 830, 1130, 1430, 1730, 2030, 2330, 2630, 2930, 3230, 3530];   
-const DURACION_HORA = 3600; // 60 * 60
- 
-const seg_race    = [240, 540, 840, 1140, 1440, 1740, 2040, 2340, 2640, 2940, 3240, 3540];
-
-const seg_sincro  = [120, 420, 720,  1020,  1320, 1620, 1920, 2220, 2520, 2820, 3120, 3420];    
-
 
 var video_intro         = document.getElementById("intro"); 
 var video_race          = document.getElementById("race"); 
@@ -36,19 +29,21 @@ var ver_b = false
 var cc = true
 
 
+var tiempo = 0
+var event_tiempo = 288
+  
 
-var horas = 0;
-var minutos = 0;
-var segundos = 0;
-var dia = 0;
-var mes = 0;
-var year = 0;
+var entra_intro = false;
+var entra_race = false; 
 
-var entra_intro = true;
-var entra_race = true;
-var entra_tabla = true;
+var entra_sincro_1 = true
+var entra_sincro_2 = true
+var entra_sincro_3 = true
 
 var internet = true
+
+var id_table = 0;
+
 
 cerrar_to = () =>{
 
@@ -79,36 +74,23 @@ connectWebSocket = async () => {
   
   if (navigator.onLine) { // Solo intenta conectar si está online
 
-    if(!internet) {
-      location.reload()  
-      internet = true
-      
-    }
+    if(!internet) location.reload()  
     
     Swal.close()
     let latestTimestamp = 0;
 
-    let websocket = new WebSocket('wss://time.varmanex.com');
+    let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/games/${localStorage.getItem('game_id')}/countdown/`);
 
     websocket.onmessage = (event) => {
-    
+
       const data = JSON.parse(event.data);
-      const messageTimestamp = parseFloat(data.timestamp);
-
-      if (messageTimestamp > latestTimestamp) {
-    
-        latestTimestamp = messageTimestamp;  // Actualiza la marca de tiempo más reciente
-        
-        const date = new Date(data.time);
-        
-        horas    = date.getHours()
-        minutos  = date.getMinutes()
-        segundos = date.getSeconds()
-        dia      = date.getDate()
-        mes      = date.getMonth()
-        year     = date.getFullYear()
-
-      }
+  
+      id_table = data['table_odds_id']
+      tiempo = data['seconds_left']
+      
+      $('#id_sorteos_c_id').text(data['event_number']);
+      $('#tiempo_regresivo').text(formatoTiempo(tiempo));
+   
     
     };
 
@@ -133,42 +115,15 @@ window.addEventListener('offline', updateConnectionStatus);
 
 
 
-const confirmacion_tabla = (fecha_t, hora_t)=> {
-      
-  const hrs  = (horas     < 10 ? '0' : '') + horas
-  const mit  = (minutos   < 10 ? '0' : '') + minutos
-  const segd = (segundos  < 10 ? '0' : '') + segundos
-  
-  const dia2 = (dia     < 10 ? '0' : '') + dia
-  const mes2 = ((mes+1) < 10 ? '0' : '') + (mes+1)
 
-
-  const tiempo = hrs + ":" + mit + ":" + segd
-  const fecha_aqu = year + "/" + mes2 + "/" + dia2
-  
-  const fecha1 = `${fecha_t} ${hora_t.substr(0, 6)}00`.replace('/', '-').replace('/', '-')
-  const fecha2 = `${fecha_aqu} ${tiempo.substr(0, 6)}00`.replace('/', '-').replace('/', '-')
-
-  var dift = moment(fecha2).diff(moment(fecha1), 'minute')
-  
-  if(dift <= 4 ) return false 
-  else return true
-
-
-
-} 
     
 const sincronizacion = async () =>{
 
-  const fecha = localStorage.getItem('fecha')
-  const hora = localStorage.getItem('hora')
+  await confirmar_configuracion()
+ 
+  vd = await Consulta_Tabla(id_table) 
 
-  const good = confirmacion_tabla(fecha, hora)
-
-  if (good) vd = await Consulta_Tabla()
 }
-
-
 
 
 
@@ -276,16 +231,23 @@ const mostrando_tablas = async () =>{
 
 const excute_race = async () =>{
 
+    
+  entra_sincro_1 = true
+  entra_sincro_2 = true
+  entra_sincro_3 = true
+
+
   nup = await Consulta_resultados()
   
-  vid = `${nup[0].substr(0,1)}-${nup[0].substr(1,1)}-${nup[0].substr(2,1)}` 
-  
-  pt = localStorage.getItem('url') != null ? 6 : 0
 
-    
+  
+  pt = localStorage.getItem('dkg') != null ? 6 : 0
+
+  console.log("race",   nup);
   // video_race.src    = `http://localhost:300${pt}/dog8/${vid}.mp4`;
 
-  video_race.src               = `static/videos/dog8/${vid}.mp4`;
+
+  video_race.src               = `../static/videos/1-2-B.mp4`;
 
   video_race.type               = 'video/mp4';
   
@@ -361,6 +323,14 @@ function esperar(ms) {
 
   
 
+
+
+
+
+
+video_intro.addEventListener('ended', async () => excute_race() )  
+
+
 video_race.addEventListener('ended', async () => {
 
   mostrando_resultado();
@@ -399,6 +369,7 @@ video_race.addEventListener('playing', async () => {
     
   ver_w_p = await Consulta_ganador_jack()
   ver_b = await Consulta_bonos()
+  console.log("mostrando el video");
 
 })
   
@@ -433,100 +404,38 @@ video_race.addEventListener('error', async () => {
 
 });
  
-
-
-
-var actualizando_seg = (mint, seg) => {
-
-    const t = (mint * 60) + seg;  // segundos dentro de la hora (0–3599)
-    let segundos_res;
-
-    // 1. Antes del primer cierre de la hora
-    if (t < seg_intro[0]) segundos_res = seg_intro[0] - t; // Cuenta regresiva hasta el primer cierre (230 = 3:50)
-
-    else {
-
-        // 2. Buscar el próximo cierre dentro de esta misma hora
-        let proximo_cierre = seg_intro.find(c => c > t);
-
-        if (proximo_cierre) segundos_res = proximo_cierre - t; // Hay un cierre por delante en esta hora
-        
-        else {
-            // 3. Ya pasamos el ÚLTIMO cierre (3530 = 58:50)
-            // Próximo cierre = PRIMER cierre de la SIGUIENTE hora
-            // 3600 (fin de la hora) + 230 (primer cierre)
-            proximo_cierre = DURACION_HORA + seg_intro[0]; // 3600 + 230
-            segundos_res = proximo_cierre - t;
-        }
-    }
-
-    $('#tiempo_regresivo').text( new Date(segundos_res * 1000).toISOString().slice(14, 19) );
-
-};
-
-
-
-
-
-$(document).ready(async()=>{
-  
-  $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
-  Consulta_grupo()
-
- 
-  
-  //Evitar que se pueda sombrar textos
-  document.onselectstart = () => false;
-  
-  if (!navigator.onLine) cerrar_to()
-
-  else if(localStorage.getItem('usr') == null || localStorage.getItem('pss') == null){
-
-		window.location.href = "/";
-    	
-  }else{ 
-
-    await connectWebSocket();
-
-    vd = await Consulta_Tabla();
-    await mostrando_tablas() 
-
-    Consulta_ganador_jack()
-    
-  }
-  
-
-})
  
 
+ 
 
-const allinfo = async()=> vd = await Consulta_Tabla() 
+ 
 
 setInterval( async ()=> {
   
-
-  actualizando_seg(minutos, segundos)
-  
-  if( seg_intro.includes( (minutos * 60) + segundos ) && vd && entra_intro){
-      
-    entra_intro = false
-
-  
+  console.log(tiempo, vd, entra_intro);
+    
+  if(tiempo == 0 && vd && entra_intro){entra_intro = false
+    console.log('intro'); 
+    entra_race = true
+    
+    entra_sincro_1 = true
+    entra_sincro_2 = true
+    entra_sincro_3 = true
+    
     nup2 = await Consulta_resultados()
     
-    
-    $('.precios_tbl').each(function () {  
-      
 
+    $('.precios_tbl').each( function() {  
+      
+      $(`#${$(this).attr('id')}`).css("color", "#fff")
       $($(this).attr('id')).text('- - -')
 
     });
 
     $('#id_sorteos_c_id').val('');
-    
+
     if(localStorage.getItem('url') != null) pt = 6
     else pt = 0
-    
     // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `http://localhost:300${pt}/dog8/intro${nup2[1]}.mp4`;
     // else                                   video_intro.src = `http://localhost:300${pt}/dog8/intro.mp4`;  
     
@@ -547,36 +456,28 @@ setInterval( async ()=> {
     
     
 
-  }else if( seg_race.includes( (minutos * 60) + segundos ) && vd && entra_race){
+  }else if(tiempo == 60 && entra_sincro_1){ entra_sincro_1 = false  
 
-    entra_race = false
-    excute_race()
-    
-
-  }
- 
-  
-  if(seg_race.includes(((minutos * 60) + segundos) - 60 ) || seg_race.includes(((minutos * 60) + segundos) + 60 )){ 
-  
+    console.log("entra_sincro_1");
     sincronizacion()
-    
-    entra_race = true
-    entra_tabla = true
     entra_intro = true
-
-  }if(seg_sincro.includes((minutos * 60) + segundos) ){
+  
+     
+  }else if(tiempo == 120 && entra_sincro_2){ entra_sincro_2 = false 
     
     ver_w_p = false
     ver_b = false
-    
+
+    console.log("entra_sincro_2");
     sincronizacion()
-    Consulta_grupo()
+    entra_intro = true
   
-  
-  }if(seg_race.includes( ((minutos * 60) + segundos) - 35 ) && entra_tabla){ 
-  
-    allinfo()
-    entra_tabla = false;
+  }else if((event_tiempo - 30) == tiempo && entra_sincro_3){ entra_sincro_3 = false  
+
+    console.log("entra_sincro_3");
+    sincronizacion() 
+    entra_intro = true
+
   }
   
 
@@ -585,6 +486,40 @@ setInterval( async ()=> {
  
  
  
+ 
 
  
    
+
+
+
+   
+$(document).ready(async()=>{
+
+  $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
+
+
+  //Evitar que se pueda sombrar textos
+  document.onselectstart = () => false;
+  
+  if (!navigator.onLine) cerrar_to()
+
+  else if(localStorage.getItem('dkg') == null){
+   
+    localStorage.clear(); 
+    window.location.href = "/";
+    	
+  }else{ 
+
+    await connectWebSocket();
+
+    vd = await Consulta_Tabla(id_table);
+    await mostrando_tablas() 
+    
+    Consulta_ganador_jack()
+    
+  }
+  
+
+})
+

@@ -1,0 +1,987 @@
+
+// AUTH API  sorteo_id 
+
+Table USER_API.backOfficie_User {
+  id bigint [pk]
+  username Char
+  email Email
+  nombres Char
+  apellidos Char
+  telefono Char
+  password_hash Char
+  is_active Boolean
+  is_superuser Boolean
+  status Char
+  default_country_code Char
+  timezone Char
+  preferred_currency_code Char
+  locale Char
+  last_login_at DateTime
+  created_at DateTime
+  updated_at DateTime
+  token_version PositiveInteger
+  created_by BigInteger
+  updated_by BigInteger
+}
+
+Table USER_API.Country_Acces {
+
+  id int [pk]
+  user_id ForeignKey
+  country_code Char
+  assigned_at DateTime
+  assigned_by BigInteger
+
+}
+
+Table USER_API.Audit_Log {
+  id BigAuto [pk]
+  user_id BigInteger
+  action  Char
+  performed_by  BigInteger
+  metadata  JSON
+  created_at  DateTime
+
+}
+
+Table USER_API.Session_User {
+  id UUID [pk]
+  user_id ForeignKey
+  is_active Boolean
+  created_at DateTime
+  last_seen_at DateTime
+  closed_at DateTime
+  user_agent Text
+  ip_address GenericIPAddress
+}
+
+Table USER_API.Record_token {
+  id int [pk]
+  user_id ForeignKey
+
+  jti  UUID
+  family_id  UUID
+  parent_jti  UUID
+  session_id  UUID
+  token_version  Integer
+  issued_at  DateTime
+  expires_at  DateTime
+  consumed_at  DateTime
+  revoked_at  DateTime
+  is_compromised  Boolean
+  issued_ip  GenericIPAddress
+  issued_user_agent  Text
+}
+
+Table USER_API.Backoffice_Role {
+  id int [pk]
+}
+Table USER_API.BackofficePermission {
+  id int [pk]
+  
+}
+Table USER_API.BackofficeRolePermission {
+  id int [pk]
+  role_id int
+  permission_id int
+}
+Table USER_API.BackofficeUserRole {
+  id int [pk]
+  user_id ForeignKey
+  role_id ForeignKey
+}
+Table USER_API.BackofficeUserPermissionOverride {
+  id int [pk]
+  user_id ForeignKey 
+  permission_id ForeignKey
+}
+
+
+
+table USER_API.user_cons_acces { //usuarios con acceso
+  id int [pk]
+  consorcio_id ForeignKey
+  user_id ForeignKey  
+  assigned_at DateTime
+  assigned_by BigInteger
+
+} 
+
+table USER_API.user_place_acces {
+  id int [pk]
+  lugar_id ForeignKey
+  user_id ForeignKey
+  assigned_at DateTime
+  assigned_by_user_id BigInteger
+
+} 
+
+
+
+
+
+
+
+
+
+
+//Jackpot
+
+table JACKPOT.jk_sort {
+  id int [pk]
+  jk_id ForeignKey
+  sorteo_id ForeignKey
+
+  status Char
+  starts_at DateTime
+  ends_at DateTime
+  contribution_amount Decimal
+  prize_pool_amount Decimal
+  triggered_at DateTime
+  closed_at DateTime
+  created_at DateTime
+
+}
+
+table JACKPOT.jk_location {
+  id int [pk]
+  jk_id ForeignKey
+  lugar_id ForeignKey
+  
+  active Boolean
+  created_at DateTime
+  assigned_at DateTime
+  assigned_by_user_id BigInteger
+  unassigned_at DateTime
+  metadata JSON
+
+
+
+}
+
+table JACKPOT.jk {
+  id int [pk]
+  name Char
+  status Char
+  base_amount Decimal
+  accumulated_amount Decimal
+  contribution_percentage Decimal
+  activation_type Char
+  activation_config JSON
+  starts_at DateTime
+  ends_at DateTime
+  created_at DateTime
+  updated_at DateTime
+  remanent_amount Decimal
+  remanent_percentage Decimal
+  activation_min_amount Decimal
+  activation_max_amount Decimal
+  current_activation_amount Decimal
+
+
+}
+table JACKPOT.jk_winner {
+  id int [pk]
+  jk_id     ForeignKey
+  id_draw   ForeignKey
+  sorteo_id ForeignKey
+  ticket_id ForeignKey
+  lugar_id  ForeignKey
+
+  prize_amount Decimal
+  status Char
+  selected_at DateTime
+  created_at DateTime
+
+
+}
+
+
+
+table JACKPOT.jk_entry {
+  id int [pk]
+  jk_id ForeignKey
+  sorteo_id ForeignKey
+  ticket_id ForeignKey
+  lugar_id  ForeignKey
+  jk_draw   ForeignKey
+
+  ticket_amount Decimal
+  contribution_amount Decimal
+  status Char
+  cancelled_at DateTime
+  created_at DateTime
+  current_amount Decimal
+  remanent_amount Decimal
+
+
+}
+
+
+
+
+
+
+
+// REPORTING API
+
+
+table REPORTES.total_lgr_dia {
+  id int [pk]
+  lugar_id      ForeignKey
+  consorcio_id  ForeignKey
+  
+  business_date Date
+  ticket_count BigInteger
+  bet_count BigInteger
+  gross_sales Decimal
+  cancelled_sales Decimal
+  net_sales Decimal
+  prizes_paid Decimal
+  gross_profit Decimal
+  cancelled_ticket_count BigInteger
+  paid_ticket_count BigInteger
+  won_ticket_count BigInteger
+  lost_ticket_count BigInteger
+  partial_won_ticket_count BigInteger
+  updated_at DateTime
+
+
+}
+table REPORTES.total_gm_lgr_dia {
+  id int [pk]
+  lugar_id ForeignKey
+  game_id ForeignKey
+  consorcio_id ForeignKey
+  
+  business_date Date
+  game_code Char
+  ticket_count BigInteger
+  bet_count BigInteger
+  total_sales Decimal
+  cancelled_sales Decimal
+  total_paid Decimal
+  pending_amount Decimal
+  won_potential_amount Decimal
+  gross_profit Decimal
+  updated_at DateTime
+
+}
+
+table REPORTES.total_lgr_porc_dia {
+  id int [pk]
+  lugar_id ForeignKey
+  consorcio_id ForeignKey
+
+  business_date Date
+  tax_source Char
+  tax_mode Char
+  tax_rate Decimal
+  ticket_count BigInteger
+  cancelled_ticket_count BigInteger
+  paid_ticket_count BigInteger
+  gross_sales Decimal
+  cancelled_sales Decimal
+  net_sales Decimal
+  prizes_paid Decimal
+  gross_profit Decimal
+  tax_amount Decimal
+  updated_at DateTime
+
+
+}
+
+
+
+
+
+// ORGANIZATION API
+
+
+table ORGANIZACION.block_lgr_acces {
+  id int [pk]
+  lugar_id ForeignKey
+
+  status CharField
+  reason TextField
+  blocked_by_admin_id BigIntegerField
+  blocked_by_admin_username CharField
+  unblocked_by_admin_id BigIntegerField
+  unblocked_by_admin_username CharField
+  unblocked_at DateTimeField
+  metadata JSONField
+  created_at DateTimeField
+
+} 
+
+table ORGANIZACION.log_block_lgr_acces {
+  id int [pk]
+  block_lgr_acces ForeignKey
+
+} 
+
+
+table ORGANIZACION.parametros_lmt_lgr {
+  id int [pk]
+  lugar_id ForeignKey
+  consorcio_id ForeignKey
+
+  max_daily_profit Decimal
+  max_ticket_amount Decimal
+  max_operator_daily_sales Decimal
+  max_terminal_daily_sales Decimal
+  max_daily_cancelled_amount Decimal
+  max_daily_cancelled_count PositiveInteger
+  status Char
+  metadata JSON
+  created_at DateTime
+  updated_at DateTime
+
+
+}
+
+
+
+
+table ORGANIZACION.pais {
+  id int [pk]
+
+} 
+table ORGANIZACION.estado_pais {
+  id int [pk]
+  pais_id ForeignKey
+} 
+
+
+table ORGANIZACION.consorcio {
+  id int [pk]
+  user_id ForeignKey // owner principal / creador
+  grupo_id ForeignKey
+  default_jk_id ForeignKey //nullable
+
+  nombre Char
+  estado Boolean
+  created_at DateTime
+  id_consorcio_m Decimal
+  
+  tax_mode Char
+  tax_rate Decimal
+  business_day_cutoff_hour PositiveSmallInteger
+
+
+
+} 
+table ORGANIZACION.lugar {
+  id int [pk]
+  consorcio_id ForeignKey
+  grupo_id ForeignKey
+  estado_pais_id ForeignKey
+
+  nombre Char
+  estado Boolean
+  coordenadas Char
+  teclado_touch Boolean
+  limit_venta Integer
+  time_open Time
+  time_closed Time
+  last_update DateTime
+  auto_service Boolean
+  id_lugar_m Decimal
+  created_at DateTime
+  tax_mode Char
+  tax_rate Decimal
+  business_day_cutoff_hour PositiveSmallInteger
+
+} 
+table ORGANIZACION.terminal {
+  id BigInteger [pk]
+  lugar_id ForeignKey
+  nombre Char
+  codigo BigInteger
+  configurada Boolean
+  estado Boolean
+  time_create DateTime
+  device_token Char
+ 
+} 
+table ORGANIZACION.datos_activacion {
+  id int [pk]
+  terminal_id ForeignKey
+  activation_code Char
+  status Char 
+  device_token Char
+  expires_at DateTime
+  created_at DateTime
+  confirmed_at DateTime
+  cancelled_at DateTime
+  metadata JSON
+
+
+
+} 
+table ORGANIZACION.log_datos_activacion {
+  id int [pk]
+  terminal_id ForeignKey
+  activation_id ForeignKey 
+  
+  action Char
+  admin_user_id Integer
+  admin_username Char
+  ip_address GenericIPAddress
+  user_agent Text
+  metadata JSON
+  created_at DateTime
+
+} 
+
+
+table ORGANIZACION.operador {
+  id int [pk]
+  lugar_id ForeignKey
+
+  code Char
+  first_name Char
+  last_name Char
+  document_number Char
+  phone Char
+  status Char
+  operator OneToOne
+  username Char
+  password_hash Char
+  pin_hash Char
+  failed_attempts PositiveInteger
+  locked_until DateTime
+  last_login_at DateTime 
+
+  created_at DateTime
+  updated_at DateTime
+
+
+
+} 
+
+
+table ORGANIZACION.refresh_token {
+  id int [pk]
+  operador_id ForeignKey
+  session_id ForeignKey
+
+  token_jti UUID
+  status Char
+  expires_at DateTime
+  created_at DateTime
+  rotated_at DateTime
+  revoked_at DateTime
+
+} 
+
+table ORGANIZACION.session_operador {
+  id int [pk]
+  operador_id ForeignKey
+  terminal_id ForeignKey
+  lugar_id ForeignKey
+  consorcio_id ForeignKey
+  
+  token_jti UUID
+  status Char
+  ip_address GenericIPAddress
+  user_agent Text
+  started_at DateTime
+  expires_at DateTime
+  closed_at DateTime
+  last_activity_at DateTime
+  device_token_hash char
+
+} 
+
+table ORGANIZACION.permiso_abarca {
+  id int [pk]
+  operador_id ForeignKey
+  lugar_id ForeignKey
+  consorcio_id ForeignKey
+
+  scope_type Char
+  can_sell Boolean
+  is_active Boolean
+  created_at DateTime
+
+
+
+} 
+table ORGANIZACION.log_operador {
+  id int [pk]
+  operador_id ForeignKey
+  session_id ForeignKey
+  
+  action Char
+  ip_address GenericIPAddress
+  user_agent Text
+  metadata JSON
+  created_at DateTime
+
+} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+// GAMING CORE API
+
+
+table CORE.grupo {
+  id int [pk]
+  nombre varchar(20)
+
+  code Char
+  status Char
+  created_at DateTime
+  updated_at DateTime
+
+} 
+
+
+Table CORE.session_caja {
+  id int [pk]
+  operador_id ForeignKey
+  terminal_id ForeignKey
+  lugar_id ForeignKey
+  consorcio_id ForeignKey
+
+  opened_by_operator_id UUID
+  opened_by_operator_code Char
+  closed_by_operator_id UUID
+  closed_by_operator_code Char
+  status Char
+  opening_amount Decimal
+  total_sales Decimal
+  total_cancelled Decimal
+  total_paid Decimal
+  expected_cash Decimal
+  counted_cash Decimal
+  difference Decimal
+  opened_at DateTime
+  closed_at DateTime
+  summary_snapshot JSON
+  metadata JSON
+
+}
+
+table CORE.tickets {
+  id int [pk]
+  lugar_id ForeignKey 
+  terminal_id ForeignKey 
+  operador_id ForeignKey 
+  consorcio_id ForeignKey 
+  game_id ForeignKey 
+  sorteo_id ForeignKey 
+  session_caja_id ForeignKey
+
+  ticket_number Char
+  operator_code Char
+  total_amount Decimal
+  potential_payout Decimal
+  paid_amount Decimal
+  status Char
+  tax_mode_snapshot Char
+  tax_rate_snapshot Decimal
+  tax_source_snapshot Char
+  metadata JSON
+  created_at DateTime
+  cancelled_at DateTime
+  paid_at DateTime
+  short_code Char
+
+} 
+
+
+
+table CORE.tickets_audi_log {
+  id int [pk]
+  action Char
+  ticket_id ForeignKey
+  sorteo_id ForeignKey
+  session_caja_id ForeignKey
+  operator_id ForeignKey
+  terminal_id ForeignKey
+  lugar_id ForeignKey
+  consorcio_id ForeignKey
+
+  ip_address GenericIPAddress
+  user_agent Text
+  metadata JSON
+  created_at DateTime
+  
+
+} 
+
+
+table CORE.ticket_bet {
+  id int [pk]
+  sorteo_id ForeignKey
+  ticket_id ForeignKey
+  game_id ForeignKey
+  lugar_id ForeignKey
+  terminal_id ForeignKey
+  operador_id ForeignKey
+  consorcio_id ForeignKey
+
+
+  table_odds_id ForeignKey
+  game_pay_item_id ForeignKey
+  game_code_snapshot Char
+  event_number_snapshot BigInteger
+  paytable_version_snapshot PositiveInteger
+  bet_type Char
+  selection_key Char
+  amount Decimal
+  odds Decimal
+  potential_payout Decimal
+  payload JSON
+  rules_snapshot JSON
+  status Char
+  result_payload JSON
+  created_at DateTime
+  settled_at DateTime
+
+} 
+table CORE.sorteo {
+  id UUID [pk]
+  grupo_id ForeignKey
+  table_odds_id ForeignKey
+  game_id ForeignKey
+  event_number BigInteger
+  scheduled_at DateTime
+  sales_close_at DateTime
+  status Char
+  result_payload JSON
+  resulted_at DateTime
+  cancelled_at DateTime
+  created_at DateTime
+  metadata JSON 
+
+} 
+
+
+table CORE.game {
+  id int [pk]
+  
+  code Char
+  name Char
+  status Char
+  metadata JSON
+  created_at DateTime
+  updated_at DateTime
+  
+
+} 
+
+table CORE.table_odds {
+  id int [pk]
+  game_id ForeignKey
+
+  name Char
+  version PositiveInteger
+  status Char
+  effective_from DateTime
+  effective_to DateTime
+  metadata JSON
+  created_at DateTime
+
+} 
+
+table CORE.game_pay_item {
+  id int [pk]
+  table_odds_id int
+
+  bet_type Char
+  selection_key Char
+  odds Decimal
+  metadata JSON
+
+
+} 
+
+table CORE.game_place_access {
+  id int [pk]
+
+  game_id ForeignKey
+  lugar_id ForeignKey
+  status Char
+  created_at DateTime
+  updated_at DateTime
+
+
+} 
+table CORE.game_config {
+  id int [pk]
+  game_id ForeignKey
+  event_interval_seconds PositiveInteger
+  sales_close_seconds_before_start PositiveInteger
+  schedule_anchor_time Time
+  min_bet_amount Decimal
+  max_bet_amount Decimal
+  max_payout_per_ticket Decimal
+  settings JSON
+  created_at DateTime
+  updated_at DateTime
+
+
+} 
+ 
+
+table INTEGRATION.OutboxEvent {
+
+  id UUID
+  topic Char
+  aggregate_type Char
+  aggregate_id Char
+  payload JSON
+  status Char
+  attempts PositiveInteger
+  last_error Text
+  available_at DateTime
+  locked_at DateTime
+  processed_at DateTime
+  created_at DateTime
+  updated_at DateTime
+
+}
+
+// TableGroup "auth_api" {
+//   backOfficie.User
+//   Backoffice.Role
+//   BackofficePermission
+//   BackofficeRolePermission
+//   BackofficeUserRole
+//   BackofficeUserPermissionOverride
+
+//   Session.User
+//   Record.token
+//   Country.Acces
+
+//   user.cons_acces
+//   user.place_acces
+// }
+
+// TableGroup "Organización" {
+//   organization.lugares
+//   organization.terminales
+// }
+
+// TableGroup "Núcleo de Tickets" {
+//   gaming.tickets
+// }
+
+// TableGroup "Jackpots" {
+//   jackpot.fondos_jackpot
+// }
+
+// TableGroup "Totalizados / Reportes" {
+//   reporting.totalizados_diarios
+// }
+
+Ref: "CORE"."table_odds"."id" < "CORE"."ticket_bet"."table_odds_id"
+Ref: "CORE"."game_pay_item"."id" < "CORE"."ticket_bet"."game_pay_item_id"
+
+
+Ref: "ORGANIZACION"."lugar"."id" < "ORGANIZACION"."parametros_lmt_lgr"."lugar_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "REPORTES"."total_lgr_porc_dia"."lugar_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "ORGANIZACION"."lugar"."consorcio_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "REPORTES"."total_lgr_dia"."lugar_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "REPORTES"."total_gm_lgr_dia"."lugar_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "ORGANIZACION"."terminal"."lugar_id"
+
+
+Ref: "ORGANIZACION"."operador"."id" < "ORGANIZACION"."refresh_token"."operador_id"
+
+Ref: "ORGANIZACION"."operador"."id" < "ORGANIZACION"."session_operador"."operador_id"
+
+Ref: "ORGANIZACION"."operador"."id" < "ORGANIZACION"."permiso_abarca"."operador_id"
+
+Ref: "ORGANIZACION"."operador"."id" < "ORGANIZACION"."log_operador"."operador_id"
+
+Ref: "ORGANIZACION"."terminal"."id" < "ORGANIZACION"."datos_activacion"."terminal_id"
+
+Ref: "ORGANIZACION"."terminal"."id" < "ORGANIZACION"."log_datos_activacion"."terminal_id"
+
+Ref: "CORE"."session_caja"."id" < "CORE"."tickets"."session_caja_id"
+
+Ref: "CORE"."grupo"."id" < "CORE"."sorteo"."grupo_id"
+
+Ref: "ORGANIZACION"."pais"."id" < "ORGANIZACION"."estado_pais"."pais_id"
+
+Ref: "CORE"."game"."id" < "CORE"."table_odds"."game_id"
+
+Ref: "CORE"."table_odds"."id" < "CORE"."game_pay_item"."table_odds_id"
+
+Ref: "CORE"."game"."id" < "CORE"."game_config"."game_id"
+
+
+
+Ref: "CORE"."tickets"."id" < "CORE"."ticket_bet"."ticket_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "CORE"."ticket_bet"."lugar_id"
+Ref: "ORGANIZACION"."terminal"."id" < "CORE"."ticket_bet"."terminal_id"
+Ref: "ORGANIZACION"."operador"."id" < "CORE"."ticket_bet"."operador_id"
+Ref: "ORGANIZACION"."consorcio"."id" < "CORE"."ticket_bet"."consorcio_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "CORE"."session_caja"."consorcio_id"
+
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."Audit_Log"."user_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."Session_User"."user_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."Country_Acces"."user_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."Record_token"."user_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."user_cons_acces"."user_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."user_place_acces"."user_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "USER_API"."user_cons_acces"."consorcio_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "USER_API"."user_place_acces"."lugar_id"
+
+Ref: "JACKPOT"."jk"."id" < "JACKPOT"."jk_sort"."jk_id"
+
+Ref: "JACKPOT"."jk"."id" < "JACKPOT"."jk_location"."jk_id"
+
+Ref: "JACKPOT"."jk"."id" < "JACKPOT"."jk_entry"."jk_id"
+
+Ref: "JACKPOT"."jk"."id" < "JACKPOT"."jk_winner"."jk_id"
+
+Ref: "ORGANIZACION"."block_lgr_acces"."id" < "ORGANIZACION"."log_block_lgr_acces"."block_lgr_acces"
+
+Ref: "ORGANIZACION"."lugar"."id" < "ORGANIZACION"."block_lgr_acces"."lugar_id"
+
+Ref: "CORE"."sorteo"."id" < "CORE"."ticket_bet"."sorteo_id"
+
+Ref: "CORE"."game"."id" < "REPORTES"."total_gm_lgr_dia"."game_id"
+
+Ref: "CORE"."table_odds"."id" < "CORE"."sorteo"."table_odds_id"
+
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."BackofficeUserRole"."user_id"
+Ref: "USER_API"."Backoffice_Role"."id" < "USER_API"."BackofficeUserRole"."role_id"
+
+Ref: "USER_API"."BackofficePermission"."id" < "USER_API"."BackofficeRolePermission"."permission_id"
+
+Ref: "USER_API"."Backoffice_Role"."id" < "USER_API"."BackofficeRolePermission"."role_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "USER_API"."BackofficeUserPermissionOverride"."user_id"
+
+Ref: "USER_API"."BackofficePermission"."id" < "USER_API"."BackofficeUserPermissionOverride"."permission_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "CORE"."tickets"."lugar_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "CORE"."session_caja"."lugar_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "CORE"."tickets"."consorcio_id"
+
+Ref: "ORGANIZACION"."operador"."id" < "CORE"."tickets"."operador_id"
+
+Ref: "ORGANIZACION"."operador"."id" < "CORE"."session_caja"."operador_id"
+
+Ref: "ORGANIZACION"."terminal"."id" < "CORE"."session_caja"."terminal_id"
+
+Ref: "ORGANIZACION"."terminal"."id" < "CORE"."tickets"."terminal_id"
+
+Ref: "CORE"."game"."id" < "CORE"."tickets"."game_id"
+
+Ref: "CORE"."sorteo"."id" < "CORE"."tickets"."sorteo_id"
+
+
+
+
+
+
+Ref: "ORGANIZACION"."lugar"."id" < "ORGANIZACION"."operador"."lugar_id"
+
+Ref: "USER_API"."backOfficie_User"."id" < "ORGANIZACION"."consorcio"."user_id"
+
+
+
+
+Ref: "CORE"."grupo"."id" < "ORGANIZACION"."consorcio"."grupo_id"
+
+Ref: "CORE"."grupo"."id" < "ORGANIZACION"."lugar"."grupo_id"
+
+Ref: "CORE"."tickets"."id" < "CORE"."tickets_audi_log"."ticket_id"
+
+Ref: "CORE"."sorteo"."id" < "CORE"."tickets_audi_log"."sorteo_id"
+
+
+Ref: "ORGANIZACION"."operador"."id" < "CORE"."tickets_audi_log"."operator_id"
+
+Ref: "ORGANIZACION"."terminal"."id" < "CORE"."tickets_audi_log"."terminal_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "CORE"."tickets_audi_log"."lugar_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "CORE"."tickets_audi_log"."consorcio_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "REPORTES"."total_lgr_dia"."consorcio_id"
+
+Ref: "CORE"."game"."id" < "CORE"."game_place_access"."game_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "CORE"."game_place_access"."lugar_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "JACKPOT"."jk_winner"."lugar_id"
+
+Ref: "JACKPOT"."jk_sort"."id" < "JACKPOT"."jk_winner"."id_draw"
+
+Ref: "CORE"."sorteo"."id" < "JACKPOT"."jk_winner"."sorteo_id"
+
+Ref: "CORE"."tickets"."id" < "JACKPOT"."jk_winner"."ticket_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "JACKPOT"."jk_location"."lugar_id"
+
+Ref: "CORE"."sorteo"."id" < "JACKPOT"."jk_sort"."sorteo_id"
+
+Ref: "JACKPOT"."jk_sort"."id" < "JACKPOT"."jk_entry"."jk_draw"
+
+Ref: "CORE"."sorteo"."id" < "JACKPOT"."jk_entry"."sorteo_id"
+
+Ref: "CORE"."tickets"."id" < "JACKPOT"."jk_entry"."ticket_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "JACKPOT"."jk_entry"."lugar_id"
+
+Ref: "JACKPOT"."jk"."id" < "ORGANIZACION"."consorcio"."default_jk_id"
+
+Ref: "ORGANIZACION"."terminal"."id" < "ORGANIZACION"."session_operador"."terminal_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "ORGANIZACION"."session_operador"."lugar_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "ORGANIZACION"."session_operador"."consorcio_id"
+
+Ref: "CORE"."game"."id" < "CORE"."sorteo"."game_id"
+
+Ref: "CORE"."game"."id" < "CORE"."ticket_bet"."game_id"
+
+Ref: "ORGANIZACION"."datos_activacion"."id" < "ORGANIZACION"."log_datos_activacion"."activation_id"
+
+Ref: "ORGANIZACION"."session_operador"."id" < "ORGANIZACION"."refresh_token"."session_id"
+
+Ref: "ORGANIZACION"."lugar"."id" < "ORGANIZACION"."permiso_abarca"."lugar_id"
+
+Ref: "ORGANIZACION"."consorcio"."id" < "ORGANIZACION"."permiso_abarca"."consorcio_id"
+
+Ref: "ORGANIZACION"."session_operador"."id" < "ORGANIZACION"."log_operador"."session_id"
+
+Ref: "CORE"."session_caja"."id" < "CORE"."tickets_audi_log"."session_caja_id"
+
+Ref: "ORGANIZACION"."estado_pais"."id" < "ORGANIZACION"."lugar"."estado_pais_id"

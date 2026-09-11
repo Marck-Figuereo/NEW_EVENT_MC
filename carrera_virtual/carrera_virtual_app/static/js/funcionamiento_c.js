@@ -1,9 +1,3 @@
-const seg_intro   = [170, 470, 770, 1070, 1370, 1670, 1970, 2270, 2570, 2870, 3170, 3470];    
-const seg_race    = [180, 480, 780,  1080,  1380, 1680, 1980, 2280, 2580, 2880, 3180, 3480];  
-const DURACION_HORA = 3600; // 60 * 60
-
-const seg_sincro  = [60,   360, 660,  960,  1260, 1560, 1860, 2160, 2460, 2760, 3060, 3360];
-
 
 var video_intro         = document.getElementById("intro");
 var video_race          = document.getElementById("race"); 
@@ -31,20 +25,25 @@ var nup2 = ["", ""]
 var ver_w_p = false
 var ver_b = false
 
-
-var horas = 0;
-var minutos = 0;
-var segundos = 0;
-var dia = 0;
-var mes = 0;
-var year = 0;
+var cc = true
 
 
-var entra_intro = true;
-var entra_race = true;
-var entra_tabla = true;
+var tiempo = 0
+var event_tiempo = 288
+  
+
+var entra_intro = false;
+var entra_race = false; 
+
+var entra_sincro_1 = true
+var entra_sincro_2 = true
+var entra_sincro_3 = true
 
 var internet = true
+
+var id_table = 0;
+
+
 
 cerrar_to = () =>{
 
@@ -76,37 +75,24 @@ connectWebSocket = async () => {
   
   if (navigator.onLine) {
 
-    if(!internet) {
-      location.reload()  
-      internet = true
-      
-    }
+    if(!internet) location.reload()  
 
     Swal.close()
     let latestTimestamp = 0;
 
-    let websocket = new WebSocket('wss://time.varmanex.com');
+    let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/games/${localStorage.getItem('game_id')}/countdown/`);
 
     websocket.onmessage = (event) => {
     
       const data = JSON.parse(event.data);
-      const messageTimestamp = parseFloat(data.timestamp);
+  
+      id_table = data['table_odds_id']
+      tiempo = data['seconds_left']
+      
+      $('#id_sorteos_c_id').text(data['event_number']);
+      $('#tiempo_regresivo').text(formatoTiempo(tiempo));
 
-      if (messageTimestamp > latestTimestamp) {
-    
-        latestTimestamp = messageTimestamp;  // Actualiza la marca de tiempo más reciente
-        
-        const date = new Date(data.time);
-        
-        horas    = date.getHours()
-        minutos  = date.getMinutes()
-        segundos = date.getSeconds()
-        dia      = date.getDate()
-        mes      = date.getMonth()
-        year     = date.getFullYear()
 
-      }
-    
     };
 
     websocket.onclose = () => setTimeout(connectWebSocket, 1000); // Intenta reconectar automáticamente
@@ -128,43 +114,15 @@ window.addEventListener('online',  connectWebSocket);
 window.addEventListener('offline', updateConnectionStatus);
 
 
-
-
-const confirmacion_tabla = (fecha_t, hora_t)=> {
-
-      
-  const hrs  = (horas     < 10 ? '0' : '') + horas
-  const mit  = (minutos   < 10 ? '0' : '') + minutos
-  const segd = (segundos  < 10 ? '0' : '') + segundos
-  
-  const dia2 = (dia     < 10 ? '0' : '') + dia
-  const mes2 = ((mes+1) < 10 ? '0' : '') + (mes+1)
-
-  const tiempo = hrs + ":" + mit + ":" + segd
-  const fecha_aqu = year + "/" + mes2 + "/" + dia2
-
-   
-  const fecha1 = `${fecha_t} ${hora_t.substr(0, 6)}00`.replace('/', '-').replace('/', '-')
-  const fecha2 = `${fecha_aqu} ${tiempo.substr(0, 6)}00`.replace('/', '-').replace('/', '-')
-
-  var dift = moment(fecha2).diff(moment(fecha1), 'minute')
-  
-  if(dift <= 4 ) return false 
-  else return true
-
-} 
     
 const sincronizacion = async () =>{
-  
-  const fecha = localStorage.getItem('fecha')
-  const hora = localStorage.getItem('hora')
 
-  const good = confirmacion_tabla(fecha, hora)
-  
-  if (good) vd = await Consulta_Tabla() 
-    
+  await confirmar_configuracion()
+ 
+  vd = await Consulta_Tabla(id_table) 
 
 }
+
 
 
 const mostrando_bonos = () => {
@@ -272,15 +230,17 @@ const mostrando_tablas = async () =>{
 
  
 const excute_race = async () =>{
+   
+  entra_sincro_1 = true
+  entra_sincro_2 = true
+  entra_sincro_3 = true
 
   nup = await Consulta_resultados()
-
-  vid = `${nup[0].substr(0,1)}-${nup[0].substr(1,1)}-${nup[0].substr(2,1)}`
-  
+  console.log("race",   nup);
 
   // video_race.src                = `http://localhost:3000/horse/${vid}.mp4`;
-  
-  video_race.src               = `static/videos/horse/${vid}.mp4`;
+ 
+  video_race.src               = `../static/videos/1-2-B.mp4`;
 
   video_race.type               = 'video/mp4';
   
@@ -345,18 +305,6 @@ promesa_bonos = () => {
   })
 
 }
-promesa_extra = () => {
-
-  
-  return new Promise((resolve, reject)=>{
-
-    
-    setTimeout(()=> resolve(), 18000)
-    
-  
-  })
-
-}
 
 
 
@@ -364,7 +312,14 @@ function esperar(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-  
+
+
+
+function esperar(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+video_intro.addEventListener('ended', async () => excute_race() )  
 
 video_race.addEventListener('ended', async () => {
 
@@ -373,27 +328,21 @@ video_race.addEventListener('ended', async () => {
   if(ver_w_p){ 
     
     await promesa_win_jackpot()
-    await promesa_extra()
+    await esperar(18000)
   } 
    
   if(ver_b){     
     await promesa_bonos() 
-    await promesa_extra() 
+    await esperar(18000) 
   }
   
   await promesa_tablas();
-
-  
 
 
 })
 
 
-
-
 video_race.addEventListener('playing', async () => {
-
-
 
   if(nup[1] == 'X2' || nup[1] == 'X3'){
 
@@ -404,6 +353,8 @@ video_race.addEventListener('playing', async () => {
     
   ver_w_p = await Consulta_ganador_jack()
   ver_b = await Consulta_bonos()
+  console.log("mostrando el video");
+
 
 })
   
@@ -421,6 +372,7 @@ video_race.addEventListener('error', async () => {
 
     $('.precios_tbl').each(()=> {  
         
+      $(`#${$(this).attr('id')}`).css("color", "#fff")
       $($(this).attr('id')).text('- - -')
 
     });
@@ -437,147 +389,82 @@ video_race.addEventListener('error', async () => {
 
 });
 
-
-
-
-
-
-var actualizando_seg = (mint, seg) => {
-
-    const t = (mint * 60) + seg;  // segundos dentro de la hora (0–3599)
-    let segundos_res;
-
-    // 1. Antes del primer cierre de la hora
-    if (t < seg_intro[0]) segundos_res = seg_intro[0] - t; // Cuenta regresiva hasta el primer cierre (230 = 3:50)
-
-    else {
-
-        // 2. Buscar el próximo cierre dentro de esta misma hora
-        let proximo_cierre = seg_intro.find(c => c > t);
-
-        if (proximo_cierre) segundos_res = proximo_cierre - t; // Hay un cierre por delante en esta hora
-        
-        else {
-            // 3. Ya pasamos el ÚLTIMO cierre (3530 = 58:50)
-            // Próximo cierre = PRIMER cierre de la SIGUIENTE hora
-            // 3600 (fin de la hora) + 230 (primer cierre)
-            proximo_cierre = DURACION_HORA + seg_intro[0]; // 3600 + 230
-            segundos_res = proximo_cierre - t;
-        }
-    }
-
-    $('#tiempo_regresivo').text( new Date(segundos_res * 1000).toISOString().slice(14, 19) );
-};
-
-
-
-
-
-
-
-$(document).ready(async()=>{
-
-  
-  $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
-  Consulta_grupo()
-  
-  //Evitar que se pueda sombrar textos 
-  document.onselectstart = () => false;
-
-  if(!navigator.onLine) cerrar_to()
-
-  else if (localStorage.getItem('usr') == null || localStorage.getItem('pss') == null){
-
-		window.location.href = "/";
-    	
-  }else{ 
-
-    await connectWebSocket()
-
-    vd = await Consulta_Tabla();
-    await mostrando_tablas() 
-
-    Consulta_ganador_jack() 
-    
-  }
-  
-
-})
  
 
 
-const allinfo = async()=> vd = await Consulta_Tabla() 
 
 
 
 setInterval( async ()=> {
-
-  actualizando_seg(minutos, segundos)
   
-
-  // if( seg_intro.includes( (minutos * 60) + segundos ) && vd && entra_intro){
-      
-  //   entra_intro = false
+  console.log(tiempo, vd, entra_intro);
     
-  //   nup2 = await Consulta_resultados()
-
-
-  //   $('#id_sorteos_c_id').val('');
-
-  //   if(localStorage.getItem('url') != null) pt = 6
-  //   else pt = 0
-
-  //   if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `http://localhost:300${pt}/horse/intro${nup2[1]}.mp4`; 
-  //   else                                   video_intro.src = `http://localhost:300${pt}/horse/intro.mp4`; 
-      
-
-  //   video_intro.type                  = 'video/mp4';
-  //   video_intro.style.opacity         = 1;
-  //   screen_resultados.style.opacity   = 0;
-  //   screen_tablas.style.opacity       = 0;
-    
-  //   screen_jp.style.opacity           = 0;
-  //   screen_bono.style.opacity         = 0;
-  //   video_intro.muted = true
-  //   video_intro.play() 
-
- 
-    
-  if( seg_intro.includes( (minutos * 60) + segundos ) && vd && entra_race){ // var check
-
-    entra_race = false
-    excute_race()
-    
-
-  }
- 
-  
-  if(seg_race.includes(((minutos * 60) + segundos) - 60 ) || seg_race.includes(((minutos * 60) + segundos) + 60 )){ 
-    
-    sincronizacion()
-  
-    entra_intro = true
+  if(tiempo == 0 && vd && entra_intro){entra_intro = false
+    console.log('intro'); 
     entra_race = true
-    entra_tabla = true
-  
-  }
+    
+    entra_sincro_1 = true
+    entra_sincro_2 = true
+    entra_sincro_3 = true
+    
+    nup2 = await Consulta_resultados()
+    
 
-  if(seg_sincro.includes((minutos * 60) + segundos) ){
+    $('.precios_tbl').each( function() {  
+      
+      $(`#${$(this).attr('id')}`).css("color", "#fff")
+      $($(this).attr('id')).text('- - -')
+
+    });
+
+    $('#id_sorteos_c_id').val('');
+
+    
+    pt = localStorage.getItem('dkg') != null ? 6 : 0
+
+    // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `http://localhost:300${pt}/horse/intro${nup2[1}.mp4`; 
+    // else                                   video_intro.src = `http://localhost:300${pt}/horse/intro.mp4`; 
+    
+    if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `../static/videos/horse/intro${nup2[1]}.mp4`; 
+    else                                   video_intro.src = `../static/videos/horse/intro.mp4`; 
+    console.log(nup2); 
+    
+    video_intro.type                  = 'video/mp4';
+    video_intro.style.opacity         = 1;
+    screen_resultados.style.opacity   = 0;
+    screen_tablas.style.opacity       = 0;
+    
+    screen_jp.style.opacity           = 0;
+    screen_bono.style.opacity         = 0;
+    video_intro.muted = true
+    video_intro.play() 
+
+ 
+
+  }else if(tiempo == 60 && entra_sincro_1){ entra_sincro_1 = false  
+
+    console.log("entra_sincro_1");
+    sincronizacion()
+    entra_intro = true
+  
+     
+  }else if(tiempo == 120 && entra_sincro_2){ entra_sincro_2 = false 
     
     ver_w_p = false
     ver_b = false
 
+    console.log("entra_sincro_2");
     sincronizacion()
-    Consulta_grupo()
+    entra_intro = true
   
-  }
+  }else if((event_tiempo - 30) == tiempo && entra_sincro_3){ entra_sincro_3 = false  
 
-  if(seg_race.includes( ((minutos * 60) + segundos) - 35 ) && entra_tabla){ 
-  
-    allinfo()
-    entra_tabla = false
-  
+    console.log("entra_sincro_3");
+    sincronizacion() 
+    entra_intro = true
+
   }
+  
 
 
 } , 500);
@@ -587,3 +474,31 @@ setInterval( async ()=> {
 
  
    
+$(document).ready(async()=>{
+
+  $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
+
+
+  //Evitar que se pueda sombrar textos
+  document.onselectstart = () => false;
+  
+  if (!navigator.onLine) cerrar_to()
+
+  else if(localStorage.getItem('dkg') == null){
+   
+    localStorage.clear(); 
+    window.location.href = "/";
+    	
+  }else{ 
+
+    await connectWebSocket();
+
+    vd = await Consulta_Tabla(id_table);
+    await mostrando_tablas() 
+    
+    Consulta_ganador_jack()
+    
+  }
+  
+
+})

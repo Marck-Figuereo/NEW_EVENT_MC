@@ -18,41 +18,71 @@
   <body>    
     
   <video id="intro" playsinline></video>
-  <video id="race" playsinline></video> 
+  <video id="evento" playsinline></video> 
 
 
   <main id="cuerpo">
 
+
+
+    
     <div class="container-fluid themed-container container1 mt-3">
       
-      <div class="row d-flex align-items-center caja-logo">
 
-        <div class="col-md-2 themed-grid-col d-flex justify-content-end align-items-center caja-logo">
+        <div>
           <img class="img-logo" src='static/img/logo2s.png'>                       
         </div>
         
-        <div class="col-md-7"></div>
-        <div class="col-md-2 themed-grid-col caja_total">
+        <div class="caja_total">
 
-          <div>  
+          <!-- RONDA Y TIEMPO -->
+          <div class="caja_superior">
 
-            <span class="span_cj">
-              <label class="nombre_jac_rc">RONDA </label><label id="id_sorteos_c_id" class="label-jk-rc"></label>                         
-            </span>
-            <span class="span_er">
-              <label id="tiempo_regresivo"></label>
-            </span>
-          
+              <div class="box_ronda">
+                  <span>RONDA</span>
+                  <strong id="id_sorteos_c_id"></strong>
+              </div>
+
+              <div class="box_tiempo">
+                  <span id="tiempo_regresivo"></span>
+              </div>
+
           </div>
-          
-          <div class="caja_jack">
-            <label class="nombre_jac_rc">JACKPOT </label><label id="jp_global" class="label-jk-rc"></label>                         
+
+
+          <!-- JACKPOTS -->
+          <div class="jackpots_grid">
+
+            <div class="jackpot_item jackpot_mega">
+                <span class="jackpot_nombre">GLOBAL</span>
+                <span class="jackpot_monto" id="jp_mega"></span>
+            </div>
+
+            <div class="jackpot_item jackpot_grand">
+                <span class="jackpot_nombre">REGIONAL</span>
+                <span class="jackpot_monto" id="jp_grand">- - -</span>
+            </div>
+
+            <div class="jackpot_item jackpot_major">
+                <span class="jackpot_nombre">LOCAL</span>
+                <span class="jackpot_monto" id="jp_major">- - - </span>
+            </div>
+<!-- 
+            <div class="jackpot_item jackpot_minor">
+                <span class="jackpot_nombre">MAJOR</span>
+                <span class="jackpot_monto" id="jp_minor">- - - </span>
+            </div>
+
+            <div class="jackpot_item jackpot_mini">
+                <span class="jackpot_nombre">MINI</span>
+                <span class="jackpot_monto" id="jp_mini">- - - </span>
+            </div> -->
+
           </div>
 
           
         </div>
 
-      </div>
 
     </div>
 
@@ -454,7 +484,15 @@
 
 
 
+  <div class="container themed-container" id="container-resultado-bonos">
 
+    <div class="row">
+      <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+        <img id="pos_bono" style="width: 150px;">
+      </div>
+    </div>
+
+  </div>
  
 
 
@@ -472,8 +510,8 @@
 
   <script src="static/js/bootstrap.bundle.min.js?v={{version1}}"></script>
   
-  <script src="../static/js/funcionamiento_roulette.js"></script>
-  <script src="../static/js/cone_db_roulette.js"></script>
+  <script src="../static/js/funcionamiento_p.js"></script>
+  <script src="../static/js/cone_db_p.js"></script>
   
  
 

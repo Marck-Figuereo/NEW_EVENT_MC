@@ -1,13 +1,33 @@
-const seg_intro   = [290, 590, 890,  1190, 1490, 1790, 2090, 2390, 2690, 2990, 3290, 3590];  
-const DURACION_HORA = 3600; // 60 * 60
 
-const seg_race    = [0,   300, 600,  900,  1200, 1500, 1800, 2100, 2400, 2700, 3000, 3300];
 
-const seg_sincro  = [120,   420, 720,  1020,  1320, 1620, 1920, 2220, 2520, 2820, 3120, 3420];    
+const game_code = localStorage.getItem('game_id')
+
+const games = {
+                5 : 'gallos',
+                4 : 'horse',
+                3 : 'dog8',
+                2 : 'dog',
+                1 : 'roulette'
+              }
+
+
+
+if(game_code == 5){
+  
+
+  var screen_resultados_en_carrera   = document.getElementById("container-resultado-en-carrera"); 
+  var screen_resultados_medio_carrera   = document.getElementById("container-resultado-medio-carrera");
+
+  const bkg_clss = {'1' : ['linear-gradient(to bottom, #3475ef, #002363)', '#fff'],
+                    '2' : ['linear-gradient(to bottom, #fff, #bcbcbc)', '#000'],
+                    '0' : ['linear-gradient(to bottom, #4b4b4b, #101010)', '#fff']}
+
+}
+
 
 
 var video_intro         = document.getElementById("intro"); 
-var video_race          = document.getElementById("race"); 
+var video_event          = document.getElementById("evento"); 
 
 var screen_tablas       = document.getElementById("cuerpo"); 
 var screen_resultados   = document.getElementById("container-resultado-carrera"); 
@@ -17,51 +37,105 @@ var menjase_bonos       = document.getElementById("container-resultado-bonos");
 var screen_jp           = document.getElementById("container-jackpots");
 var screen_bono         = document.getElementById('ganador-bono')
 
-
-
-
-video_race.style.width  = '100%'; 
-video_race.style.height = '100%'
+video_event.style.width  = '100%'; 
+video_event.style.height = '100%'
 
 video_intro.style.width = '100%';
 video_intro.style.height = '100%';
+
+
+
 
 var vd = false;
 var nup = ["", ""]
 var nup2 = ["", ""]
 
 var ver_w_p = false
-var ver_b = false
-var ver_p = false
-var condi_ver_p = false
+var ver_b = false  
 
 var cc = true
 
 
+var tiempo = 0
+var event_tiempo = 288
+  
 
-var horas = 0;
-var minutos = 0;
-var segundos = 0;
-var dia = 0;
-var mes = 0;
-var year = 0;
+var entra_intro = false;
+var entra_race = false; 
 
-var entra_intro = true;
-var entra_race = true;
-var entra_tabla = true;
+var entra_sincro_1 = true
+var entra_sincro_2 = true
+var entra_sincro_3 = true
 
 var internet = true
 
 var id_table = 0;
 
+
+
+function iniciarConteoAscendente(limite = 100, velocidad = 1000) {
+  // 1. Buscar si ya existe un contador viejo en el DOM
+  let div = document.getElementById("contador");
+
+  // 2. Si existe de antes, frenamos el intervalo viejo y lo limpiamos visualmente
+  if (div) {
+    clearInterval(contadorInterval);
+    div.remove(); // lo quitamos para crear uno limpio
+  }
+
+  // 3. Creamos un contador nuevo desde cero
+  div = document.createElement("div");
+  div.id = "contador";
+  div.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    font-size: 40px;
+    color: white;
+    background: rgba(0,0,0,0.7);
+    padding: 10px 20px;
+    border-radius: 10px;
+    z-index: 9999;
+  `;
+  div.textContent = "0:00";
+  document.body.appendChild(div);
+
+  // 4. Arrancamos el conteo desde cero
+  contadorValor = 0;
+  clearInterval(contadorInterval); // por si acaso
+  contadorInterval = setInterval(() => {
+    contadorValor++;
+    div.textContent = convtSegs(contadorValor);
+
+    if (contadorValor >= limite) {
+      clearInterval(contadorInterval);
+      // si quieres que desaparezca SOLO cuando llega al límite, descomenta:
+      // div.remove();
+    }
+  }, velocidad);
+}
+
+// 🔥 Nueva función para eliminar completamente el contador
+function detenerConteoAscendente() {
+  clearInterval(contadorInterval);
+  contadorInterval = null;
+  contadorValor = 0;
+
+  const div = document.getElementById("contador");
+  if (div) div.remove();
+}
+
+
+
+
 cerrar_to = () =>{
 
-  if (video_race.currentTime == 0 &&  screen_resultados.style.opacity == 0 && screen_bono.style.opacity == 0 && screen_jp.style.opacity == 0){
+  if (video_event.currentTime == 0 &&  screen_resultados.style.opacity == 0 && screen_bono.style.opacity == 0 && screen_jp.style.opacity == 0){
 
     internet = false
     Swal.fire({ title: 'Error de conexion', showConfirmButton: false, icon: 'warning' })
     video_intro.style.opacity = 0
-    video_race.style.opacity = 0
+    video_event.style.opacity = 0
     screen_tablas.style.opacity = 0
     screen_resultados.style.opacity = 0
     menjase_bonos.style.opacity = 0
@@ -79,29 +153,28 @@ updateConnectionStatus = () => {
 }
 
 
+
+
 connectWebSocket = async () => {
 
     if (navigator.onLine) { // Solo intenta conectar si está online
         
+        if(!internet) location.reload()  
+      
         Swal.close()
         let latestTimestamp = 0;
-        
-        console.log(localStorage.getItem('game_id'))
-
-        let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/games/${localStorage.getItem('game_id')}/countdown/`);
+        let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/grupos/${localStorage.getItem('grupo')}/games/${localStorage.getItem('game_id')}/countdown/`);
         
         websocket.onmessage = (event) => {
             
             const data = JSON.parse(event.data);
             
             id_table = data['table_odds_id']
-
-            // console.log(data)            
-            $('#id_sorteos_c_id').text(data['event_number']);
+            tiempo = data['seconds_left']
             
-
-            $('#tiempo_regresivo').text(formatoTiempo(data['seconds_left']));
-
+            $('#id_sorteos_c_id').text(data['event_number']);
+            $('#tiempo_regresivo').text(formatoTiempo(tiempo));
+            
 
         };
 
@@ -123,62 +196,22 @@ window.addEventListener('online',  connectWebSocket);
 window.addEventListener('offline', updateConnectionStatus);
 
 
-
-
-const confirmacion_tabla = (fecha_t, hora_t)=> {
-      
-  const hrs  = (horas     < 10 ? '0' : '') + horas
-  const mit  = (minutos   < 10 ? '0' : '') + minutos
-  const segd = (segundos  < 10 ? '0' : '') + segundos
-  
-  const dia2 = (dia     < 10 ? '0' : '') + dia
-  const mes2 = ((mes+1) < 10 ? '0' : '') + (mes+1)
-
-
-  const tiempo = hrs + ":" + mit + ":" + segd
-  const fecha_aqu = year + "/" + mes2 + "/" + dia2
-  
-  //Verificando si los minutos, horas y fechas estan sincronizadas
-  if ( (Number(hora_t.substr(3,1)) == Number(tiempo.substr(3,1))) && (Number(hora_t.substr(0,2)) == Number(tiempo.substr(0,2)) ) && (fecha_t == fecha_aqu) ){
-
-      //Confirmando cual tiempo correspondiente, la mitad o el completo
-      let dejaver = 
-          
-      (Number(tiempo.substr(4,1)) > 4 && Number(hora_t.substr(3,2)) == Number(tiempo.substr(3,1) + '5') ) 
-      ||  (Number(tiempo.substr(4,1)) < 5 && Number(hora_t.substr(3,2)) == Number(tiempo.substr(3,1) + '0') )
-      
-      if(!dejaver){ return true   }else{return false}
-      
-
-
-  
-  }else{ return true }
-
-
-
-} 
     
 const sincronizacion = async () =>{
 
-  const fecha = localStorage.getItem('fecha')
-  const hora = localStorage.getItem('hora')
-
-  const good = confirmacion_tabla(fecha, hora)
+  await confirmar_configuracion()
  
-  if (good) vd = await Consulta_Tabla(id_table) 
+  vd = await Consulta_Tabla(id_table, Number(game_code)) 
 
 }
 
-
-
-
+ 
 
 
 const mostrando_bonos = () => {
 
   screen_resultados.style.opacity   = 0;  
   screen_bono.style.opacity         = 1
-
 
 
   var c3 = false 
@@ -209,19 +242,23 @@ const mostrando_bonos = () => {
 
 const mostrando_win_jackpot = () => {
   
-  video_race.currentTime            = 0
+  video_event.currentTime           = 0
   video_intro.currentTime           = 0
 
   screen_tablas.style.opacity       = 0;
   video_intro.style.opacity         = 0;
-  video_race.style.opacity          = 0;
+  video_event.style.opacity         = 0;
   
-  menjase_bonos.style.opacity       = 0;
   
-
   screen_resultados.style.opacity   = 0;
   screen_jp.style.opacity           = 1;
   screen_bono.style.opacity         = 0
+
+  if(game_code == 5){
+    screen_resultados_en_carrera.style.opacity    = 0
+    screen_resultados_medio_carrera.style.opacity = 0 
+  
+  }else menjase_bonos.style.opacity       = 0;
 
 
 }
@@ -231,36 +268,54 @@ const mostrando_win_jackpot = () => {
 const mostrando_resultado = async () => {
   
   
+  if(game_code == 5){
+    screen_resultados_en_carrera.style.opacity    = 0
+    screen_resultados_medio_carrera.style.opacity = 0
+    $("#div_result_1, #div_result_2, #div_result_3").css({background: "transparent", color: "transparent"}); 
   
-  video_race.currentTime = 0
+  }else if([2,3,4].includes(game_code)){
+    
+    document.getElementById("pos_bono").innerHTML = "";
+    menjase_bonos.style.opacity  = 0;
+
+  }
+  
+  video_event.currentTime = 0
   video_intro.currentTime = 0
   
   screen_tablas.style.opacity     = 0;
   video_intro.style.opacity       = 0;
-  video_race.style.opacity        = 0;
+  video_event.style.opacity        = 0;
   
-  menjase_bonos.style.opacity  = 0;
 
   screen_jp.style.opacity = 0;
-
-  screen_bono.style.opacity         = 0
-  
+  screen_bono.style.opacity = 0
   screen_resultados.style.opacity = 1;
   
 
-  document.getElementById("pos_bono").innerHTML = "";
+  
 
 }
 
 const mostrando_tablas = async () =>{
 
-  document.getElementById("pos_bono").innerHTML = '';
 
-  video_race.style.opacity        = 0;
+  if(game_code == 5){
+    screen_resultados_en_carrera.style.opacity    = 0
+    screen_resultados_medio_carrera.style.opacity = 0
+    $("#div_result_1, #div_result_2, #div_result_3").css({background: "transparent", color: "transparent"}); 
+  
+  }else if([2,3,4].includes(game_code)){
+    
+    document.getElementById("pos_bono").innerHTML = "";
+    menjase_bonos.style.opacity  = 0;
+  
+  }
+
+  video_event.style.opacity        = 0;
   video_intro.style.opacity       = 0;
   screen_resultados.style.opacity = 0;
-  
-  menjase_bonos.style.opacity  = 0;
+   
 
   screen_jp.style.opacity = 0;
 
@@ -271,33 +326,114 @@ const mostrando_tablas = async () =>{
   
 }
 
+
+const showGallos = async (inf) =>{
+
+  const time_vd1 = Number(`${inf[0].substr(7,2)}000`)
+  const time_vd2 = Number(`${inf[0].substr(10,2)}000`)
+  const time_vd3 = Number(`${inf[0].substr(13,2)}000`)
+
+  console.log(inf[0].substr(7,2), inf[0].substr(10,2), inf[0].substr(13,2));
+
+  console.log(time_vd1, time_vd2, time_vd3);
+
+  await esperar(time_vd1)
+
+  console.log("Termino pelea 1");
+
+  $("#div_medio_1").css("background" , bkg_clss[inf[0][2]][0])
+  $("#div_medio_1").css("color" ,      bkg_clss[inf[0][2]][1])
+  $("#div_medio_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
+  $(".txt_medio_1").text(convtSegs(inf[0].substr(7,2)))
+  $(".tt_medio").text('Pelea #1')
+  $("#container-resultado-medio-carrera").css("opacity" , "1")
+
+  if(time_vd1 < 60000) await esperar(3000)
+
+  $("#container-resultado-medio-carrera").css("opacity" , "0")
+  $("#container-resultado-en-carrera").css("opacity" , "1")
+  $("#div_result_1").css("background" , bkg_clss[inf[0][2]][0])
+  $("#div_result_1").css("color" ,      bkg_clss[inf[0][2]][1])
+  $("#div_result_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
+  $(".txt_result_1").text(convtSegs(inf[0].substr(7,2)))
+
+  iniciarConteoAscendente(Number(inf[0].substr(10,2)))
+
+
+  await esperar(time_vd2)
+  console.log("Termino pelea 2");
+
+  $("#div_medio_1").css("background" , bkg_clss[inf[0][3]][0])
+  $("#div_medio_1").css("color" ,      bkg_clss[inf[0][3]][1])
+  $("#div_medio_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
+  $(".txt_medio_1").text(convtSegs(inf[0].substr(10,2)))
+  $(".tt_medio").text('Pelea #2')
+  $("#container-resultado-medio-carrera").css("opacity" , "1")
+
+  if(time_vd2 < 60000) await esperar(3000)
+
+  $("#container-resultado-medio-carrera").css("opacity" , "0")
+  $("#div_result_2").css("background" , bkg_clss[inf[0][3]][0])
+  $("#div_result_2").css("color" ,      bkg_clss[inf[0][3]][1])
+  $("#div_result_2").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
+  $(".txt_result_2").text(convtSegs(inf[0].substr(10,2)))
+
+  iniciarConteoAscendente(Number(inf[0].substr(13,2)))
+
+
+  await esperar(time_vd3)
+  console.log("Termino pelea 3");    
+
+  $("#div_medio_1").css("background" , bkg_clss[inf[0][4]][0])
+  $("#div_medio_1").css("color" ,      bkg_clss[inf[0][4]][1])
+  $("#div_medio_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
+  $(".txt_medio_1").text(convtSegs(inf[0].substr(13,2)))
+  $(".tt_medio").text('Pelea #3')
+  $("#container-resultado-medio-carrera").css("opacity" , "1")
+
+  if(time_vd3 < 60000) await esperar(3000)
+
+  $("#container-resultado-medio-carrera").css("opacity" , "0")
+  $("#div_result_3").css("background" , bkg_clss[inf[0][4]][0])
+  $("#div_result_3").css("color" ,      bkg_clss[inf[0][4]][1])
+  $("#div_result_3").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
+
+  $(".txt_result_3").text(convtSegs(inf[0].substr(13,2)))
+
+  await esperar(2000)
+
+  detenerConteoAscendente();
+
+}
+
 const excute_race = async () =>{
+   
+  entra_sincro_1 = true
+  entra_sincro_2 = true
+  entra_sincro_3 = true
 
-  // nup = await Consulta_resultados()
-  await Consulta_resultados()
+  nup = await Consulta_resultados()
 
-  // vid = `${nup[0].substr(0,1)}-${nup[0].substr(1,1)}-${nup[0].substr(3,1)}`
+  console.log("race",   nup);
+
+  // video_event.src                = `http://localhost:3000/${games[game_code]}/${nup[0]}`;
   
-  // console.log(vid);
+  video_event.src               = `../static/videos/1-2-B.mp4`;
+  video_event.type               = 'video/mp4';
   
-
-
-    // video_race.src                = `http://localhost:3000/dog/${vid}.mp4`;
-    
-    video_race.src               = `../static/videos/1-2-B.mp4`;
-    video_race.type               = 'video/mp4';
-  
-
-  
-
   screen_tablas.style.opacity   = 0;
   screen_jp.style.opacity       = 0;
-  video_race.style.opacity      = 1;  
-  video_race.muted = true
+  video_event.style.opacity      = 1;  
+  video_event.muted = true
 
-  video_race.play()
+  video_event.play()
+
+  if(game_code == 5){
     
- 
+    iniciarConteoAscendente(Number(nup[0].substr(7,2)))    
+    await showGallos()
+  }
+
 }
 
 
@@ -357,9 +493,14 @@ function esperar(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-  
 
-video_race.addEventListener('ended', async () => {
+
+
+
+
+video_intro.addEventListener('ended', async () => excute_race() )  
+
+video_event.addEventListener('ended', async () => {
 
   mostrando_resultado();
   
@@ -384,27 +525,31 @@ video_race.addEventListener('ended', async () => {
 
 
 
-video_race.addEventListener('playing', async () => {
+video_event.addEventListener('playing', async () => {
 
-  if(nup[1] == 'X2' || nup[1] == 'X3'){
-    
-    menjase_bonos.style.opacity  = 1;
-    document.getElementById('pos_bono').src = `../static/img/${nup[1]}_V.png`
+  if(game_code != 5){
 
-    
+    if(nup[1] == 'X2' || nup[1] == 'X3'){
+      
+      menjase_bonos.style.opacity  = 1;
+      document.getElementById('pos_bono').src = `../static/img/${nup[1]}_V.png`
+      
+    }
+
   }
 
-    
-  // ver_w_p = await Consulta_ganador_jack()
-  // ver_b = await Consulta_bonos()
-  await Consulta_ganador_jack()
-  await Consulta_bonos()
+  ver_w_p = await Consulta_ganador_jack()
+  ver_b = await Consulta_bonos()
+
+  
+  
+  console.log("mostrando el video");
 
 })
   
 
 reload_err = true
-video_race.addEventListener('error', async () => {
+video_event.addEventListener('error', async () => {
 
   if (reload_err){
 
@@ -413,12 +558,17 @@ video_race.addEventListener('error', async () => {
     reload_err = false
 
   }else{
-
-    $('.precios_tbl').each(()=> $($(this).attr('id')).text('- - -') );
-
-    $('#id_sorteos_c_id').val('');
     
-    video_race.style.opacity        = 0;
+    $('.precios_tbl').each(function(){
+      
+      $(`#${$(this).attr('id')}`).css("color", "#fff")
+      $($(this).attr('id')).text('- - -') 
+    
+    });
+
+    $('#id_sorteos_c_id').text('');
+    
+    video_event.style.opacity        = 0;
     video_intro.style.opacity       = 0;
     screen_tablas.style.opacity     = 0;
     screen_resultados.style.opacity = 0;
@@ -434,108 +584,40 @@ video_race.addEventListener('error', async () => {
 
 
 
-
-
-// var actualizando_seg = (mint, seg) => {
-
-//     const t = (mint * 60) + seg;  // segundos dentro de la hora (0–3599)
-//     let segundos_res;
-
-//     // 1. Antes del primer cierre de la hora
-//     if (t < seg_intro[0]) segundos_res = seg_intro[0] - t; // Cuenta regresiva hasta el primer cierre (230 = 3:50)
-
-//     else {
-
-//         // 2. Buscar el próximo cierre dentro de esta misma hora
-//         let proximo_cierre = seg_intro.find(c => c > t);
-
-//         if (proximo_cierre) segundos_res = proximo_cierre - t; // Hay un cierre por delante en esta hora
-        
-//         else {
-//             // 3. Ya pasamos el ÚLTIMO cierre (3530 = 58:50)
-//             // Próximo cierre = PRIMER cierre de la SIGUIENTE hora
-//             // 3600 (fin de la hora) + 230 (primer cierre)
-//             proximo_cierre = DURACION_HORA + seg_intro[0]; // 3600 + 230
-//             segundos_res = proximo_cierre - t;
-//         }
-//     }
-
-//     $('#tiempo_regresivo').text( new Date(segundos_res * 1000).toISOString().slice(14, 19) );
-
-// };
-
-
-
-
-
-$(document).ready(async()=>{
-
-  $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
-
-
-  //Evitar que se pueda sombrar textos
-  document.onselectstart = () => false;
   
-  if (!navigator.onLine) cerrar_to()
 
-  else if(localStorage.getItem('dkg') == null){
-
-		
-    window.location.href = "/";
-    	
-  }else{ 
-
-    await connectWebSocket();
-
-    // vd = await Consulta_Tabla();
-    await Consulta_Tabla();
-    await mostrando_tablas() 
+setInterval( async ()=> { 
     
-    Consulta_ganador_jack()
+  if(tiempo == 0 && vd && entra_intro){entra_intro = false
+
+    console.log('intro'); 
+    entra_race = true
     
-  }
-  
-
-})
- 
-
-
-// const allinfo = async()=> vd = await Consulta_Tabla() 
-const allinfo = async()=> await Consulta_Tabla() 
-
-setInterval( async ()=> {
-  
-
-  // actualizando_seg(minutos, segundos)
-  
-  if( seg_intro.includes( (minutos * 60) + segundos ) && vd && entra_intro){
+    entra_sincro_1 = true
+    entra_sincro_2 = true
+    entra_sincro_3 = true
+    
+    nup2 = await Consulta_resultados()
+    
+    $('.precios_tbl').each( function() {  
       
-    entra_intro = false
-    
-    // nup2 = await Consulta_resultados()
-    await Consulta_resultados()
-
-  
-    $('.precios_tbl').each(()=> {  
-    
+      $(`#${$(this).attr('id')}`).css("color", "#fff")
       $($(this).attr('id')).text('- - -')
 
     });
 
-    $('#id_sorteos_c_id').val('');
+    $('#id_sorteos_c_id').text('');
 
-    if(localStorage.getItem('url') != null) pt = 6
-    else pt = 0
-
-    // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `http://localhost:300${pt}/dog/intro${nup2[1]}.mp4`; 
-    // else                                   video_intro.src = `http://localhost:300${pt}/dog/intro.mp4`; 
+    // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `http://localhost:300${pt}/${games[game_code]}/intro${nup2[1}.mp4`; 
+    // else                                   video_intro.src = `http://localhost:300${pt}/${games[game_code]}/intro.mp4`; 
     
-    // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `static/videos/dog/intro${nup2[1]}.mp4`; 
-    // else                                   video_intro.src = `static/videos/dog/intro.mp4`; 
-    video_intro.src = `../static/videos/intro.mp4`; 
-  
-      
+    // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `../static/videos/${games[game_code]}/intro${nup2[1]}.mp4`; 
+    // else                                   video_intro.src = `../static/videos/${games[game_code]}/intro.mp4`; 
 
+    video_intro.src = `../static/videos/intro.mp4`; 
+    
+    console.log(nup2); 
+    
     video_intro.type                  = 'video/mp4';
     video_intro.style.opacity         = 1;
     screen_resultados.style.opacity   = 0;
@@ -547,40 +629,28 @@ setInterval( async ()=> {
     video_intro.play() 
 
  
-    
-    
 
-  }else if( seg_race.includes( (minutos * 60) + segundos ) && vd && entra_race){
+  }else if(tiempo == 60 && entra_sincro_1){ entra_sincro_1 = false  
 
-
-    entra_race = false    
-    excute_race()
-    
-
-  }
- 
-  
-  if(seg_race.includes(((minutos * 60) + segundos) - 60 ) || seg_race.includes(((minutos * 60) + segundos) + 60 )){ 
-  
+    console.log("entra_sincro_1");
     sincronizacion()
-    
-    entra_race = true
-    entra_tabla = true
     entra_intro = true
-
-  }if(seg_sincro.includes((minutos * 60) + segundos) ){
+  
+     
+  }else if(tiempo == 120 && entra_sincro_2){ entra_sincro_2 = false 
     
     ver_w_p = false
     ver_b = false
-    
+
+    console.log("entra_sincro_2");
     sincronizacion()
-    Consulta_grupo()
+    entra_intro = true
   
-  
-  }if(seg_race.includes( ((minutos * 60) + segundos) - 35 ) && entra_tabla){ 
-  
-    allinfo()
-    entra_tabla = false;
+  }else if((event_tiempo - 30) == tiempo && entra_sincro_3){ entra_sincro_3 = false  
+
+    console.log("entra_sincro_3");
+    sincronizacion() 
+    entra_intro = true
 
   }
   
@@ -593,3 +663,31 @@ setInterval( async ()=> {
 
  
    
+$(document).ready(async()=>{
+
+  $('.txt_lgr').text(localStorage.getItem('nm_lgr'))
+
+
+  //Evitar que se pueda sombrar textos
+  document.onselectstart = () => false;
+  
+  if (!navigator.onLine) cerrar_to()
+
+  else if(localStorage.getItem('dkg') == null){
+   
+    localStorage.clear(); 
+    window.location.href = "/";
+    	
+  }else{ 
+
+    await connectWebSocket();
+
+    vd = await Consulta_Tabla(id_table, Number(game_code));
+    await mostrando_tablas() 
+    
+    Consulta_ganador_jack()
+    
+  }
+  
+
+})

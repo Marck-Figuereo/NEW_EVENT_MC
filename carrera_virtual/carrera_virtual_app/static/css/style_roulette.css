@@ -133,8 +133,8 @@
   margin-bottom: 1.5rem;
    
   /* background-color: rgba(0,0,255,0.1); 
-  border: 1px solid rgb(255,0,0);    
-   */
+  border: 1px solid rgb(255,0,0);     */
+  
  }
  
 
@@ -161,78 +161,217 @@ body {
 
 }
 
-.img-logo { width: 200px; }
-
- 
-
-.span_cj, .span_er {
-  background: rgb(35, 35, 35);
-  border-radius: 8px; 
-  color: #fff; 
-  box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.634);
-
-
+.container1 {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 100px;
 }
+.img-logo { width: 250px; }
 
-.span_cj { 
- 
-  align-items: center;
-  justify-content: center; 
-  font-size: 15px;  
-  padding:18px 5px; 
-  
-}
-.span_er { margin-left: 20px;  font-size: 25px;  padding: 13px 10px;}
+ .caja_total {
 
-.caja_total {
+    width: 600px;
+    background: #2d2f33;
+    border-radius: 10px;
+    padding: 10px;
 
-  background: #2d2f33;
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.6),       /* sombra exterior fuerte */
-    inset 0 1px 2px rgba(255, 255, 255, 0.294); /* leve brillo superior */
-  border-radius: 10px;
-  padding: 20px;
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.60),
+        inset 0 1px 2px rgba(255, 255, 255, 0.25);
+
+    /* IMPORTANTE */
+    height: fit-content;
+    min-height: 0;
+
+    align-self: flex-start;
+    flex: 0 0 auto;
+
+    box-sizing: border-box;
 }
 
 
-.caja_jack {
+/* ========================================
+   RONDA + TIEMPO
+======================================== */
 
-  
-  width: 280px;
-  font-size: 25px;
-  height: 55px;
-  background: linear-gradient(to bottom, #d22c29, #8a1513);
-  border-radius: 8px; 
-  margin-top: 15px;
-  
-  box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.5),            /* sombra 3D exterior */
-        inset 0 1px 1px rgba(255, 170, 170, 0.837);     /* profundidad interna */
+.caja_superior {
 
-}
-.nombre_jac_rc { 
-  font-size: 22px !important;
-  margin: 15px; 
-  margin-right: 20px;
-  margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 30px;
+    margin-bottom: 8px;
 }
 
 
+.box_ronda,
+.box_tiempo {
 
-.label-jk-rc {
+    height: 50px;
 
-  font-weight: 900;
-  font-size: 25px; 
+    background: #232323;
+    border-radius: 8px;
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow:
+        inset 0 2px 5px rgba(0, 0, 0, 0.65);
+}
+
+
+.box_ronda {
+    gap: 25px;
+}
+
+
+.box_ronda span {
+
+    font-size: 27px;
+    font-weight: 400;
+}
+
+
+.box_ronda strong {
+
+    font-size: 28px;
+    font-weight: 900;
+}
+
+
+/* ========================================
+   TIEMPO
+======================================== */
+
+.box_tiempo span {
+
+    font-size: 31px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ========================================
+   GRID JACKPOTS
+======================================== */
+
+.jackpots_grid {
+
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 14px;
+    height: fit-content;
+}
+
+
+/* ========================================
+   JACKPOT
+======================================== */
+
+.jackpot_item {
+
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 17px;
+    color: white;
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+
+
+/* MEGA */
+
+.jackpot_mega {
+
+    background: linear-gradient( to bottom, #e8751a 0%, #c5530c 45%, #8f3405 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 196, 120, 0.75);
+}
+
+
+/* GRAND */
+
+.jackpot_grand {
+
+    background: linear-gradient( to bottom, #d99a28 0%, #b97912 45%, #7d4d08 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 222, 145, 0.75);
+}
+
+
+/* MAJOR */
+
+.jackpot_major {
+
+    background: linear-gradient( to bottom, #d22c29 0%, #bc211e 45%, #8f1513 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 170, 170, 0.75);
+}
+
+
+/* MINOR */
+
+.jackpot_minor {
+
+    background: linear-gradient( to bottom, #2675a8 0%, #1b5b88 45%, #103b5d 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(150, 210, 255, 0.75);
+}
+
+
+/* MINI */
+
+.jackpot_mini {
+
+    background: linear-gradient( to bottom, #7b7f84 0%, #5c6065 45%, #373a3e 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(235, 235, 235, 0.55);
+}
+
+
+/* ========================================
+   CANTIDAD IMPAR
+   El último ocupa las dos columnas
+======================================== */
+
+.jackpot_item:last-child:nth-child(odd) {
+
+    grid-column: 1 / -1;
+}
+
+
+/* ========================================
+   SOLO EXISTE 1 JACKPOT
+======================================== */
+
+.caja_total:has(.jackpot_item:only-child) { width: 390px; }
+.caja_total:has(.jackpot_item:only-child) .caja_superior { gap: 12px; }
+.jackpots_grid:has(.jackpot_item:only-child) { grid-template-columns: 1fr; }
+
+
+/* ========================================
+   TEXTOS JACKPOT
+======================================== */
+
+.jackpot_nombre {
+
+    font-size: 20px;
+    font-weight: 400;
+}
+
+
+.jackpot_monto {
+
+    font-size: 30px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+
 }
 
 
 
-
-
-#container-ulti-result{
-
-  height: 600px;
-}
+#container-ulti-result{ height: 600px; }
 
 main { position: relative; }
 

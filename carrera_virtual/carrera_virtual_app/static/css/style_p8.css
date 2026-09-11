@@ -98,18 +98,22 @@ video {
 } .txt_lgr { margin-left:10px ; }
 
 .span_cj {  font-size: 25px;  padding:13px 4px;}
-.span_er { margin-left: 7px;  font-size: 30px;  padding: 8px 18px;}
+.span_er { margin-left: 7px;  font-size: 30px;  padding: 8px 25px;}
 
 
 
 .caja_jack {
 
   
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  box-sizing: border-box;
   width: 325px;
   font-size: 25px;
   height: 55px;
-    background: linear-gradient(to bottom, #b72720, #350805);
-  box-shadow: inset 0px 3px 10px rgba(255, 137, 137, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674);  
+  background: linear-gradient( to bottom, #d99a28 0%, #b97912 45%, #7d4d08 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 222, 145, 0.75); 
   border-radius: 0px 0px 10px 10px;
   font-family: dinnextltpro-light; 
   margin-top: 11px;
@@ -121,9 +125,34 @@ video {
 
 .label-jk-rc {
 
+  margin-left: auto;
   font-weight: 900;
   font-size: 35px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
+
+
+.caja_jack_global {
+
+    margin-top: 11px;
+    border-radius: 0;
+}
+
+
+/* LOCAL */
+
+.caja_jack_local {
+
+    margin-top: 3px;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient( to bottom, #7b7f84 0%, #5c6065 45%, #373a3e 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(235, 235, 235, 0.55);
+}
+
+
+
 
 
 
