@@ -93,8 +93,19 @@ def get_current_display_video(
         "settlement": settlement,
         "event_number": latest.get("event_number"),
         "sorteo_id": latest.get("sorteo_id"),
+
+        "race_multiplier": latest.get(
+            "race_multiplier"
+        ),
+        "multiplier_label": latest.get(
+            "multiplier_label"
+        ),
+
         "scheduled_at": latest.get("scheduled_at"),
-        "settled_at": latest.get("settled_at"),
+        "settled_at": (
+            latest.get("settled_at")
+            or latest.get("resulted_at")
+        ),
     }
 
 
