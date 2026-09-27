@@ -60,7 +60,11 @@ const sincronizacion_jack_sort = (fecha_t, hora_t)=> {
   
 
 
-const aumento_jack = (num_inicio, num_fn) =>{
+var animaciones_jack = {}   // animacion activa de cada caja de jackpot
+
+const detener_animacion_jack = id_html => cancelAnimationFrame(animaciones_jack[id_html])
+
+const aumento_jack = (num_inicio, num_fn, id_html) =>{
 
 
     let duration = 240000; // Duración total de la animación en milisegundos
@@ -79,198 +83,265 @@ const aumento_jack = (num_inicio, num_fn) =>{
         const currentNumber = (num_inicio + easedProgress * (num_fn - num_inicio)).toFixed(2)
         
         // Mostrar el número actual en el elemento HTML
-        document.querySelector('#jp_mega').textContent = moneda(currentNumber.toLocaleString());
+        document.querySelector(id_html).textContent = moneda(currentNumber.toLocaleString());
     
         // Verificar si la animación debe continuar
-        if (progress < 1)  animationFrame = requestAnimationFrame(updateCount);
+        if (progress < 1)  animaciones_jack[id_html] = requestAnimationFrame(updateCount);
         
     }
     
     // Función de interpolación cuadrática (easeOut)
     easeOutQuad = t => t * (2 - t);
     
+    detener_animacion_jack(id_html)   // una sola animacion por caja
+
     startTime = performance.now(); // Obtener el tiempo actual de alta resolución
-    animationFrame = requestAnimationFrame(updateCount);
+    animaciones_jack[id_html] = requestAnimationFrame(updateCount);
 }
 
 
+
+
+// Pinta una caja de jackpot (#jp_global o #jp_local).
+//   jackpot existe      -> monto (con la animacion de aumento)
+//   jackpot no asignado -> "JK SIN ASIGNAR"
+const pintar_caja_jackpot = (id_html, clave, jackpot) => {
+
+    if (!jackpot) {
+        detener_animacion_jack(id_html)
+        $(id_html).text('JK SIN ASIGNAR').css('font-size', '22px')
+        localStorage.removeItem(clave)
+        return
+    }
+
+    $(id_html).css('font-size', '')
+
+    const datoss = localStorage.getItem(clave)
+    const jack   = jackpot['current_amount']
+
+    if(datoss == undefined){ 
+        
+        localStorage.setItem(clave, jack) 
+        $(id_html).text(moneda(jack))
+    
+    }else{
+
+        if(Number(datoss) > Number(jack)) document.querySelector(id_html).textContent = moneda(jack);            
+        else aumento_jack(Number(datoss), jack, id_html)
+    
+        localStorage.setItem(clave, jack) 
+    }
+}
+
+
+// Error al consultar los jackpots: ambas cajas muestran ERROR
+const error_jackpots = () => {
+    detener_animacion_jack('#jp_global')
+    detener_animacion_jack('#jp_local')
+    $('#jp_global, #jp_local').text('ERROR').css('font-size', '22px')
+}
 
 
 const Consultas_jackpot_carrera = async () =>{
 
-   
-    // try {
+    let data = null
 
-    //     const id_jackpt = localStorage.getItem('id_jackpot')
+    try {
 
-        const datos_re = {'realizar':'consulta_jackpots', "jackpot_id": localStorage.getItem('jk')};
+        const datos_re = { 'realizar'     : 'consulta_jackpots', 'device_token' : localStorage.getItem('dkg'), 'game_id' : localStorage.getItem('game_id') };
         const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-        const data     = await response.json() 
- 
-        console.log(data);
-        $('#id_tk_info').text(`****${data['last_winner_ticket_id']}`)
-        $('#monto_info').text(moneda(data['last_winner_amount']))
-        $('#lugar_info').text(data['last_winner_lugar'])
-        $('#date_info').text(data['last_winner_at'])
-            
 
-        const datoss = localStorage.getItem('datos_jack')
-        const jack = data['current_amount']
-        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
 
-        if(datoss == undefined){ 
-            
-            localStorage.setItem('datos_jack', 	jack) 
-            $('#jp_global').text(moneda(jack))
-        
-        }else{
+        data = await response.json()
 
-            if(Number(datoss) > Number(jack)) document.querySelector('#jp_global').textContent = moneda(jack);            
-            else aumento_jack(Number(datoss), jack)
-        
-            localStorage.setItem('datos_jack', 	jack) 
-            
-        }
-        
+    } catch (error) {
+        console.log("Error: ", error)
+        error_jackpots()
+        return
+    }
+
+    console.log(data, 'Consultas_jackpot_carrera');
+
+    // La API no respondio o la respuesta no trae el contrato esperado
+    if (!data || data['error'] || !Array.isArray(data['jackpots'])) {
+        error_jackpots()
+        return
+    }
+
+    const jk_global = (data['global_jackpots'] || [])[0]
+    const jk_local  = (data['local_jackpots']  || [])[0]
+
+    pintar_caja_jackpot('#jp_global', 'datos_jack_gl', jk_global)
+    pintar_caja_jackpot('#jp_local',  'datos_jack_lc', jk_local)
 
 
-    // } catch (error) {
-    //     console.log("Error: ", error)
-    //     $('#jp_global').text(moneda(0))
-            
-    // }
-
-
-
+    // Ultimo ganador (del jackpot global, como antes)
+    if (jk_global && jk_global['last_winner_at']) {
+        $('#id_tk_info').text(`****${jk_global['last_winner_ticket_id']}`)
+        $('#monto_info').text(moneda(jk_global['last_winner_amount']))
+        $('#lugar_info').text(jk_global['last_winner_lugar'])
+        $('#date_info').text(jk_global['last_winner_at'])
+    } else {
+        $('#id_tk_info, #monto_info, #lugar_info, #date_info').text('- - -')
+    }
 }
 
 
 
+// ==========================================
+// GANADORES DE JACKPOT (guia: Ganadores de jackpots)
+// El backend devuelve el evento ganador de cada jackpot aplicable al visor y juego.
+// Cada ganador se muestra una sola vez: se guarda su winner_id (o jackpot_id + sorteo_id)
+// en localStorage, asi no se repite despues de recargar o reconectar.
+// ==========================================
+
+const CLAVE_JK_VISTOS = 'jk_ganadores_vistos'
+
+const id_ganador_jk = item => {
+    const ev = item['event'] || {}
+    if (ev['winner_id'] != null) return `w:${ev['winner_id']}`
+    if (ev['sorteo_id'])         return `j:${item['jackpot_id']}:${ev['sorteo_id']}`
+    return null
+}
+
+
+// Devuelve true si hay un ganador nuevo para mostrar
 const Consulta_ganador_jack = async () => {
 
     console.log('Consulta_ganador_jack');
-    // $("#container-jackpots .row_jp").remove();
 
-    // try {
-    //     const id_jackpt = localStorage.getItem('id_jackpot')
+    try {
+
+        const datos_re = {'realizar':'consulta_gandores_jack', "device_token" : localStorage.getItem('dkg'), "game_id" : localStorage.getItem('game_id')};
+
+        const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
+        const data      = await response.json() 
+
+        if (!data || !Array.isArray(data['events'])) return false
+
+        // Ganadores ya mostrados en este visor
+        const primera_vez = localStorage.getItem(CLAVE_JK_VISTOS) == null
+        let vistos = []
+        try { vistos = JSON.parse(localStorage.getItem(CLAVE_JK_VISTOS)) || [] } catch (error) { vistos = [] }
+
+        const nuevos = data['events'].filter(item => {
+            const id = id_ganador_jk(item)
+            return id && !vistos.includes(id)
+        })
+
+        nuevos.forEach(item => vistos.push(id_ganador_jk(item)))
+        localStorage.setItem(CLAVE_JK_VISTOS, JSON.stringify(vistos.slice(-50)))
+
+        // Primer arranque del visor: se registran los ganadores existentes sin anunciarlos
+        if (primera_vez || nuevos.length == 0) return false
+
+
+        // Pantalla de ganador: una fila por cada jackpot ganado
+        $("#container-jackpots .row_jp").remove();
+
+        nuevos.forEach(item => {
+
+            const ev = item['event']
+
+            const fila_nombre = $(`<div class="row row_jp mt-5"><div class="col-md-12 themed-grid-col"><div class="form-group"><input class="input_info_jp" type="text" readonly></div></div></div>`)
+            fila_nombre.find('input').val(item['name'] || '')
+
+            const fila_datos = $(`<div class="row row_jp mt-3">
+                <div class="col-md-7 themed-grid-col"><div class="form-group"><input class="input_info_jp jk_lugar" type="text" readonly></div></div>
+                <div class="col-md-5 themed-grid-col"><div class="form-group"><input class="input_info_jp jk_ticket" type="text" readonly></div></div>
+            </div>`)
+            fila_datos.find('.jk_lugar').val(ev['winner_lugar'] || '')
+            fila_datos.find('.jk_ticket').val(`******${String(ev['ticket_code'] || '').slice(-6)}`)
+
+            const fila_monto = $(`<div class="row row_jp"><div class="col-md-12 themed-grid-col mt-3"><div class="form-group"><input class="input_info_jp precio_jp" type="text" readonly></div></div></div>`)
+            fila_monto.find('input').val(moneda(ev['winner_amount']))
+
+            $('#container-jackpots').append(fila_nombre, fila_datos, fila_monto)
+        })
+
+
+        // Barra "ULTIMO JACKPOT" con el ganador que se acaba de mostrar
+        const ultimo = nuevos[0]['event']
+        $('#id_tk_info').text(`****${String(ultimo['ticket_code'] || '').slice(-6)}`)
+        $('#monto_info').text(moneda(ultimo['winner_amount']))
+        $('#lugar_info').text(ultimo['winner_lugar'] || '')
+        $('#date_info').text(ultimo['selected_at'] || '')
+
+        return true
         
-    //     if (id_jackpt == undefined) return false
-                
-    //     const datos_re = {'realizar':'consulta_gandores_jack', "id_jackpot": id_jackpt};
+    }catch (error) {
 
-    //     const response  = await fetch("/carreras_virtual_p",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
-    //     const data      = await response.json() 
-
-    //     const datos = [ data['data'][0]['id_apuesta_c'],  data['data'][0]['valor_ganado'], 
-    //                     `"${data['data'][0]['lugar']}"`,  `"${data['data'][0]['fecha_jack']}"`,
-    //                     ]
-        
-    //     if (localStorage.getItem('w_j') == undefined) localStorage.setItem('w_j', `[${datos}]`) 
-        
-    //     else if(JSON.parse(localStorage.getItem('w_j'))[0] != data['data'][0]['id_apuesta_c'] && sincronizacion_jack_sort(data['data'][0]['fecha_jack'].substring(0, 10), data['data'][0]['fecha_jack'].substring(11, 19))){
-    //         console.log("123456")
-
-    //         $('#container-jackpots').append(`<div class="row row_jp mt-5">\
-                                            
-    //             <div class="col-md-7 themed-grid-col">\
-    //                 <div class="form-group">\
-    //                     <input class="input_info_jp" type="text" readonly value="${data['data'][0]['lugar']}">\
-    //                 </div>\
-    //             </div>\
-            
-                
-    //             <div class="col-md-5 themed-grid-col">\
-    //                 <div class="form-group">\
-    //                     <input class="input_info_jp" type="text" readonly value="******${(data['data'][0]['id_apuesta_c']).toString().substr(6,6)}">\
-    //                 </div>\
-    //             </div>\
-
-    //         </div>\
-    //         <div class="row row_jp">\
-                
-    //             <div class="col-md-12 themed-grid-col mt-3">\
-    //                 <div class="form-group">\
-    //                     <input class="input_info_jp precio_jp" type="text" readonly value="${moneda(data['data'][0]['valor_ganado'])}">\
-    //                 </div>\
-    //             </div>\
-            
-    //         </div>`)
-            
-    //         localStorage.setItem('w_j', `[${datos}]`) 
-
-    //         const info = JSON.parse(localStorage.getItem('w_j'))
-
-    //         $('#id_tk_info').text(`ID ******${info[0].toString().substr(-6)}`)
-    //         $('#monto_info').text(moneda(info[1]))
-    //         $('#lugar_info').text(info[2])
-    //         $('#date_info').text(restar_fecha_hora(info[3].substring(0, 10), info[3].substring(11, 19))[0])
-            
-    //         return true
-
-    //     }else localStorage.setItem('w_j', `[${datos}]`) 
-        
-
-    //     const info = JSON.parse(localStorage.getItem('w_j'))
-        
-    //     $('#id_tk_info').text(`ID ******56132`)
-    //     $('#monto_info').text('$27,962.23')
-    //     $('#lugar_info').text('DEMO 02')
-    //     $('#date_info').text('12/05/2026')
-
-    //     return false
-        
-    // }catch (error) {
-
-    //     $('#id_tk_info').text(`ID ******56132`)
-    //     $('#monto_info').text('$27,962.23')
-    //     $('#lugar_info').text('DEMO 02')
-    //     $('#date_info').text('12/05/2026')
-    //     console.log("Error: ", error)
-    //     return false
+        console.log("Error: ", error)
+        return false
     
-    // }
-   
-
+    }
 }
 
 
 
 
-const Consulta_bonos = async () => {
+// ==========================================
+// BONOS DEL EVENTO FINALIZADO (todos los juegos)
+// Guia: se consulta con el sorteo_id exacto del resultado mostrado (results[0]).
+// Se consulta enseguida y se repite cada 2 s durante maximo 10 s; se detiene
+// cuando has_bonus_event es true. El sorteo ya mostrado no se repite.
+// ==========================================
 
-    console.log('Consulta_bonos');
-    // try{
-    //     const lugar = localStorage.getItem('id_lugar')
-        
-    //     const datos_re = {'realizar':'consulta_bonos', "device_token" : localStorage.getItem('dkg')};
-
-    //     const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
-    //     const data      = await response.json() 
-
-    //     if(data['data'].length > 0){
-
-    //         if(localStorage.getItem('id_b') != data['data'][0]['id_apuesta_c_id'].toString()){
-
-    //             document.getElementById("id_bns").value  = `ID ******${data['data'][0]['id_apuesta_c_id'].toString().substr(6,6)}`
-    //             document.getElementById("mnt_bns").value = moneda(data['data'][0]['valor_ganado']) 
-
-    //             localStorage.setItem('id_b', data['data'][0]['id_apuesta_c_id']) 
-
-    //             return true
-                
-    //         }else{ return false } 
+var ganador_bono = null   // ganador del ultimo bono encontrado (uno por localidad)
 
 
-    //     }else{ return false }
+const Consulta_bonos = async (sorteo_id) => {
 
-    
-    // }catch(error){
-    //     console.log("Error: ", error)
-    //     return false
-    // }
-        
+    console.log('Consulta_bonos', sorteo_id);
+
+    if (!sorteo_id) return false
+
+    // Este sorteo ya se mostro (por ejemplo, despues de recargar la pagina)
+    if (localStorage.getItem('id_b') == sorteo_id) return false
+
+    const inicio = Date.now()
+
+    while (true) {
+
+        try {
+
+            const datos_re = {'realizar':'consulta_bonos', "device_token" : localStorage.getItem('dkg'), "game_id" : localStorage.getItem('game_id'), "sorteo_id" : sorteo_id};
+
+            const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
+            const data      = await response.json()
+
+            // Nunca mostrar un bono de otro sorteo
+            const mismo_sorteo = data && (!data['sorteo_id'] || data['sorteo_id'] == sorteo_id)
+
+            if (mismo_sorteo && data['has_bonus_event'] && Array.isArray(data['winners']) && data['winners'].length > 0) {
+
+                ganador_bono = data['winners'][0]
+                localStorage.setItem('id_b', sorteo_id)
+
+                pintar_ganador_bono()
+                return true
+            }
+
+        } catch (error) {
+            console.log("Error: ", error)
+        }
+
+        // Limite de 10 segundos
+        if (Date.now() - inicio + 2000 > 10000) return false
+
+        await new Promise(resolve => setTimeout(resolve, 2000))
+    }
+}
 
 
+// Pinta en la pantalla de bono al ganador de la localidad
+const pintar_ganador_bono = () => {
+
+    if (!ganador_bono) return
+
+    document.getElementById("id_bns").value  = `ID ${ganador_bono['masked_ticket_code']}`
+    document.getElementById("mnt_bns").value = moneda(ganador_bono['bonus_amount'])
 }
 
 
@@ -285,68 +356,71 @@ const Consulta_Tabla = async (id_table, game) => {
 
             
 
-        //     $('.precios_tbl').each(function() {  
+            $('.precios_tbl').each(function() {  
                 
-        //         $(`#${$(this).attr('id')}`).css("color", "#fff")
-        //         $(`#${$(this).attr('id')}`).text('- - -') 
+                $(`#${$(this).attr('id')}`).css("color", "#fff")
+                $(`#${$(this).attr('id')}`).text('- - -') 
             
-        //     });
+            });
 
-        //     const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
+            // Gallos: quitar el verde/rojo del sorteo anterior (sus cuotas usan la clase .ods)
+            $('.ods').css("color", "");
+
+            const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
     
-        //     var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-        //     var data      = await response.json()         
+            var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+            var data      = await response.json()         
         
-        //     console.log(data);
+            console.log(data);
         
-        //     Object.entries(data).forEach(([cmb, odds])=>{
+            Object.entries(data).forEach(([cmb, odds])=>{
     
-        //         if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(parseFloat(odds).toFixed(1))
-        //         else if (game == 5)                                   $('#ods_' + cmb).text(odds);
-        //         else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(odds)
+                if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(parseFloat(odds).toFixed(1))
+                else if (game == 5)                                   $('#ods_' + cmb).text(isNaN(parseFloat(odds)) ? odds : parseFloat(odds).toFixed(1));
+                else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(odds)
     
-        //     }) 
+            }) 
 
 
-        //     try{
+            try{
     
 
-        //         const entradas = Object.entries(data);
+                const entradas = Object.entries(data);
 
-        //         const combinaciones = entradas.filter(([key]) => key.length === 3 );
+                const combinaciones = entradas.filter(([key]) => key.length === 3 );
 
-        //         const win = entradas.filter(([key]) => /^WIN \d+$/.test(key));
+                const win = entradas.filter(([key]) => /^WIN \d+$/.test(key));
 
-        //         if (combinaciones.length) { 
+                if (combinaciones.length) { 
                     
-        //             const pcMayor = combinaciones.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b);
-        //             const pcMenor = combinaciones.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b);
+                    const pcMayor = combinaciones.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b);
+                    const pcMenor = combinaciones.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b);
                 
-        //             if(game == 5){
-        //                 $(`#ods_${pcMayor[0]}`).css("color", "#09ff00");
-        //                 $(`#ods_${pcMenor[0]}`).css("color", "#ff0000");
+                    if(game == 5){
+                        $(`#ods_${pcMayor[0]}`).css("color", "#09ff00");
+                        $(`#ods_${pcMenor[0]}`).css("color", "#ff0000");
 
-        //             }else{
-        //                 $(`#${pcMayor[0]}`).css("color", "#09ff00");
-        //                 $(`#${pcMenor[0]}`).css("color", "#ff0000");
-        //             }
-        //         }
+                    }else{
+                        $(`#${pcMayor[0]}`).css("color", "#09ff00");
+                        $(`#${pcMenor[0]}`).css("color", "#ff0000");
+                    }
+                }
 
 
-        //         if (win.length) {
+                if (win.length) {
 
-        //             const winMayor = win.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b );
+                    const winMayor = win.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b );
 
-        //             const winMenor = win.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b );
+                    const winMenor = win.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b );
 
-        //             const mayorKey = winMayor[0].replace("WIN ", "");
-        //             const menorKey = winMenor[0].replace("WIN ", "");
+                    const mayorKey = winMayor[0].replace("WIN ", "");
+                    const menorKey = winMenor[0].replace("WIN ", "");
 
-        //             $(`#${mayorKey}-${mayorKey}`).css("color", "#09ff00");
-        //             $(`#${menorKey}-${menorKey}`).css("color", "#ff0000");
-        //         }
+                    $(`#${mayorKey}-${mayorKey}`).css("color", "#09ff00");
+                    $(`#${menorKey}-${menorKey}`).css("color", "#ff0000");
+                }
             
-        //     }catch(error){console.log("Error: ", error)}
+            }catch(error){console.log("Error: ", error)}
             
         // }catch(error){console.log("Error: ", error)}
 
@@ -423,7 +497,11 @@ const Consulta_resultados = async () => {
     document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
     document.getElementById("p_ext").innerHTML = pago_pale
 
-    return [data['selected_video'], 'X']
+    // [0 video, 1 multiplicador, 2 sorteo_id (para el bono), 3 numero de carrera, 4 cuota win, 5 cuota exacta]
+    // nup[1]: multiplicador del resultado ('X2', 'X3' o 'X'); gallos siempre 'X'
+    const mult = [2, 3, 4].includes(Number(localStorage.getItem('game_id'))) && [2, 3].includes(Number(data['race_multiplier'])) ? `X${Number(data['race_multiplier'])}` : 'X'
+
+    return [data['selected_video'], mult, data['sorteo_id'], data['event_number'], pago_win, pago_pale]
 
 }
 
@@ -448,7 +526,9 @@ const consult_gallos = data => {
         const getOdds = selection_key => {
 
             const apuesta = inf.find(item => item.selection_key === selection_key);
-            return apuesta ? apuesta.odds : '';
+            if (!apuesta) return '';
+            const n = parseFloat(apuesta.odds);
+            return isNaN(n) ? apuesta.odds : n.toFixed(1);
 
         };
 
@@ -554,19 +634,26 @@ const Consulta_ultimas_carreras = async () => {
             consult_gallos(data)
             return
 
-        }else if(localStorage.getItem('game_id') == 1){
-
-            
-            consult_ruleta(data)
-            return
-        }          
+        }     
 
         data['results'].map((races, cont)=>{
 
             dc = { 2 : 'p6',3 : 'p8',4 : 'h7'}
 
-    //         if(races['bonos_race'] == 'X2' || races['bonos_race'] == 'X3'){ document.getElementById(`bns${cont}`).src = `../static/img/${races['bonos_race']}_V.png` 
-    //         }else{document.getElementById(`bns${cont}`).src = '' }
+            // Guia: race_multiplier viene en cada resultado (2, 3 o null). Solo carreras.
+            // Sin multiplicador la imagen se oculta: una <img> sin src dibuja un cuadro vacio.
+            const mult     = races['race_multiplier']
+            const img_mult = document.getElementById(`bns${cont}`)
+
+            if (img_mult) {
+                if (mult == 2 || mult == 3) {
+                    img_mult.src = `../static/img/X${mult}_V.png`
+                    img_mult.style.visibility = 'visible'
+                } else {
+                    img_mult.removeAttribute('src')
+                    img_mult.style.visibility = 'hidden'
+                }
+            }
 
             document.getElementById(`numero_race${cont}`).innerHTML = races['event_number'] 
             document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][0]['selection_key']}.svg`

@@ -1,4 +1,4 @@
-
+/* container2 */
 @font-face {
 	
 	font-family: dinnextltpro-light;
@@ -19,15 +19,15 @@
 .themed-grid-col {
   padding-top: .75rem;
   padding-bottom: .75rem;
-  /* border: 1px solid rgb(255,0,0); */
+  border: 1px solid rgb(255,0,0);
 }
 
 .themed-container {
   padding-top: .75rem;
   margin-bottom: 1.5rem;
 
-  /* background-color: rgba(0,0,255,0.1);
-  border: 1px solid rgb(255,0,0);   */
+  background-color: rgba(0,0,255,0.1);
+  border: 1px solid rgb(255,0,0);  
   
  }
  
@@ -193,7 +193,7 @@ main { position: relative;}
   width: 92%;
   padding:10px 10px;
   border-radius: 10px;
-  margin-top: 50px;
+  margin-top: 30px;
   transition: all 1.5s;
 
 }
@@ -383,7 +383,7 @@ INFO PRINCIPAL DE TABLA
   position: absolute;
   padding: 0px 0px;
   text-align: center; 
-  margin: 845px 770px ;
+  margin: 900px 775px ;
 
 }
 
@@ -576,6 +576,12 @@ INFO PRINCIPAL DE TABLA
  
  
 .odds {width: 110px !important;}
+
+/* Columna CUOTAS: numeros alineados a la derecha */
+.tbl_game_blue .row-b div.odds, .tbl_game_white .row-b div.odds {
+  text-align: right;
+  padding-right: 20px;
+}
 
 
 .code {

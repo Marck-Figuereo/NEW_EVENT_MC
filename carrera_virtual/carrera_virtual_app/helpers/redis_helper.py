@@ -150,20 +150,27 @@ def get_paytable_for_display(*,table_odds_id):
 
     payload = cache.get(key)
 
-    if payload:
+    if payload is not None:
         return payload
 
-    response = requests.get(
-        (
-            f"{API_URL}"
-            f"api/core/table-odds/{table_odds_id}/"
-        ),
-        timeout=3,
-    )
+    # Segun la guia, los errores HTTP, timeouts y JSON invalidos se controlan:
+    # se devuelve el contrato vacio {} y la pantalla sigue su ciclo.
+    try:
+        response = requests.get(
+            (
+                f"{API_URL}"
+                f"api/core/table-odds/{table_odds_id}/"
+            ),
+            timeout=3,
+        )
 
-    response.raise_for_status()
+        response.raise_for_status()
 
-    payload = response.json()
+        payload = response.json()
+
+    except (requests.RequestException, ValueError) as error:
+        print(f"Tabla de pagos {table_odds_id} no disponible: {error}")
+        return {}
 
     cache.set(
         key,
@@ -218,19 +225,152 @@ def get_display_jackpot(
 
 
 
+def get_display_jackpots(
+    *,
+    device_token,
+    game_id,
+):
+    """
+    Jackpots aplicables al visor y juego (guia: Jackpots multiples por visor y juego).
+    Redis:    jackpot:display:device:{device_token}:game:{game_id}   (TTL 60 s)
+    Fallback: GET api/jackpot/display/device-game/?device_token=...&game_id=...
+    """
+    key = f"jackpot:display:device:{device_token}:game:{game_id}"
+
+    payload = cache.get(key)
+
+    if payload is not None:
+        return payload
+
+    try:
+        response = requests.get(
+            (
+                f"{API_URL}"
+                f"api/jackpot/display/device-game/"
+            ),
+            params={
+                "device_token": device_token,
+                "game_id": game_id,
+            },
+            timeout=3,
+        )
+
+        response.raise_for_status()
+
+        payload = response.json()
+
+    except (requests.RequestException, ValueError) as error:
+        print(f"Jackpots del visor no disponibles (game {game_id}): {error}")
+        # Contrato vacio explicito. "error" permite a la pantalla distinguir
+        # "API no disponible" (ERROR) de "visor sin jackpots" (JK SIN ASIGNAR).
+        return {
+            "error": True,
+            "jackpots": [],
+            "global_jackpots": [],
+            "local_jackpots": [],
+        }
+
+    cache.set(
+        key,
+        payload,
+        60,
+    )
+
+    return payload
+
+
+
+def get_display_bonus_event(
+    *,
+    device_token,
+    lugar_id,
+    game_id,
+    sorteo_id,
+):
+    """
+    Ganadores de bono del sorteo exacto que acaba de finalizar (guia: Bonos del evento finalizado).
+    Redis:    display:bonus_event:{lugar_id}:{game_id}:{sorteo_id}   (TTL 30 min)
+    Fallback: GET api/core/display/bonuses/event/?device_token=...&game_id=...&sorteo_id=...
+    La respuesta negativa NO se guarda: el bono puede acreditarse segundos despues.
+    """
+    key = f"display:bonus_event:{lugar_id}:{game_id}:{sorteo_id}"
+
+    payload = cache.get(key)
+
+    if payload is not None:
+        return payload
+
+    try:
+        response = requests.get(
+            (
+                f"{API_URL}"
+                f"api/core/display/bonuses/event/"
+            ),
+            params={
+                "device_token": device_token,
+                "game_id": game_id,
+                "sorteo_id": sorteo_id,
+            },
+            timeout=3,
+        )
+
+        response.raise_for_status()
+
+        payload = response.json()
+
+    except (requests.RequestException, ValueError) as error:
+        print(f"Bono del sorteo {sorteo_id} no disponible: {error}")
+        # Contrato vacio explicito
+        return {
+            "has_bonus_event": False,
+            "lugar_id": lugar_id,
+            "game_id": game_id,
+            "sorteo_id": sorteo_id,
+            "event_number": None,
+            "count": 0,
+            "winners": [],
+        }
+
+    if payload.get("has_bonus_event"):
+        cache.set(
+            key,
+            payload,
+            60 * 30,
+        )
+
+    return payload
+
+
+
 def get_display_jackpot_winner_event(
     *,
     jackpot_id,
 ):
+    """
+    Evento ganador de un jackpot (guia: Ganadores de jackpots).
+    Redis:    jackpot:winner_event:{jackpot_id}   (TTL 30 min)
+    Fallback: GET api/jackpot/display/{jackpot_id}/winner-event/
+    Contrato: {"has_winner_event": bool, "event": {...} o null}
+    """
     key = f"jackpot:winner_event:{jackpot_id}"
+
+    sin_ganador = {
+        "has_winner_event": False,
+        "event": None,
+    }
 
     payload = cache.get(key)
 
-    if payload:
-        return {
-            "has_winner_event": True,
-            "event": payload,
-        }
+    if payload is not None:
+        # Contrato canonico: se devuelve tal cual
+        if isinstance(payload, dict) and "has_winner_event" in payload:
+            return payload
+        # Compatibilidad con claves antiguas que guardaban solo el evento
+        if isinstance(payload, dict) and payload:
+            return {
+                "has_winner_event": True,
+                "event": payload,
+            }
 
     try:
         response = requests.get(
@@ -243,24 +383,24 @@ def get_display_jackpot_winner_event(
 
         response.raise_for_status()
 
-        fallback_payload = response.json()
+        payload = response.json()
 
-        event = fallback_payload.get("event")
+    except (requests.RequestException, ValueError) as error:
+        print(f"Ganador del jackpot {jackpot_id} no disponible: {error}")
+        return sin_ganador
 
-        if event:
-            cache.set(
-                key,
-                event,
-                60 * 30,
-            )
+    if not isinstance(payload, dict):
+        return sin_ganador
 
-        return fallback_payload
+    # Se guarda la respuesta completa, sin transformarla, solo cuando hay ganador
+    if payload.get("has_winner_event"):
+        cache.set(
+            key,
+            payload,
+            60 * 30,
+        )
 
-    except Exception:
-        return {
-            "has_winner_event": False,
-            "event": None,
-        }
+    return payload
 
 
 

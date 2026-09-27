@@ -582,3 +582,7 @@ INFO DIRECTAS FINAL DE LA CARRERA
 
 
 }
+
+
+/* Multiplicador del historial: sin imagen no se dibuja el cuadro vacio */
+img[id^="bns"]:not([src]) { visibility: hidden; }

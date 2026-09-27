@@ -7,11 +7,12 @@ from django.core.cache import cache
 from decouple import config
 from urllib.parse import urlencode
 from carrera_virtual_app.helpers.redis_helper import *
+import uuid
 
 
 # Configuraciones de entorno
 API_URL = config('API_URL')
-version = "v7.0.1" 
+version = "v7.1.0" 
 
 
 
@@ -99,13 +100,14 @@ def games(request):
 
 
 		if request.method =='POST' and datos['realizar'] =='consulta_jackpots':
-			jackpot_id = datos['jackpot_id']
-			
-			jackpot_actual = get_display_jackpot(
-			    jackpot_id=jackpot_id
+
+			# Guia: siempre consultar jackpots por device_token y game_id (no por jackpot_id)
+			jackpots = get_display_jackpots(
+			    device_token=datos['device_token'],
+			    game_id=datos['game_id'],
 			)
 			
-			return JsonResponse(jackpot_actual,safe=False,content_type='application/json')
+			return JsonResponse(jackpots,safe=False,content_type='application/json')
 
 		
 
@@ -120,16 +122,32 @@ def games(request):
 
 		elif request.method =='POST' and datos['realizar'] =='consulta_gandores_jack':
 
-			jackpot_id = datos['jackpot_id']
-
-			winner_event_payload = get_display_jackpot_winner_event(
-			    jackpot_id=jackpot_id,
+			# Guia: se consulta el evento ganador de CADA jackpot aplicable al visor.
+			# Los jackpot_id salen de la lista de jackpots del dispositivo y juego,
+			# no de un id guardado en el navegador.
+			jackpots = get_display_jackpots(
+			    device_token=datos['device_token'],
+			    game_id=datos['game_id'],
 			)
 
-			print(winner_event_payload)
+			eventos = []
 
-		
-			return JsonResponse(winner_event_payload,safe=False,content_type='application/json')
+			for jackpot in (jackpots or {}).get('jackpots') or []:
+
+				ganador = get_display_jackpot_winner_event(
+				    jackpot_id=jackpot['jackpot_id'],
+				)
+
+				if ganador.get('has_winner_event') and ganador.get('event'):
+					eventos.append({
+						'jackpot_id': jackpot['jackpot_id'],
+						'name':       jackpot.get('name'),
+						'scope_type': jackpot.get('scope_type'),
+						'level_name': jackpot.get('level_name'),
+						'event':      ganador['event'],
+					})
+
+			return JsonResponse({'count': len(eventos), 'events': eventos},safe=False,content_type='application/json')
 
 
 		elif request.method =='POST' and datos['realizar'] =='consulta_resultados':
@@ -175,16 +193,39 @@ def games(request):
 
 
 		elif request.method =='POST' and datos['realizar'] =='consulta_bonos':
-			lugar_b = datos['id_lugar']
-			juego = datos['juego']
-			bonos_red = cache.get(f'bonos_{lugar_b}_{juego}')
 
-			if bonos_red is None:
+			# Guia: el bono se consulta con el sorteo exacto que acaba de finalizar
+			# (lugar + juego + sorteo). Funciona igual para todos los juegos.
+			device_token = datos.get('device_token')
+			game_id      = datos.get('game_id')
+			sorteo_id    = datos.get('sorteo_id')
 
-				return JsonResponse({'mensaje':'OK','data':[]},safe=False,content_type='application/json')
+			sin_bono = {'has_bonus_event': False, 'sorteo_id': sorteo_id, 'count': 0, 'winners': []}
 
-			else:
-				return JsonResponse(bonos_red,safe=False,content_type='application/json')
+			# El sorteo_id forma parte de la clave Redis: solo se acepta un UUID valido
+			try:
+				sorteo_id = str(uuid.UUID(str(sorteo_id)))
+			except (ValueError, TypeError):
+				return JsonResponse(sin_bono,safe=False,content_type='application/json')
+
+			if not device_token or not game_id:
+				return JsonResponse(sin_bono,safe=False,content_type='application/json')
+
+			# El lugar se toma de la configuracion del visor, no del navegador
+			display_config = get_display_config(device_token=device_token) or {}
+			lugar_id = (display_config.get('lugar') or {}).get('id')
+
+			if not lugar_id:
+				return JsonResponse(sin_bono,safe=False,content_type='application/json')
+
+			bono = get_display_bonus_event(
+			    device_token=device_token,
+			    lugar_id=lugar_id,
+			    game_id=game_id,
+			    sorteo_id=sorteo_id,
+			)
+
+			return JsonResponse(bono,safe=False,content_type='application/json')
 
 
 	return render(request, "pv_p.html",{'version1': version})

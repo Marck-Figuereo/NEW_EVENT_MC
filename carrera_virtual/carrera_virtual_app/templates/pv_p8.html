@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="static/css/all.min.css?v={{version1}}">
     <link rel="stylesheet" type="text/css" href="static/css/style_p8.css?v={{version1}}">
+    <link rel="stylesheet" type="text/css" href="static/css/overlay_video.css?v={{version1}}">
     
     <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css?v={{version1}}">
 
@@ -57,14 +58,14 @@
               <!-- JACKPOT GLOBAL -->
               <div class="caja_jack caja_jack_global">
                 <label class="nombre_jac_rc">GLOBAL</label>
-                <label id="jp_global" class="label-jk-rc">$11,391.96</label>
+                <label id="jp_global" class="label-jk-rc"></label>
               </div>
 
 
               <!-- JACKPOT LOCAL -->
               <div class="caja_jack caja_jack_local">
                 <label class="nombre_jac_rc">LOCAL</label>
-                <label id="jp_local" class="label-jk-rc">$5,250.00</label>
+                <label id="jp_local" class="label-jk-rc"></label>
               </div>
 
             
@@ -525,6 +526,14 @@
     <input id="id_cons2"          type="hidden" value="{{id_cons1}}">
 
     
+    <!-- Datos sobre el video del evento: la pantalla de resultados viene incrustada en el video -->
+    <div id="overlay-video">
+      <div id="ov_carrera">CARRERA&nbsp;<span id="ov_numero"></span></div>
+      <div id="ov_titulo" class="ov_resultado">RESULTADOS</div>
+      <div id="ov_win"    class="ov_resultado"></div>
+      <div id="ov_exacta" class="ov_resultado"></div>
+    </div>
+
   </body>
   
   <script src="static/js/moment.min.js"></script>

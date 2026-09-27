@@ -2,13 +2,35 @@
 
 const game_code = localStorage.getItem('game_id')
 
+// Carpeta de videos de cada juego dentro de static/videos
 const games = {
-                5 : 'gallos',
-                4 : 'horse',
-                3 : 'dog8',
-                2 : 'dog',
-                1 : 'roulette'
+                5 : 'roosters',
+                4 : 'horses7',
+                3 : 'dogs8',
+                2 : 'dogs6',
+                1 : 'ruleta'
               }
+
+// Sufijo de los intros con multiplicador (caballos usa introX2C.mp4 / introX3C.mp4)
+const sufijo_intro = { 4 : 'C' }
+
+
+// ==========================================
+// MULTIPLICADORES (solo carreras; gallos y ruleta no tienen)
+// Guia: race_multiplier llega por el WebSocket en el estado in_progress (despues de
+// cerrar ventas) y tambien en cada resultado. Valores 2 o 3 -> 'X2' / 'X3'; otro -> 'X'.
+// ==========================================
+
+var multiplicador_ws = null   // race_multiplier del evento en curso (WebSocket)
+var mult_evento      = 'X'    // multiplicador usado para el intro y el elemento durante la carrera
+
+const es_carrera = () => [2, 3, 4].includes(Number(game_code))
+
+const etiqueta_multiplicador = valor => {
+  if (!es_carrera()) return 'X'
+  const n = Number(valor)
+  return (n === 2 || n === 3) ? `X${n}` : 'X'
+}
 
 
 
@@ -49,6 +71,14 @@ video_intro.style.height = '100%';
 var vd = false;
 var nup = ["", ""]
 var nup2 = ["", ""]
+
+// Duracion del video del evento en segundos (valor de prueba; luego llegara de la API
+// junto con el nombre del video). Si el navegador ya leyo la duracion real del archivo
+// (video_event.duration), se usa esa.
+var tiempoVideo = 54.920
+
+var overlay_video   = document.getElementById('overlay-video')   // solo existe en carreras
+var vigilando_resultado = false   // revisa cuadro a cuadro el tiempo real del video
 
 var ver_w_p = false
 var ver_b = false  
@@ -162,8 +192,8 @@ connectWebSocket = async () => {
         if(!internet) location.reload()  
       
         Swal.close()
-        let latestTimestamp = 0;
-        let websocket = new WebSocket(`ws://127.0.0.1:8500/ws/pos/grupos/${localStorage.getItem('grupo')}/games/${localStorage.getItem('game_id')}/countdown/`);
+        
+        let websocket = new WebSocket(`ws://api-demp.applications.svc.cluster.local:8000/ws/pos/grupos/${localStorage.getItem('grupo')}/games/${localStorage.getItem('game_id')}/countdown/`);
         
         websocket.onmessage = (event) => {
             
@@ -171,6 +201,10 @@ connectWebSocket = async () => {
             
             id_table = data['table_odds_id']
             tiempo = data['seconds_left']
+
+            // El multiplicador solo aparece despues de cerrar ventas (estado in_progress)
+            if (data['state'] === 'in_progress' && data['race_multiplier'] != null) multiplicador_ws = data['race_multiplier']
+            else if (data['state'] === 'selling') multiplicador_ws = null
             
             $('#id_sorteos_c_id').text(data['event_number']);
             $('#tiempo_regresivo').text(formatoTiempo(tiempo));
@@ -208,14 +242,37 @@ const sincronizacion = async () =>{
  
 
 
+var intervalo_bono = null   // parpadeo de la pantalla de bono
+
+const detener_bono = () => {
+  clearInterval(intervalo_bono)
+  intervalo_bono = null
+}
+
+
 const mostrando_bonos = () => {
+
+  // Evita que se acumulen intervalos de eventos anteriores
+  detener_bono()
+
+  ocultar_overlay_video()
+
+  // Viniendo directo del video (carreras), se ocultan el video y el multiplicador
+  video_event.style.opacity         = 0;
+  video_intro.style.opacity         = 0;
+  screen_jp.style.opacity           = 0;
+  if (game_code != 5) menjase_bonos.style.opacity = 0;
 
   screen_resultados.style.opacity   = 0;  
   screen_bono.style.opacity         = 1
 
 
+  // Hay un solo ganador de bono por localidad
+  pintar_ganador_bono()
+
+
   var c3 = false 
-  setInterval(()=>{ 
+  intervalo_bono = setInterval(()=>{ 
     
     if(c3){
       
@@ -241,6 +298,8 @@ const mostrando_bonos = () => {
 
 
 const mostrando_win_jackpot = () => {
+
+  ocultar_overlay_video()
   
   video_event.currentTime           = 0
   video_intro.currentTime           = 0
@@ -273,9 +332,9 @@ const mostrando_resultado = async () => {
     screen_resultados_medio_carrera.style.opacity = 0
     $("#div_result_1, #div_result_2, #div_result_3").css({background: "transparent", color: "transparent"}); 
   
-  }else if([2,3,4].includes(game_code)){
+  }else if(es_carrera()){
     
-    document.getElementById("pos_bono").innerHTML = "";
+    document.getElementById("pos_bono").removeAttribute('src');
     menjase_bonos.style.opacity  = 0;
 
   }
@@ -299,15 +358,18 @@ const mostrando_resultado = async () => {
 
 const mostrando_tablas = async () =>{
 
+  detener_bono()
+  ocultar_overlay_video()
+
 
   if(game_code == 5){
     screen_resultados_en_carrera.style.opacity    = 0
     screen_resultados_medio_carrera.style.opacity = 0
     $("#div_result_1, #div_result_2, #div_result_3").css({background: "transparent", color: "transparent"}); 
   
-  }else if([2,3,4].includes(game_code)){
+  }else if(es_carrera()){
     
-    document.getElementById("pos_bono").innerHTML = "";
+    document.getElementById("pos_bono").removeAttribute('src');
     menjase_bonos.style.opacity  = 0;
   
   }
@@ -413,12 +475,14 @@ const excute_race = async () =>{
   entra_sincro_3 = true
 
   nup = await Consulta_resultados()
-
   console.log("race",   nup);
 
+  // Carreras: numero de carrera visible desde el inicio del video y cuotas listas para duracion - 10 s
+  preparar_overlay_video()
+
+
   // video_event.src                = `http://localhost:3000/${games[game_code]}/${nup[0]}`;
-  
-  video_event.src               = `../static/videos/1-2-B.mp4`;
+  video_event.src               = `../static/videos/${games[game_code]}/perros8.mp4`;
   video_event.type               = 'video/mp4';
   
   screen_tablas.style.opacity   = 0;
@@ -498,24 +562,54 @@ function esperar(ms) {
 
 
 
-video_intro.addEventListener('ended', async () => excute_race() )  
+video_intro.addEventListener('ended', async () => excute_race() )
+
+// Si el intro no existe o no se puede reproducir, se pasa directo al video de la carrera
+video_intro.addEventListener('error', async () => {
+  console.log('Intro no disponible, se pasa directo a la carrera:', video_intro.src)
+  video_intro.style.opacity = 0
+  excute_race()
+})  
 
 video_event.addEventListener('ended', async () => {
 
-  mostrando_resultado();
-  
-  if(ver_w_p){ 
+  // Gallos: mantiene su pantalla de resultados
+  if (game_code == 5) {
+
+    mostrando_resultado();
     
-    await promesa_win_jackpot()
-    await esperar(18000)
-  } 
-   
-  if(ver_b){     
-    await promesa_bonos() 
-    await esperar(18000) 
+    if(ver_w_p){ 
+      await promesa_win_jackpot()
+      await esperar(18000)
+    } 
+     
+    if(ver_b){     
+      await promesa_bonos() 
+      await esperar(18000) 
+    }
+    
+    await promesa_tablas();
+    return
   }
-  
-  await promesa_tablas();
+
+
+  // Carreras: los resultados ya se vieron dentro del video.
+  // intro -> video -> jackpot (si hay ganador) -> bono (si hay ganador) -> tabla
+
+  // El ganador puede acreditarse segundos despues del resultado: segunda consulta al terminar el video
+  if (!ver_w_p) ver_w_p = await Consulta_ganador_jack()
+
+  if (ver_w_p) {
+    mostrando_win_jackpot()
+    await esperar(18000)
+  }
+
+  if (ver_b) {
+    mostrando_bonos()
+    await esperar(18000)
+  }
+
+  mostrando_tablas()
 
   
 
@@ -525,21 +619,96 @@ video_event.addEventListener('ended', async () => {
 
 
 
+// ==========================================
+// DATOS SOBRE EL VIDEO (carreras)
+// CARRERA N se ve durante todo el video; RESULTADOS y las cuotas aparecen
+// exactamente a (duracion - 10 s), que es cuando el video muestra su pantalla de resultados.
+// ==========================================
+
+const preparar_overlay_video = () => {
+
+  if (!overlay_video) return
+
+  vigilando_resultado = false
+
+  document.getElementById('ov_numero').textContent = nup[3] ?? ''
+  document.getElementById('ov_win').textContent    = nup[4] ?? ''
+  document.getElementById('ov_exacta').textContent = nup[5] ?? ''
+
+  overlay_video.classList.remove('con-resultado')
+  overlay_video.classList.add('visible')
+}
+
+
+// El momento se mide con el reloj del propio video (el tiempo del cuadro que se esta
+// mostrando), no con un temporizador: si el video se atrasa, pierde cuadros o se pausa,
+// el texto espera con el. Asi sale exactamente cuando el video muestra sus resultados.
+const programar_resultado_video = () => {
+
+  if (!overlay_video || vigilando_resultado || overlay_video.classList.contains('con-resultado')) return
+
+  vigilando_resultado = true
+
+  const revisar = (tiempo_video) => {
+
+    if (!vigilando_resultado) return
+
+    const duracion = (isFinite(video_event.duration) && video_event.duration > 0) ? video_event.duration : tiempoVideo
+
+    if (tiempo_video >= duracion - 10) {
+      vigilando_resultado = false
+      overlay_video.classList.add('con-resultado')
+      console.log(`Resultados sobre el video: segundo ${tiempo_video.toFixed(2)} (esperado ${(duracion - 10).toFixed(2)} de ${duracion.toFixed(2)})`)
+      return
+    }
+
+    siguiente_cuadro()
+  }
+
+  const siguiente_cuadro = () => {
+
+    // Tiempo exacto del cuadro mostrado en pantalla (Chrome / Edge)
+    if ('requestVideoFrameCallback' in video_event) {
+      video_event.requestVideoFrameCallback((ahora, cuadro) => revisar(cuadro.mediaTime))
+    } else {
+      requestAnimationFrame(() => revisar(video_event.currentTime))
+    }
+  }
+
+  siguiente_cuadro()
+}
+
+
+const ocultar_overlay_video = () => {
+
+  if (!overlay_video) return
+
+  vigilando_resultado = false
+  overlay_video.classList.remove('visible', 'con-resultado')
+}
+
+
+
+
 video_event.addEventListener('playing', async () => {
 
-  if(game_code != 5){
+  programar_resultado_video()
 
-    if(nup[1] == 'X2' || nup[1] == 'X3'){
+  if(game_code != 5 && game_code != 1){
+
+    // Elemento del multiplicador durante la carrera: el mismo del intro (evento en curso)
+    if(mult_evento == 'X2' || mult_evento == 'X3'){
       
       menjase_bonos.style.opacity  = 1;
-      document.getElementById('pos_bono').src = `../static/img/${nup[1]}_V.png`
+      document.getElementById('pos_bono').src = `../static/img/${mult_evento}_V.png`
       
     }
 
   }
 
   ver_w_p = await Consulta_ganador_jack()
-  ver_b = await Consulta_bonos()
+  // Bono del sorteo exacto que se esta mostrando (nup[2] = sorteo_id del resultado)
+  ver_b = await Consulta_bonos(nup[2])
 
   
   
@@ -567,6 +736,7 @@ video_event.addEventListener('error', async () => {
     });
 
     $('#id_sorteos_c_id').text('');
+    ocultar_overlay_video()
     
     video_event.style.opacity        = 0;
     video_intro.style.opacity       = 0;
@@ -611,10 +781,15 @@ setInterval( async ()=> {
     // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `http://localhost:300${pt}/${games[game_code]}/intro${nup2[1}.mp4`; 
     // else                                   video_intro.src = `http://localhost:300${pt}/${games[game_code]}/intro.mp4`; 
     
-    // if(nup2[1] == 'X2' || nup2[1] == 'X3') video_intro.src = `../static/videos/${games[game_code]}/intro${nup2[1]}.mp4`; 
-    // else                                   video_intro.src = `../static/videos/${games[game_code]}/intro.mp4`; 
+    // Multiplicador del evento en curso: llega por el WebSocket al cerrar ventas (estado in_progress).
+    // No se usa el de Consulta_resultados: en este momento results[0] todavia es el evento anterior.
+    mult_evento = etiqueta_multiplicador(multiplicador_ws)
 
-    video_intro.src = `../static/videos/intro.mp4`; 
+    if(mult_evento == 'X2' || mult_evento == 'X3') video_intro.src = `../static/videos/${games[game_code]}/intro${mult_evento}${sufijo_intro[game_code] || ''}.mp4`; 
+    else                                          video_intro.src = `../static/videos/${games[game_code]}/intro.mp4`; 
+
+    console.log('intro', video_intro.src, 'multiplicador:', mult_evento);
+ 
     
     console.log(nup2); 
     
@@ -685,7 +860,8 @@ $(document).ready(async()=>{
     vd = await Consulta_Tabla(id_table, Number(game_code));
     await mostrando_tablas() 
     
-    Consulta_ganador_jack()
+    // Primer arranque de este visor: registrar los ganadores existentes sin anunciarlos
+    if (localStorage.getItem('jk_ganadores_vistos') == null) Consulta_ganador_jack()
     
   }
   

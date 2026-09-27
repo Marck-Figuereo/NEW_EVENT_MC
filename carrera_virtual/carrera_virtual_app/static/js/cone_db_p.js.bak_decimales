@@ -1,0 +1,684 @@
+function getCookie2(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+         //Does this cookie string begin with the name we want?
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+          }
+  }
+    }
+    return cookieValue;
+  } 
+
+  
+
+function formatoTiempo(segundos) {
+  segundos = Number(segundos) || 0;
+
+  const min = Math.floor(segundos / 60);
+  const sec = segundos % 60;
+
+  return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+
+}
+
+
+
+const moneda = (number) => new Intl.NumberFormat('es-US', {style: 'currency',currency: 'USD', minimumFractionDigits: 2}).format(number);
+
+var  pc_tl = {};
+
+
+
+const sincronizacion_jack_sort = (fecha_t, hora_t)=> {
+
+      
+    const hrs  = (horas     < 10 ? '0' : '') + horas
+    const mit  = (minutos   < 10 ? '0' : '') + minutos
+    const segd = (segundos  < 10 ? '0' : '') + segundos
+    
+    const dia2 = (dia     < 10 ? '0' : '') + dia
+    const mes2 = ((mes+1) < 10 ? '0' : '') + (mes+1)
+  
+    const tiempo = hrs + ":" + mit + ":" + segd
+    const fecha_aqu = year + "/" + mes2 + "/" + dia2
+  
+    console.log(hora_t, fecha_t)
+    const fecha1 = `${fecha_t} ${hora_t.substr(0, 6)}00`.replace('/', '-').replace('/', '-')
+    const fecha2 = `${fecha_aqu} ${tiempo.substr(0, 6)}00`.replace('/', '-').replace('/', '-')
+  
+    var dift = moment(fecha2).diff(moment(fecha1), 'minute')
+    if(dift <= 4 ) return true 
+    else return false
+  
+} 
+  
+
+
+var animaciones_jack = {}   // animacion activa de cada caja de jackpot
+
+const detener_animacion_jack = id_html => cancelAnimationFrame(animaciones_jack[id_html])
+
+const aumento_jack = (num_inicio, num_fn, id_html) =>{
+
+
+    let duration = 240000; // Duración total de la animación en milisegundos
+    var startTime; // Tiempo de inicio del contador
+    var animationFrame; // Referencia al cuadro de animación    
+    
+    function updateCount(timestamp) {
+        
+        const elapsed = timestamp - startTime;
+        
+        // Calcular el progreso como una función cuadrática para simular el efecto de podómetro
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOutQuad(progress);
+    
+        // Calcular el número actual basado en el progreso
+        const currentNumber = (num_inicio + easedProgress * (num_fn - num_inicio)).toFixed(2)
+        
+        // Mostrar el número actual en el elemento HTML
+        document.querySelector(id_html).textContent = moneda(currentNumber.toLocaleString());
+    
+        // Verificar si la animación debe continuar
+        if (progress < 1)  animaciones_jack[id_html] = requestAnimationFrame(updateCount);
+        
+    }
+    
+    // Función de interpolación cuadrática (easeOut)
+    easeOutQuad = t => t * (2 - t);
+    
+    detener_animacion_jack(id_html)   // una sola animacion por caja
+
+    startTime = performance.now(); // Obtener el tiempo actual de alta resolución
+    animaciones_jack[id_html] = requestAnimationFrame(updateCount);
+}
+
+
+
+
+// Pinta una caja de jackpot (#jp_global o #jp_local).
+//   jackpot existe      -> monto (con la animacion de aumento)
+//   jackpot no asignado -> "JK SIN ASIGNAR"
+const pintar_caja_jackpot = (id_html, clave, jackpot) => {
+
+    if (!jackpot) {
+        detener_animacion_jack(id_html)
+        $(id_html).text('JK SIN ASIGNAR').css('font-size', '22px')
+        localStorage.removeItem(clave)
+        return
+    }
+
+    $(id_html).css('font-size', '')
+
+    const datoss = localStorage.getItem(clave)
+    const jack   = jackpot['current_amount']
+
+    if(datoss == undefined){ 
+        
+        localStorage.setItem(clave, jack) 
+        $(id_html).text(moneda(jack))
+    
+    }else{
+
+        if(Number(datoss) > Number(jack)) document.querySelector(id_html).textContent = moneda(jack);            
+        else aumento_jack(Number(datoss), jack, id_html)
+    
+        localStorage.setItem(clave, jack) 
+    }
+}
+
+
+// Error al consultar los jackpots: ambas cajas muestran ERROR
+const error_jackpots = () => {
+    detener_animacion_jack('#jp_global')
+    detener_animacion_jack('#jp_local')
+    $('#jp_global, #jp_local').text('ERROR').css('font-size', '22px')
+}
+
+
+const Consultas_jackpot_carrera = async () =>{
+
+    let data = null
+
+    try {
+
+        const datos_re = { 'realizar'     : 'consulta_jackpots', 'device_token' : localStorage.getItem('dkg'), 'game_id' : localStorage.getItem('game_id') };
+        const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+        data = await response.json()
+
+    } catch (error) {
+        console.log("Error: ", error)
+        error_jackpots()
+        return
+    }
+
+    console.log(data, 'Consultas_jackpot_carrera');
+
+    // La API no respondio o la respuesta no trae el contrato esperado
+    if (!data || data['error'] || !Array.isArray(data['jackpots'])) {
+        error_jackpots()
+        return
+    }
+
+    const jk_global = (data['global_jackpots'] || [])[0]
+    const jk_local  = (data['local_jackpots']  || [])[0]
+
+    pintar_caja_jackpot('#jp_global', 'datos_jack_gl', jk_global)
+    pintar_caja_jackpot('#jp_local',  'datos_jack_lc', jk_local)
+
+
+    // Ultimo ganador (del jackpot global, como antes)
+    if (jk_global && jk_global['last_winner_at']) {
+        $('#id_tk_info').text(`****${jk_global['last_winner_ticket_id']}`)
+        $('#monto_info').text(moneda(jk_global['last_winner_amount']))
+        $('#lugar_info').text(jk_global['last_winner_lugar'])
+        $('#date_info').text(jk_global['last_winner_at'])
+    } else {
+        $('#id_tk_info, #monto_info, #lugar_info, #date_info').text('- - -')
+    }
+}
+
+
+
+// ==========================================
+// GANADORES DE JACKPOT (guia: Ganadores de jackpots)
+// El backend devuelve el evento ganador de cada jackpot aplicable al visor y juego.
+// Cada ganador se muestra una sola vez: se guarda su winner_id (o jackpot_id + sorteo_id)
+// en localStorage, asi no se repite despues de recargar o reconectar.
+// ==========================================
+
+const CLAVE_JK_VISTOS = 'jk_ganadores_vistos'
+
+const id_ganador_jk = item => {
+    const ev = item['event'] || {}
+    if (ev['winner_id'] != null) return `w:${ev['winner_id']}`
+    if (ev['sorteo_id'])         return `j:${item['jackpot_id']}:${ev['sorteo_id']}`
+    return null
+}
+
+
+// Devuelve true si hay un ganador nuevo para mostrar
+const Consulta_ganador_jack = async () => {
+
+    console.log('Consulta_ganador_jack');
+
+    try {
+
+        const datos_re = {'realizar':'consulta_gandores_jack', "device_token" : localStorage.getItem('dkg'), "game_id" : localStorage.getItem('game_id')};
+
+        const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
+        const data      = await response.json() 
+
+        if (!data || !Array.isArray(data['events'])) return false
+
+        // Ganadores ya mostrados en este visor
+        const primera_vez = localStorage.getItem(CLAVE_JK_VISTOS) == null
+        let vistos = []
+        try { vistos = JSON.parse(localStorage.getItem(CLAVE_JK_VISTOS)) || [] } catch (error) { vistos = [] }
+
+        const nuevos = data['events'].filter(item => {
+            const id = id_ganador_jk(item)
+            return id && !vistos.includes(id)
+        })
+
+        nuevos.forEach(item => vistos.push(id_ganador_jk(item)))
+        localStorage.setItem(CLAVE_JK_VISTOS, JSON.stringify(vistos.slice(-50)))
+
+        // Primer arranque del visor: se registran los ganadores existentes sin anunciarlos
+        if (primera_vez || nuevos.length == 0) return false
+
+
+        // Pantalla de ganador: una fila por cada jackpot ganado
+        $("#container-jackpots .row_jp").remove();
+
+        nuevos.forEach(item => {
+
+            const ev = item['event']
+
+            const fila_nombre = $(`<div class="row row_jp mt-5"><div class="col-md-12 themed-grid-col"><div class="form-group"><input class="input_info_jp" type="text" readonly></div></div></div>`)
+            fila_nombre.find('input').val(item['name'] || '')
+
+            const fila_datos = $(`<div class="row row_jp mt-3">
+                <div class="col-md-7 themed-grid-col"><div class="form-group"><input class="input_info_jp jk_lugar" type="text" readonly></div></div>
+                <div class="col-md-5 themed-grid-col"><div class="form-group"><input class="input_info_jp jk_ticket" type="text" readonly></div></div>
+            </div>`)
+            fila_datos.find('.jk_lugar').val(ev['winner_lugar'] || '')
+            fila_datos.find('.jk_ticket').val(`******${String(ev['ticket_code'] || '').slice(-6)}`)
+
+            const fila_monto = $(`<div class="row row_jp"><div class="col-md-12 themed-grid-col mt-3"><div class="form-group"><input class="input_info_jp precio_jp" type="text" readonly></div></div></div>`)
+            fila_monto.find('input').val(moneda(ev['winner_amount']))
+
+            $('#container-jackpots').append(fila_nombre, fila_datos, fila_monto)
+        })
+
+
+        // Barra "ULTIMO JACKPOT" con el ganador que se acaba de mostrar
+        const ultimo = nuevos[0]['event']
+        $('#id_tk_info').text(`****${String(ultimo['ticket_code'] || '').slice(-6)}`)
+        $('#monto_info').text(moneda(ultimo['winner_amount']))
+        $('#lugar_info').text(ultimo['winner_lugar'] || '')
+        $('#date_info').text(ultimo['selected_at'] || '')
+
+        return true
+        
+    }catch (error) {
+
+        console.log("Error: ", error)
+        return false
+    
+    }
+}
+
+
+
+
+// ==========================================
+// BONOS DEL EVENTO FINALIZADO (todos los juegos)
+// Guia: se consulta con el sorteo_id exacto del resultado mostrado (results[0]).
+// Se consulta enseguida y se repite cada 2 s durante maximo 10 s; se detiene
+// cuando has_bonus_event es true. El sorteo ya mostrado no se repite.
+// ==========================================
+
+var ganador_bono = null   // ganador del ultimo bono encontrado (uno por localidad)
+
+
+const Consulta_bonos = async (sorteo_id) => {
+
+    console.log('Consulta_bonos', sorteo_id);
+
+    if (!sorteo_id) return false
+
+    // Este sorteo ya se mostro (por ejemplo, despues de recargar la pagina)
+    if (localStorage.getItem('id_b') == sorteo_id) return false
+
+    const inicio = Date.now()
+
+    while (true) {
+
+        try {
+
+            const datos_re = {'realizar':'consulta_bonos', "device_token" : localStorage.getItem('dkg'), "game_id" : localStorage.getItem('game_id'), "sorteo_id" : sorteo_id};
+
+            const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
+            const data      = await response.json()
+
+            // Nunca mostrar un bono de otro sorteo
+            const mismo_sorteo = data && (!data['sorteo_id'] || data['sorteo_id'] == sorteo_id)
+
+            if (mismo_sorteo && data['has_bonus_event'] && Array.isArray(data['winners']) && data['winners'].length > 0) {
+
+                ganador_bono = data['winners'][0]
+                localStorage.setItem('id_b', sorteo_id)
+
+                pintar_ganador_bono()
+                return true
+            }
+
+        } catch (error) {
+            console.log("Error: ", error)
+        }
+
+        // Limite de 10 segundos
+        if (Date.now() - inicio + 2000 > 10000) return false
+
+        await new Promise(resolve => setTimeout(resolve, 2000))
+    }
+}
+
+
+// Pinta en la pantalla de bono al ganador de la localidad
+const pintar_ganador_bono = () => {
+
+    if (!ganador_bono) return
+
+    document.getElementById("id_bns").value  = `ID ${ganador_bono['masked_ticket_code']}`
+    document.getElementById("mnt_bns").value = moneda(ganador_bono['bonus_amount'])
+}
+
+
+
+
+const Consulta_Tabla = async (id_table, game) => {
+
+    console.log('Consulta_Tabla', id_table, game);
+        $('.txt_lgr').text(localStorage.getItem('lugar'))
+
+        // try {        
+
+            
+
+            $('.precios_tbl').each(function() {  
+                
+                $(`#${$(this).attr('id')}`).css("color", "#fff")
+                $(`#${$(this).attr('id')}`).text('- - -') 
+            
+            });
+
+            const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
+    
+            var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+            var data      = await response.json()         
+        
+            console.log(data);
+        
+            Object.entries(data).forEach(([cmb, odds])=>{
+    
+                if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(parseFloat(odds).toFixed(1))
+                else if (game == 5)                                   $('#ods_' + cmb).text(odds);
+                else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(odds)
+    
+            }) 
+
+
+            try{
+    
+
+                const entradas = Object.entries(data);
+
+                const combinaciones = entradas.filter(([key]) => key.length === 3 );
+
+                const win = entradas.filter(([key]) => /^WIN \d+$/.test(key));
+
+                if (combinaciones.length) { 
+                    
+                    const pcMayor = combinaciones.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b);
+                    const pcMenor = combinaciones.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b);
+                
+                    if(game == 5){
+                        $(`#ods_${pcMayor[0]}`).css("color", "#09ff00");
+                        $(`#ods_${pcMenor[0]}`).css("color", "#ff0000");
+
+                    }else{
+                        $(`#${pcMayor[0]}`).css("color", "#09ff00");
+                        $(`#${pcMenor[0]}`).css("color", "#ff0000");
+                    }
+                }
+
+
+                if (win.length) {
+
+                    const winMayor = win.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b );
+
+                    const winMenor = win.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b );
+
+                    const mayorKey = winMayor[0].replace("WIN ", "");
+                    const menorKey = winMenor[0].replace("WIN ", "");
+
+                    $(`#${mayorKey}-${mayorKey}`).css("color", "#09ff00");
+                    $(`#${menorKey}-${menorKey}`).css("color", "#ff0000");
+                }
+            
+            }catch(error){console.log("Error: ", error)}
+            
+        // }catch(error){console.log("Error: ", error)}
+
+
+        Consulta_ultimas_carreras()
+        Consultas_jackpot_carrera()
+        
+        return true
+        
+    
+    
+    // } catch (error) {
+
+    //     console.log("Error: ", error)
+    //     $('.precios_tbl').each(function() {  
+
+    //         $(`#${$(this).attr('id')}`).text('- - -')
+
+    //     });
+
+    //     return false
+
+    // }
+
+            
+
+
+}
+ 
+
+const confirmar_configuracion = async () => {
+
+    console.log('confirmar_configuracion')
+
+    const datos_re = {'realizar':'display_config', "device_token" : localStorage.getItem('dkg')};
+    const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+    const data     = await response.json()
+
+    if(data['config_version'] != localStorage.getItem("version")){
+
+        localStorage.setItem('game_id', data['config']['games']) 
+        localStorage.setItem('grupo', data['grupo']['id']) 
+        localStorage.setItem('version', data['config_version']) 
+        localStorage.setItem('lugar', data['lugar']['nombre'])
+        localStorage.setItem('jk', data['jackpot_id']) 
+    }
+
+}
+ 
+
+
+
+const Consulta_resultados = async () => {
+
+    console.log('Consulta_resultados');
+    const datos_re = {'realizar':'consulta_resultados' ,  'grupo_id' : localStorage.getItem('grupo'), 'game_id' : localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
+    const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+    const data     = await response.json()
+    console.log(response, data, 'Consulta_resultados');
+    
+    let pos1 = data['settlement']['result_odds'][1]['selection_key'][0] 
+    let pos2 = data['settlement']['result_odds'][1]['selection_key'][2]
+    
+    let pago_win  = parseFloat(data['settlement']['result_odds'][0]['odds']).toFixed(1)
+    let pago_pale = parseFloat(data['settlement']['result_odds'][1]['odds']).toFixed(1)
+
+   
+    document.getElementById("n_race").innerHTML = data['event_number']
+
+    document.getElementById("img_win").src = `static/img/numeros/p6/n${pos1}.svg`;
+    document.getElementById("p_win").innerHTML = pago_win
+   
+    document.getElementById("img1_ext").src = `static/img/numeros/p6/n${pos1}.svg`;
+    document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
+    document.getElementById("p_ext").innerHTML = pago_pale
+
+    // [0 video, 1 multiplicador, 2 sorteo_id (para el bono), 3 numero de carrera, 4 cuota win, 5 cuota exacta]
+    // nup[1]: multiplicador del resultado ('X2', 'X3' o 'X'); gallos siempre 'X'
+    const mult = [2, 3, 4].includes(Number(localStorage.getItem('game_id'))) && [2, 3].includes(Number(data['race_multiplier'])) ? `X${Number(data['race_multiplier'])}` : 'X'
+
+    return [data['selected_video'], mult, data['sorteo_id'], data['event_number'], pago_win, pago_pale]
+
+}
+
+
+
+
+const consult_gallos = data => {
+
+    $('.sidebar_ult div').remove();
+
+    $('.sidebar_ult').append('<div class="row row-title">HISTORIAL DE TORNEO</div>');
+ 
+    data.results.forEach(dts => {
+
+        const result = dts.result;
+        const inf = dts.settlement.result_odds || [];
+
+        // ==========================================
+        // BUSCAR ODDS
+        // ==========================================
+
+        const getOdds = selection_key => {
+
+            const apuesta = inf.find(item => item.selection_key === selection_key);
+            return apuesta ? apuesta.odds : '';
+
+        };
+
+
+        // ==========================================
+        // RESULTADO
+        // ==========================================
+
+        const order = (result.order_key || '').split('-');
+        const generalWinner = result.general_winner || '';
+
+
+        // ==========================================
+        // ODDS
+        // ==========================================
+
+        const ganadorTorneo = getOdds(result.order_key);
+        const ganadorGeneral = getOdds(`GENERAL:${generalWinner}`);
+        const ganadorR1 = getOdds(`FIGHT_1:${order[0]}`);
+        const ganadorR2 = getOdds(`FIGHT_2:${order[1]}`);
+        const ganadorR3 = getOdds(`FIGHT_3:${order[2]}`);
+
+
+        // ==========================================
+        // RESULT KEY
+        // ==========================================
+
+        const resultKey = result.result_key || '';
+
+
+        // ==========================================
+        // HTML
+        // ==========================================
+
+        $('.sidebar_ult').append(`
+
+            <div class="row row-body">
+
+                <!-- GANADOR -->
+
+                <div class="row row-b row-b-1">
+                    <div class="items-num">${dts.event_number ?? ''}</div>
+                    <div class="items-info">GANADOR</div>
+                    <div><span class="bg_${generalWinner || 'emp'}" style="color:transparent;"> - - -</span></div>
+                    <div class="odds-result">${ganadorGeneral}</div>
+                </div>
+
+
+                <!-- RONDAS -->
+
+                <div class="row row-b row-b-2">
+
+                    <div class="items-num"></div>
+                    <div class="items-info">RONDAS</div>
+
+                    <!-- RONDA 1 -->
+
+                    <div><span class="bg_${order[0] || 'emp'}" style="color:transparent;"> - - -</span></div>
+                    <div class="odds-result">${ganadorR1}</div>
+                    <div><span class="bg_${order[1] || 'emp'}"style="color:transparent;">- - -</span></div>
+                    <div class="odds-result">${ganadorR2}</div>
+                    <div><span class="bg_${order[2] || 'emp'}" style="color:transparent;">- - -</span></div>
+                    <div class="odds-result">${ganadorR3}</div>
+
+                </div>
+
+
+                <!-- NUMERO -->
+
+                <div class="row row-b row-b-3">
+
+                    <div class="items-num"></div>
+                    <div class="items-info">NO. ${resultKey}</div>
+                    <div><span class="bg_${order[0] || 'emp'}">${resultKey[0] ?? ''}</span></div>
+                    <div><span class="bg_${order[1] || 'emp'}">${resultKey[1] ?? ''}</span></div>
+                    <div><span class="bg_${order[2] || 'emp'}">${resultKey[2] ?? ''}</span></div>
+                    <div class="odds-result">${ganadorTorneo}</div>
+
+                </div>
+
+            </div>
+        `);
+    });
+};
+
+
+
+const Consulta_ultimas_carreras = async () => {
+
+ 
+    // try{
+
+        const datos_re = {'realizar':'history_results', 'grupo_id' : localStorage.getItem('grupo'), 'game_id': localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
+
+        const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+        
+        const data      = await response.json()
+
+        console.log(data, "Consulta_ultimas_carreras");
+
+        if (localStorage.getItem('game_id') == 5){
+
+            consult_gallos(data)
+            return
+
+        }else if(localStorage.getItem('game_id') == 1){
+
+            
+            consult_ruleta(data)
+            return
+        }          
+
+        data['results'].map((races, cont)=>{
+
+            dc = { 2 : 'p6',3 : 'p8',4 : 'h7'}
+
+            // Guia: race_multiplier viene en cada resultado (2, 3 o null). Solo carreras.
+            // Sin multiplicador la imagen se oculta: una <img> sin src dibuja un cuadro vacio.
+            const mult     = races['race_multiplier']
+            const img_mult = document.getElementById(`bns${cont}`)
+
+            if (img_mult) {
+                if (mult == 2 || mult == 3) {
+                    img_mult.src = `../static/img/X${mult}_V.png`
+                    img_mult.style.visibility = 'visible'
+                } else {
+                    img_mult.removeAttribute('src')
+                    img_mult.style.visibility = 'hidden'
+                }
+            }
+
+            document.getElementById(`numero_race${cont}`).innerHTML = races['event_number'] 
+            document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][0]['selection_key']}.svg`
+            document.getElementById(`lugarprc_1er${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][0]['odds']).toFixed(1) 
+
+
+            document.getElementById(`lugarimg_pls_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][1]['selection_key'][0]}.svg`
+            document.getElementById(`lugarimg_pls_2do${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][1]['selection_key'][2]}.svg`
+            document.getElementById(`lugarprc_pls${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][1]['odds']).toFixed(1) 
+
+
+        })
+        
+    //      return true
+        
+    // } catch (error) {
+    
+    //     console.log("Error: ", error)
+    //     return false
+
+    // }
+            
+
+}
+
+ 
+
+

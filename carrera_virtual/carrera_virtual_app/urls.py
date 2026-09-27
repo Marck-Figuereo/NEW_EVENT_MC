@@ -14,7 +14,7 @@ urlpatterns=[
     path('HORSES_7',	views.HORSES_7,	        name="HORSES_7"),
     path('ROULETTE',	views.ROULETTE,	        name="ROULETTE"),
     path('ROOSTERS',	views.ROOSTERS,	        name="ROOSTERS"),
-    path('',            views.configuration,    name="configuration"),
+    path('configuration',            views.configuration,    name="configuration"),
     
 
 
