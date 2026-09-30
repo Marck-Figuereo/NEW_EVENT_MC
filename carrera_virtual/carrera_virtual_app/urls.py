@@ -7,6 +7,8 @@ urlpatterns=[
 
 
     #GENERALES
+    # configuration.html envia sus POST de activacion a "/"
+    path('',          views.configuration,    name="inicio"),
     path('games',views.games,name="games"),
 
     path('DOGS_6',	    views.DOGS_6,	        name="DOGS_6"),

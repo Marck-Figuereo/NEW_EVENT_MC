@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'carrera_virtual_app',
-    'django_redis',
+    # 'django_redis' se elimino: el visor ya no lee Redis (guia sin Redis)
 ]
 
 MIDDLEWARE = [
@@ -133,15 +133,6 @@ STATICFILES_DIRS = [
 
 
 
-#PRUEBA DE REDIS
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-        "TIMEOUT": 60,
-    }
-}
+# Sin bloque CACHES: el visor ya no lee claves de la API en Redis.
+# La cache, sus TTL y el respaldo en PostgreSQL viven dentro de la API.
 

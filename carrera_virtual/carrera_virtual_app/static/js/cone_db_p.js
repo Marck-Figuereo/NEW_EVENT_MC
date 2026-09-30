@@ -31,6 +31,51 @@ function formatoTiempo(segundos) {
 
 const moneda = (number) => new Intl.NumberFormat('es-US', {style: 'currency',currency: 'USD', minimumFractionDigits: 2}).format(number);
 
+
+// ==========================================
+// ACCESO A DJANGO LOCAL (guia "Integracion del visor con la API sin Redis")
+// JavaScript solo llama /games del mismo origen; Django consulta la API.
+// ==========================================
+
+const post_visor = datos => fetch("/games",{ method:"POST", body:JSON.stringify(datos), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+
+// Token revocado o visor inactivo: se limpia el visor y se vuelve al flujo de activacion (QR)
+const volver_a_configuracion = () => {
+    localStorage.clear()
+    window.location.href = "/"
+}
+
+
+// Segundos -> "m:ss" (tiempos de las peleas de gallos)
+function convtSegs(sgs) {
+    const total = Number(sgs) || 0
+    const min = Math.floor(total / 60)
+    const sec = total % 60
+    return `${min}:${String(sec).padStart(2, '0')}`
+}
+
+
+// ==========================================
+// GALLOS: peleas codificadas en el nombre del video
+// 9 digitos, 3 por pelea: [ganador][segundos con 2 digitos]
+//   065138229.mp4 -> pelea 1: gana 0 en 65 s | pelea 2: gana 1 en 38 s | pelea 3: gana 2 en 29 s
+// Ganador: 1 azul, 2 blanco, 0 empate
+// ==========================================
+
+// La API nombra al ganador con palabras (order_key "BLUE-DRAW-WHITE", GENERAL:WHITE, FIGHT_1:BLUE);
+// el video, con digitos. Estos mapas permiten usar cualquiera de los dos.
+const NOMBRE_GALLO = { '1' : 'BLUE', '2' : 'WHITE', '0' : 'DRAW' }
+const COLOR_GALLO  = { '1' : 'blue', '2' : 'white', '0' : 'silver', 'BLUE' : 'blue', 'WHITE' : 'white', 'DRAW' : 'silver' }
+
+const peleas_desde_video = video => {
+
+    const nombre = String(video || '').split('/').pop().split('?')[0].replace(/\.[^.]+$/, '')
+
+    if (!/^\d{9}$/.test(nombre)) return null
+
+    return [0, 3, 6].map(i => ({ ganador : nombre[i], segundos : Number(nombre.substr(i + 1, 2)) }))
+}
+
 var  pc_tl = {};
 
 
@@ -135,7 +180,12 @@ const pintar_caja_jackpot = (id_html, clave, jackpot) => {
 
 
 // Error al consultar los jackpots: ambas cajas muestran ERROR
+var jackpots_cargados = false   // ya se pinto al menos una respuesta valida
+
+// Falla de la API: si ya hay montos en pantalla se conservan (guia, seccion 6);
+// ERROR solo se muestra si nunca se pudieron cargar.
 const error_jackpots = () => {
+    if (jackpots_cargados) return
     detener_animacion_jack('#jp_global')
     detener_animacion_jack('#jp_local')
     $('#jp_global, #jp_local').text('ERROR').css('font-size', '22px')
@@ -171,6 +221,8 @@ const Consultas_jackpot_carrera = async () =>{
 
     const jk_global = (data['global_jackpots'] || [])[0]
     const jk_local  = (data['local_jackpots']  || [])[0]
+
+    jackpots_cargados = true
 
     pintar_caja_jackpot('#jp_global', 'datos_jack_gl', jk_global)
     pintar_caja_jackpot('#jp_local',  'datos_jack_lc', jk_local)
@@ -311,6 +363,12 @@ const Consulta_bonos = async (sorteo_id) => {
             const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'} })
             const data      = await response.json()
 
+            // 400 / 404: la API rechazo la consulta; reintentar no cambia nada (guia, seccion 6)
+            if (response.status == 400 || response.status == 404 || response.status == 501) {
+                console.log('Bono no disponible:', response.status, data)
+                return false
+            }
+
             // Nunca mostrar un bono de otro sorteo
             const mismo_sorteo = data && (!data['sorteo_id'] || data['sorteo_id'] == sorteo_id)
 
@@ -347,6 +405,8 @@ const pintar_ganador_bono = () => {
 
 
 
+var tabla_cargada = null   // table_odds_id que esta dibujado en la tabla
+
 const Consulta_Tabla = async (id_table, game) => {
 
     console.log('Consulta_Tabla', id_table, game);
@@ -355,6 +415,22 @@ const Consulta_Tabla = async (id_table, game) => {
         // try {        
 
             
+
+            const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
+
+            // Primero se piden los datos. La tabla se limpia y se vuelve a pintar en el mismo
+            // paso, cuando ya llegaron: el navegador no llega a dibujar la tabla vacia (sin pestaneo).
+            let data = null
+
+            try {
+                const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
+                data = response.ok ? await response.json() : null
+            } catch (error) { console.log("Error: ", error) }
+
+            // API no disponible: se conserva la tabla que ya esta en pantalla
+            if (!data || typeof data !== 'object') return true
+        
+            console.log(data);
 
             $('.precios_tbl').each(function() {  
                 
@@ -365,13 +441,6 @@ const Consulta_Tabla = async (id_table, game) => {
 
             // Gallos: quitar el verde/rojo del sorteo anterior (sus cuotas usan la clase .ods)
             $('.ods').css("color", "");
-
-            const datos_re = {'realizar':'consulta_tabla' , 'table_odds_id' : id_table};
-    
-            var response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-            var data      = await response.json()         
-        
-            console.log(data);
         
             Object.entries(data).forEach(([cmb, odds])=>{
     
@@ -425,6 +494,8 @@ const Consulta_Tabla = async (id_table, game) => {
         // }catch(error){console.log("Error: ", error)}
 
 
+        tabla_cargada = id_table
+
         Consulta_ultimas_carreras()
         Consultas_jackpot_carrera()
         
@@ -451,58 +522,237 @@ const Consulta_Tabla = async (id_table, game) => {
 }
  
 
+// Aplica una configuracion del visor (display_config o heartbeat con config_changed)
+const aplicar_configuracion = data => {
+
+    if (!data || !data['config']) return
+
+    const game_anterior  = String(localStorage.getItem('game_id'))
+    const grupo_anterior = String(localStorage.getItem('grupo'))
+
+    localStorage.setItem('game_id', data['config']['games']) 
+    localStorage.setItem('grupo', (data['grupo'] || {})['id']) 
+    localStorage.setItem('version', data['config_version']) 
+    localStorage.setItem('lugar', (data['lugar'] || {})['nombre'])
+    localStorage.setItem('jk', data['jackpot_id']) 
+
+    $('.txt_lgr').text(localStorage.getItem('lugar'))
+
+    // Otro juego: se abre su pantalla (o se recarga esta con el juego nuevo)
+    const game_url = data['config']['game_url']
+
+    if (game_url && game_url != localStorage.getItem('url')) {
+        localStorage.setItem('url', game_url)
+        window.location.href = "/" + game_url
+        return
+    }
+
+    if (String(localStorage.getItem('game_id')) != game_anterior) {
+        location.reload()
+        return
+    }
+
+    // Mismo juego en otro grupo: se reconecta el WebSocket con el grupo nuevo
+    if (String(localStorage.getItem('grupo')) != grupo_anterior && typeof reconectar_websocket == 'function') reconectar_websocket()
+}
+
+
+// Guia 5.4: se consulta al iniciar; despues, solo cuando el heartbeat indica otra config_version
 const confirmar_configuracion = async () => {
 
     console.log('confirmar_configuracion')
 
-    const datos_re = {'realizar':'display_config', "device_token" : localStorage.getItem('dkg')};
-    const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    const data     = await response.json()
+    try {
 
-    if(data['config_version'] != localStorage.getItem("version")){
+        const response = await post_visor({'realizar':'display_config', "device_token" : localStorage.getItem('dkg')})
 
-        localStorage.setItem('game_id', data['config']['games']) 
-        localStorage.setItem('grupo', data['grupo']['id']) 
-        localStorage.setItem('version', data['config_version']) 
-        localStorage.setItem('lugar', data['lugar']['nombre'])
-        localStorage.setItem('jk', data['jackpot_id']) 
+        if (response.status == 404) { volver_a_configuracion(); return }
+        if (!response.ok) return   // API no disponible: se conserva la configuracion actual
+
+        const data = await response.json()
+
+        if (data['config_version'] != localStorage.getItem("version")) aplicar_configuracion(data)
+
+    } catch (error) { console.log("Error: ", error) }
+}
+
+
+// Guia 5.5: heartbeat periodico. Mantiene el visor visible en soporte y detecta cambios de configuracion.
+var heartbeat_segundos = 30
+
+const enviar_heartbeat = async () => {
+
+    try {
+
+        const response = await post_visor({'realizar':'display_heartbeat', "device_token" : localStorage.getItem('dkg'), "config_version" : localStorage.getItem('version')})
+
+        // 404: se confirma con la configuracion antes de sacar al visor
+        if (response.status == 404) { await confirmar_configuracion(); return }
+
+        // 501: la API todavia no tiene el endpoint de heartbeat; se reintenta cada 5 minutos
+        if (response.status == 501) { console.log('La API no tiene heartbeat desplegado'); heartbeat_segundos = 300; return }
+
+        if (response.ok) {
+
+            const data = await response.json()
+
+            const intervalo = Number(((data || {})['heartbeat'] || {})['heartbeat_interval_seconds'])
+            if (intervalo > 0) heartbeat_segundos = intervalo
+
+            if (data['config_changed']) aplicar_configuracion(data['config'])
+        }
+
+    } catch (error) {
+        console.log("Error: ", error)
+    } finally {
+        setTimeout(enviar_heartbeat, heartbeat_segundos * 1000)
+    }
+}
+
+
+// Guia 5.6: estado del evento en curso. Se usa al iniciar y al reconectar el WebSocket.
+const consultar_evento_actual = async () => {
+
+    try {
+
+        const response = await post_visor({'realizar':'evento_actual', "device_token" : localStorage.getItem('dkg'), "game_id" : localStorage.getItem('game_id')})
+        if (!response.ok) return null
+
+        const data = await response.json()
+        return (data && data['has_event']) ? data['event'] : null
+
+    } catch (error) {
+        console.log("Error: ", error)
+        return null
+    }
+}
+
+
+
+// Resultado del sorteo que se va a reproducir (results[0]).
+// sorteo_esperado: sorteo_id del WebSocket. El resultado puede tardar unos segundos en publicarse:
+// se reintenta cada 2 s (maximo 20 s) para no reproducir el video de otro sorteo.
+// Devuelve [0 video, 1 multiplicador, 2 sorteo_id (para el bono), 3 numero de evento, 4 cuota win, 5 cuota exacta] o null.
+const Consulta_resultados = async (sorteo_esperado = null) => {
+
+    console.log('Consulta_resultados', sorteo_esperado);
+
+    const inicio = Date.now()
+    let data = null
+
+    while (true) {
+
+        try {
+
+            const response = await post_visor({'realizar':'consulta_resultados', 'game_id' : localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')})
+            data = response.ok ? await response.json() : null
+
+        } catch (error) {
+            console.log("Error: ", error)
+            data = null
+        }
+
+        const hay_video = data && data['selected_video']
+
+        if (hay_video && (!sorteo_esperado || !data['sorteo_id'] || data['sorteo_id'] == sorteo_esperado)) break
+
+        if (Date.now() - inicio + 2000 > 20000) {
+            console.log('El resultado del sorteo no llego a tiempo', sorteo_esperado, data)
+            return null
+        }
+
+        await esperar(2000)
     }
 
+    console.log(data, 'Consulta_resultados');
+
+    const game = Number(localStorage.getItem('game_id'))
+
+    // Gallos: su pantalla de resultados se llena con el video que se reproduce (ver excute_race)
+    if (game == 5) return [data['selected_video'], 'X', data['sorteo_id'], data['event_number'], '', '', data]
+
+
+    // Carreras
+    let pago_win  = ''
+    let pago_pale = ''
+
+    try {
+
+        const odds = data['settlement']['result_odds']
+
+        let pos1 = odds[1]['selection_key'][0] 
+        let pos2 = odds[1]['selection_key'][2]
+        
+        pago_win  = parseFloat(odds[0]['odds']).toFixed(1)
+        pago_pale = parseFloat(odds[1]['odds']).toFixed(1)
+
+        if (document.getElementById("n_race")) {
+
+            document.getElementById("n_race").innerHTML = data['event_number']
+
+            document.getElementById("img_win").src = `static/img/numeros/p6/n${pos1}.svg`;
+            document.getElementById("p_win").innerHTML = pago_win
+           
+            document.getElementById("img1_ext").src = `static/img/numeros/p6/n${pos1}.svg`;
+            document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
+            document.getElementById("p_ext").innerHTML = pago_pale
+        }
+
+    } catch (error) { console.log("Resultado sin cuotas: ", error) }
+
+    // nup[1]: multiplicador del resultado ('X2', 'X3' o 'X')
+    const mult = [2, 3, 4].includes(game) && [2, 3].includes(Number(data['race_multiplier'])) ? `X${Number(data['race_multiplier'])}` : 'X'
+
+    return [data['selected_video'], mult, data['sorteo_id'], data['event_number'], pago_win, pago_pale, data]
+
 }
- 
 
 
+// Pantalla de resultados de gallos (#container-resultado-carrera).
+// Ganadores y cuotas salen del resultado de la API; los tiempos, de las peleas del video.
+const pintar_resultado_gallos = (data, peleas) => {
 
-const Consulta_resultados = async () => {
+    if (!data) return
 
-    console.log('Consulta_resultados');
-    const datos_re = {'realizar':'consulta_resultados' ,  'grupo_id' : localStorage.getItem('grupo'), 'game_id' : localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
-    const response = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{"X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-    const data     = await response.json()
-    console.log(response, data, 'Consulta_resultados');
-    
-    let pos1 = data['settlement']['result_odds'][1]['selection_key'][0] 
-    let pos2 = data['settlement']['result_odds'][1]['selection_key'][2]
-    
-    let pago_win  = parseFloat(data['settlement']['result_odds'][0]['odds']).toFixed(1)
-    let pago_pale = parseFloat(data['settlement']['result_odds'][1]['odds']).toFixed(1)
+    const result = data['result'] || {}
+    const odds   = (data['settlement'] || {})['result_odds'] || []
 
-   
-    document.getElementById("n_race").innerHTML = data['event_number']
+    const cuota = selection_key => {
+        const apuesta = odds.find(item => String(item['selection_key']) === String(selection_key))
+        if (!apuesta) return ''
+        const n = parseFloat(apuesta['odds'])
+        return isNaN(n) ? apuesta['odds'] : n.toFixed(1)
+    }
 
-    document.getElementById("img_win").src = `static/img/numeros/p6/n${pos1}.svg`;
-    document.getElementById("p_win").innerHTML = pago_win
-   
-    document.getElementById("img1_ext").src = `static/img/numeros/p6/n${pos1}.svg`;
-    document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
-    document.getElementById("p_ext").innerHTML = pago_pale
+    // El codigo del video manda: es lo que el publico acaba de ver en cada pelea.
+    // El resultado de la API solo se usa si el nombre del video no trae el codigo.
+    const order_api = (result['order_key'] || '').split('-').filter(x => x !== '')
+    const order     = peleas ? peleas.map(p => NOMBRE_GALLO[p.ganador] || p.ganador) : order_api   // BLUE / WHITE / DRAW
 
-    // [0 video, 1 multiplicador, 2 sorteo_id (para el bono), 3 numero de carrera, 4 cuota win, 5 cuota exacta]
-    // nup[1]: multiplicador del resultado ('X2', 'X3' o 'X'); gallos siempre 'X'
-    const mult = [2, 3, 4].includes(Number(localStorage.getItem('game_id'))) && [2, 3].includes(Number(data['race_multiplier'])) ? `X${Number(data['race_multiplier'])}` : 'X'
+    if (peleas && order_api.length == 3 && order_api.join('-') != order.join('-')) console.log('El resultado de la API no coincide con el video', order_api, order)
 
-    return [data['selected_video'], mult, data['sorteo_id'], data['event_number'], pago_win, pago_pale]
+    const general = String(result['general_winner'] ?? '')
+    const numero  = peleas ? peleas.map(p => p.ganador).join('') : (result['result_key'] || '')
+    const color   = ganador => `result-${COLOR_GALLO[ganador] || 'silver'}`
 
+    $('.body_div').text(data['event_number'] ?? '')
+
+    $('#div_color_win').attr('class', color(general))
+    $('#win-odd-text').text(cuota(`GENERAL:${general}`))
+
+    for (let i = 1; i <= 3; i++) {
+
+        const ganador = order[i - 1]
+
+        $(`#div-color-round${i}`).attr('class', color(ganador))
+        $(`#text-color-round${i}`).text(cuota(`FIGHT_${i}:${ganador}`))
+
+        $(`#div-result-trpl-${i}`).attr('class', color(ganador))
+        $(`#div-result-trpl-${i}`).text(peleas ? convtSegs(peleas[i - 1].segundos) : '')
+    }
+
+    $('#text-result-trpl').text(`No. ${numero}`)
+    $('#text-result-trpl-odd').text(cuota(order.length == 3 ? order.join('-') : result['order_key']))
 }
 
 
@@ -516,8 +766,13 @@ const consult_gallos = data => {
  
     data.results.forEach(dts => {
 
+        if (!dts || !dts.result) return;
+
         const result = dts.result;
-        const inf = dts.settlement.result_odds || [];
+        const inf = (dts.settlement || {}).result_odds || [];
+
+        // Codigo de las peleas en su propio campo (video_code, ej. "146249065")
+        const peleas = peleas_desde_video(dts.video_code || (dts.settlement || {}).selected_video);
 
         // ==========================================
         // BUSCAR ODDS
@@ -602,9 +857,7 @@ const consult_gallos = data => {
 
                     <div class="items-num"></div>
                     <div class="items-info">NO. ${resultKey}</div>
-                    <div><span class="bg_${order[0] || 'emp'}">${resultKey[0] ?? ''}</span></div>
-                    <div><span class="bg_${order[1] || 'emp'}">${resultKey[1] ?? ''}</span></div>
-                    <div><span class="bg_${order[2] || 'emp'}">${resultKey[2] ?? ''}</span></div>
+                    ${[0, 1, 2].map(i => `<div><span class="bg_${order[i] || (peleas ? NOMBRE_GALLO[peleas[i].ganador] : '') || 'emp'}">${peleas ? convtSegs(peleas[i].segundos) : (resultKey[i] ?? '')}</span></div>`).join('')}
                     <div class="odds-result">${ganadorTorneo}</div>
 
                 </div>
@@ -621,13 +874,19 @@ const Consulta_ultimas_carreras = async () => {
  
     // try{
 
-        const datos_re = {'realizar':'history_results', 'grupo_id' : localStorage.getItem('grupo'), 'game_id': localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
+        const datos_re = {'realizar':'history_results', 'game_id': localStorage.getItem('game_id'), "device_token" : localStorage.getItem('dkg')};
 
-        const response  = await fetch("/games",{ method:"POST", body:JSON.stringify(datos_re), headers:{ "X-CSRFToken":getCookie2('csrftoken'), "X-Requested-With":"XMLHttpRequest", 'Content-Type':'application/json'}})
-        
-        const data      = await response.json()
+        let data = null
+
+        try {
+            const response = await post_visor(datos_re)
+            data = response.ok ? await response.json() : null
+        } catch (error) { console.log("Error: ", error) }
 
         console.log(data, "Consulta_ultimas_carreras");
+
+        // API no disponible: se conserva el historial que ya esta en pantalla
+        if (!data || !Array.isArray(data['results'])) return
 
         if (localStorage.getItem('game_id') == 5){
 

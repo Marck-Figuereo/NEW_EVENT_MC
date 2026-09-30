@@ -34,17 +34,23 @@ const etiqueta_multiplicador = valor => {
 
 
 
-if(game_code == 5){
-  
+// ==========================================
+// GALLOS (game_id 5): pantallas propias y colores de cada gallo
+// Deben verse en todo el archivo (showGallos, mostrando_*), por eso no van dentro de un if.
+// ==========================================
 
-  var screen_resultados_en_carrera   = document.getElementById("container-resultado-en-carrera"); 
-  var screen_resultados_medio_carrera   = document.getElementById("container-resultado-medio-carrera");
+var screen_resultados_en_carrera    = document.getElementById("container-resultado-en-carrera"); 
+var screen_resultados_medio_carrera = document.getElementById("container-resultado-medio-carrera");
 
-  const bkg_clss = {'1' : ['linear-gradient(to bottom, #3475ef, #002363)', '#fff'],
-                    '2' : ['linear-gradient(to bottom, #fff, #bcbcbc)', '#000'],
-                    '0' : ['linear-gradient(to bottom, #4b4b4b, #101010)', '#fff']}
+var bkg_clss = {'1' : ['linear-gradient(to bottom, #3475ef, #002363)', '#fff'],
+                '2' : ['linear-gradient(to bottom, #fff, #bcbcbc)', '#000'],
+                '0' : ['linear-gradient(to bottom, #4b4b4b, #101010)', '#fff']}
 
-}
+const SOMBRA_GALLO = "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)"
+
+var peleas_video = null   // peleas del video de gallos que se esta reproduciendo
+var ciclo_video  = 0      // cada intento de reproducir el video tiene su numero
+var consultas_del_ciclo = -1   // ciclo en el que ya se consultaron jackpot y bono
 
 
 
@@ -87,7 +93,7 @@ var cc = true
 
 
 var tiempo = 0
-var event_tiempo = 288
+var event_tiempo = 288      // duracion de la venta; se toma del WebSocket al empezar cada sorteo
   
 
 var entra_intro = false;
@@ -100,6 +106,18 @@ var entra_sincro_3 = true
 var internet = true
 
 var id_table = 0;
+
+var sorteo_ws = null   // sorteo_id del evento en curso (WebSocket)
+
+// sorteo_id del evento que cerro ventas. Se guarda en el cierre porque el WebSocket
+// anuncia enseguida el sorteo siguiente y sorteo_ws cambia antes de pedir el resultado.
+var sorteo_cierre = null
+
+var cargando_tabla = false   // hay una consulta de tabla en curso
+
+// Contador ascendente de cada pelea (gallos)
+var contadorInterval = null
+var contadorValor    = 0
 
 
 
@@ -168,7 +186,7 @@ cerrar_to = () =>{
     video_event.style.opacity = 0
     screen_tablas.style.opacity = 0
     screen_resultados.style.opacity = 0
-    menjase_bonos.style.opacity = 0
+    if (menjase_bonos) menjase_bonos.style.opacity = 0
     screen_jp.style.opacity = 0
     screen_bono.style.opacity = 0
 
@@ -185,44 +203,131 @@ updateConnectionStatus = () => {
 
 
 
+// ==========================================
+// WEBSOCKET DE CONTEO (guia 5.13)
+// Unica conexion directa del navegador. La URL la inyecta Django en la plantilla (WEBSOCKET_URL).
+// Reconexion con espera incremental y, al reconectar, una consulta del evento actual.
+// ==========================================
+
+var websocket        = null   // una sola conexion activa
+var ws_reintentos    = 0
+var ws_temporizador  = null
+var ws_conecto_antes = false
+
+const url_websocket = () => {
+  const base = String((window.VISOR_CONFIG || {}).wsUrl || '').replace(/\/+$/, '')
+  return `${base}/ws/pos/grupos/${localStorage.getItem('grupo')}/games/${localStorage.getItem('game_id')}/countdown/`
+}
+
+
+const manejar_countdown = data => {
+
+  // Sin evento programado: no trae tabla, numero ni segundos
+  if (data['type'] === 'countdown.empty' || data['state'] === 'no_event') return
+
+  const sorteo_nuevo = data['sorteo_id'] && data['sorteo_id'] != sorteo_ws
+
+  id_table  = data['table_odds_id']
+  tiempo    = data['seconds_left']
+  sorteo_ws = data['sorteo_id'] || sorteo_ws
+
+  // Duracion configurable de la venta (panel de administracion): el primer conteo del sorteo
+  if (sorteo_nuevo && data['state'] === 'selling' && Number(tiempo) > 0) event_tiempo = Number(tiempo)
+
+  // Sorteo siguiente en venta: su tabla se pide enseguida, aunque la carrera o pelea
+  // anterior siga en pantalla, para que este lista al volver a las tablas.
+  if (data['state'] === 'selling' && id_table && (sorteo_nuevo || id_table != tabla_cargada) && !cargando_tabla) {
+    cargando_tabla = true
+    Consulta_Tabla(id_table, Number(game_code)).then(ok => { vd = ok }).finally(() => { cargando_tabla = false })
+  }
+
+  // Multiplicativo (solo carreras): se revela en los ultimos 5 s de venta y se mantiene
+  // durante in_progress / awaiting_result. Un evento nuevo en venta llega sin el.
+  if (data['race_multiplier'] != null) multiplicador_ws = data['race_multiplier']
+  else if (data['state'] === 'selling' && Number(data['seconds_left']) > 5) multiplicador_ws = null
+  
+  $('#id_sorteos_c_id').text(data['event_number']);
+  $('#tiempo_regresivo').text(formatoTiempo(tiempo));
+}
+
+
+// Estado inicial o recuperacion tras reconectar (guia 5.6): una sola consulta, no polling
+const recuperar_evento_actual = async () => {
+
+  const evento = await consultar_evento_actual()
+  if (!evento) return
+
+  if (evento['table_odds_id']) id_table = evento['table_odds_id']
+  if (evento['sorteo_id'])     sorteo_ws = evento['sorteo_id']
+  if (evento['race_multiplier'] != null) multiplicador_ws = evento['race_multiplier']
+
+  $('#id_sorteos_c_id').text(evento['event_number'] ?? '');
+}
+
+
 connectWebSocket = async () => {
 
-    if (navigator.onLine) { // Solo intenta conectar si está online
-        
-        if(!internet) location.reload()  
-      
-        Swal.close()
-        
-        let websocket = new WebSocket(`ws://api-demp.applications.svc.cluster.local:8000/ws/pos/grupos/${localStorage.getItem('grupo')}/games/${localStorage.getItem('game_id')}/countdown/`);
-        
-        websocket.onmessage = (event) => {
-            
-            const data = JSON.parse(event.data);
-            
-            id_table = data['table_odds_id']
-            tiempo = data['seconds_left']
+    if (!navigator.onLine) return
 
-            // El multiplicador solo aparece despues de cerrar ventas (estado in_progress)
-            if (data['state'] === 'in_progress' && data['race_multiplier'] != null) multiplicador_ws = data['race_multiplier']
-            else if (data['state'] === 'selling') multiplicador_ws = null
-            
-            $('#id_sorteos_c_id').text(data['event_number']);
-            $('#tiempo_regresivo').text(formatoTiempo(tiempo));
-            
-
-        };
-
-        websocket.onclose = () => setTimeout(connectWebSocket, 1000); // Intenta reconectar automáticamente
-
-        websocket.onerror = () => websocket.close();
-     
-        return new Promise((resolve, reject)=>{
-    
-            setTimeout(()=> resolve(), 2000)
-          
-        })
+    if (!(window.VISOR_CONFIG && window.VISOR_CONFIG.wsUrl)) {
+      console.error('WEBSOCKET_URL no esta configurado en el visor')
+      return
     }
 
+    // Una sola conexion activa
+    if (websocket && (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING)) return
+        
+    if(!internet) location.reload()  
+  
+    Swal.close()
+    clearTimeout(ws_temporizador)
+    
+    const socket = new WebSocket(url_websocket());
+    websocket = socket
+
+    socket.onopen = () => {
+      ws_reintentos = 0
+      if (ws_conecto_antes) recuperar_evento_actual()   // se pudo perder un mensaje
+      ws_conecto_antes = true
+    }
+    
+    socket.onmessage = (event) => {
+      let data
+      try { data = JSON.parse(event.data) } catch (error) { console.log('Mensaje de WebSocket invalido'); return }
+      manejar_countdown(data)
+    };
+
+    // Reconexion con espera incremental: 1, 2, 4, 8 y maximo 15 segundos
+    socket.onclose = () => {
+
+      if (websocket !== socket) return
+      websocket = null
+
+      const espera = Math.min(1000 * Math.pow(2, ws_reintentos), 15000)
+      ws_reintentos++
+
+      clearTimeout(ws_temporizador)
+      ws_temporizador = setTimeout(connectWebSocket, espera)
+    }
+
+    socket.onerror = () => socket.close();
+ 
+    // Se espera un momento para recibir el primer mensaje (tabla y tiempo)
+    return esperar(2000)
+
+}
+
+
+// Cambio de grupo (heartbeat con config_changed): se cierra la conexion actual y se abre otra
+const reconectar_websocket = () => {
+
+  const anterior = websocket
+  websocket = null
+
+  if (anterior) { anterior.onclose = null; anterior.close() }
+
+  ws_reintentos = 0
+  connectWebSocket()
 }
 
 // Manejadores de eventos para cambios en el estado de la conexión
@@ -231,9 +336,8 @@ window.addEventListener('offline', updateConnectionStatus);
 
 
     
+// La configuracion ya no se consulta aqui: la vigila el heartbeat (guia 5.4 y 5.5)
 const sincronizacion = async () =>{
-
-  await confirmar_configuracion()
  
   vd = await Consulta_Tabla(id_table, Number(game_code)) 
 
@@ -389,78 +493,37 @@ const mostrando_tablas = async () =>{
 }
 
 
-const showGallos = async (inf) =>{
+// Gallos: durante el video se anuncia el resultado de cada pelea cuando termina.
+// peleas = [{ganador, segundos} x3] leidas del nombre del video (peleas_desde_video).
+const showGallos = async (peleas) =>{
 
-  const time_vd1 = Number(`${inf[0].substr(7,2)}000`)
-  const time_vd2 = Number(`${inf[0].substr(10,2)}000`)
-  const time_vd3 = Number(`${inf[0].substr(13,2)}000`)
+  if (!peleas) return
 
-  console.log(inf[0].substr(7,2), inf[0].substr(10,2), inf[0].substr(13,2));
+  for (let i = 0; i < 3; i++) {
 
-  console.log(time_vd1, time_vd2, time_vd3);
+    const pelea = peleas[i]
+    const ms    = pelea.segundos * 1000
+    const [fondo, texto] = bkg_clss[pelea.ganador] || bkg_clss['0']
 
-  await esperar(time_vd1)
+    await esperar(ms)
 
-  console.log("Termino pelea 1");
+    console.log(`Termino pelea ${i + 1}`);
 
-  $("#div_medio_1").css("background" , bkg_clss[inf[0][2]][0])
-  $("#div_medio_1").css("color" ,      bkg_clss[inf[0][2]][1])
-  $("#div_medio_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
-  $(".txt_medio_1").text(convtSegs(inf[0].substr(7,2)))
-  $(".tt_medio").text('Pelea #1')
-  $("#container-resultado-medio-carrera").css("opacity" , "1")
+    $("#div_medio_1").css({ "background" : fondo, "color" : texto, "box-shadow" : SOMBRA_GALLO })
+    $(".txt_medio_1").text(convtSegs(pelea.segundos))
+    $(".tt_medio").text(`Pelea #${i + 1}`)
+    $("#container-resultado-medio-carrera").css("opacity" , "1")
 
-  if(time_vd1 < 60000) await esperar(3000)
+    if (ms < 60000) await esperar(3000)
 
-  $("#container-resultado-medio-carrera").css("opacity" , "0")
-  $("#container-resultado-en-carrera").css("opacity" , "1")
-  $("#div_result_1").css("background" , bkg_clss[inf[0][2]][0])
-  $("#div_result_1").css("color" ,      bkg_clss[inf[0][2]][1])
-  $("#div_result_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
-  $(".txt_result_1").text(convtSegs(inf[0].substr(7,2)))
+    $("#container-resultado-medio-carrera").css("opacity" , "0")
+    $("#container-resultado-en-carrera").css("opacity" , "1")
 
-  iniciarConteoAscendente(Number(inf[0].substr(10,2)))
+    $(`#div_result_${i + 1}`).css({ "background" : fondo, "color" : texto, "box-shadow" : SOMBRA_GALLO })
+    $(`.txt_result_${i + 1}`).text(convtSegs(pelea.segundos))
 
-
-  await esperar(time_vd2)
-  console.log("Termino pelea 2");
-
-  $("#div_medio_1").css("background" , bkg_clss[inf[0][3]][0])
-  $("#div_medio_1").css("color" ,      bkg_clss[inf[0][3]][1])
-  $("#div_medio_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
-  $(".txt_medio_1").text(convtSegs(inf[0].substr(10,2)))
-  $(".tt_medio").text('Pelea #2')
-  $("#container-resultado-medio-carrera").css("opacity" , "1")
-
-  if(time_vd2 < 60000) await esperar(3000)
-
-  $("#container-resultado-medio-carrera").css("opacity" , "0")
-  $("#div_result_2").css("background" , bkg_clss[inf[0][3]][0])
-  $("#div_result_2").css("color" ,      bkg_clss[inf[0][3]][1])
-  $("#div_result_2").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
-  $(".txt_result_2").text(convtSegs(inf[0].substr(10,2)))
-
-  iniciarConteoAscendente(Number(inf[0].substr(13,2)))
-
-
-  await esperar(time_vd3)
-  console.log("Termino pelea 3");    
-
-  $("#div_medio_1").css("background" , bkg_clss[inf[0][4]][0])
-  $("#div_medio_1").css("color" ,      bkg_clss[inf[0][4]][1])
-  $("#div_medio_1").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
-  $(".txt_medio_1").text(convtSegs(inf[0].substr(13,2)))
-  $(".tt_medio").text('Pelea #3')
-  $("#container-resultado-medio-carrera").css("opacity" , "1")
-
-  if(time_vd3 < 60000) await esperar(3000)
-
-  $("#container-resultado-medio-carrera").css("opacity" , "0")
-  $("#div_result_3").css("background" , bkg_clss[inf[0][4]][0])
-  $("#div_result_3").css("color" ,      bkg_clss[inf[0][4]][1])
-  $("#div_result_3").css("box-shadow" , "inset 3px 3px 8px rgba(255, 255, 255, 0.274),  inset 0 1px 1px rgba(255, 255, 255, 0.432)")
-
-  $(".txt_result_3").text(convtSegs(inf[0].substr(13,2)))
+    if (i < 2) iniciarConteoAscendente(peleas[i + 1].segundos)
+  }
 
   await esperar(2000)
 
@@ -469,33 +532,70 @@ const showGallos = async (inf) =>{
 }
 
 const excute_race = async () =>{
+
+  const ciclo = ++ciclo_video
+
+  // Ganadores de jackpot y bono: se buscan de nuevo para este sorteo
+  ver_w_p = false
+  ver_b   = false
    
   entra_sincro_1 = true
   entra_sincro_2 = true
   entra_sincro_3 = true
 
-  nup = await Consulta_resultados()
+  // Resultado del sorteo que acaba de cerrar (el del WebSocket)
+  nup = await Consulta_resultados(sorteo_cierre)
   console.log("race",   nup);
+
+  if (!nup) {
+    console.log('Sin resultado del sorteo en curso: se vuelve a la tabla')
+    video_intro.style.opacity = 0
+    mostrando_tablas()
+    return
+  }
 
   // Carreras: numero de carrera visible desde el inicio del video y cuotas listas para duracion - 10 s
   preparar_overlay_video()
 
 
   // video_event.src                = `http://localhost:3000/${games[game_code]}/${nup[0]}`;
-  video_event.src               = `../static/videos/${games[game_code]}/perros8.mp4`;
+  // PRUEBA: video fijo por juego mientras los videos del resultado no se sirven desde su servidor.
+  // Caballos todavia no tiene video de carrera en static/videos/horses7: usa el de perros 8.
+  const VIDEO_PRUEBA = {
+    2 : 'dogs6/perros6.mp4',
+    3 : 'dogs8/perros8.mp4',
+    4 : 'dogs8/perros8.mp4',
+    5 : 'roosters/065138229.mp4',
+  }
+  video_event.src = `../static/videos/${VIDEO_PRUEBA[game_code] || 'dogs8/perros8.mp4'}`;
   video_event.type               = 'video/mp4';
+
+  // Gallos: todo sale del codigo del video (video_code, ej. 132065248):
+  // conteo, anuncio de cada pelea y pantalla de resultados. Asi coincide con el resultado
+  // del sorteo y sus cuotas, aunque en pruebas se reproduzca un archivo fijo.
+  if (game_code == 5) {
+    peleas_video = peleas_desde_video((nup[6] || {})['video_code'] || nup[0]) || peleas_desde_video(video_event.src)
+    pintar_resultado_gallos(nup[6], peleas_video)
+  }
+
+  const empezo = new Promise(resolve => video_event.addEventListener('playing', resolve, { once : true }))
   
   screen_tablas.style.opacity   = 0;
   screen_jp.style.opacity       = 0;
   video_event.style.opacity      = 1;  
   video_event.muted = true
 
-  video_event.play()
+  video_event.play().catch(() => {})
 
   if(game_code == 5){
-    
-    iniciarConteoAscendente(Number(nup[0].substr(7,2)))    
-    await showGallos()
+
+    if (!peleas_video) { console.log('El nombre del video no trae los tiempos de las peleas:', video_event.src); return }
+
+    // Los tiempos cuentan desde que el video empieza a verse, no desde que se pidio
+    await empezo
+    if (ciclo !== ciclo_video) return   // hubo un reintento: lo maneja el ciclo nuevo
+    iniciarConteoAscendente(peleas_video[0].segundos)    
+    await showGallos(peleas_video)
   }
 
 }
@@ -576,6 +676,7 @@ video_event.addEventListener('ended', async () => {
   // Gallos: mantiene su pantalla de resultados
   if (game_code == 5) {
 
+    detenerConteoAscendente();
     mostrando_resultado();
     
     if(ver_w_p){ 
@@ -706,13 +807,20 @@ video_event.addEventListener('playing', async () => {
 
   }
 
-  ver_w_p = await Consulta_ganador_jack()
-  // Bono del sorteo exacto que se esta mostrando (nup[2] = sorteo_id del resultado)
-  ver_b = await Consulta_bonos(nup[2])
+  // 'playing' se repite cada vez que el video se recupera de una pausa de carga.
+  // Las consultas se hacen una sola vez por video: una segunda consulta devuelve false
+  // (el ganador ya quedo marcado como visto) y borraria el ganador encontrado.
+  if (consultas_del_ciclo === ciclo_video) return
+  consultas_del_ciclo = ciclo_video
 
-  
-  
   console.log("mostrando el video");
+
+  const jackpot = await Consulta_ganador_jack()
+  // Bono del sorteo exacto que se esta mostrando (nup[2] = sorteo_id del resultado)
+  const bono    = await Consulta_bonos(nup[2])
+
+  ver_w_p = ver_w_p || jackpot
+  ver_b   = ver_b   || bono
 
 })
   
@@ -760,14 +868,14 @@ setInterval( async ()=> {
     
   if(tiempo == 0 && vd && entra_intro){entra_intro = false
 
+    sorteo_cierre = sorteo_ws   // el sorteo que acaba de cerrar: es el que se va a reproducir
+
     console.log('intro'); 
     entra_race = true
     
     entra_sincro_1 = true
     entra_sincro_2 = true
     entra_sincro_3 = true
-    
-    nup2 = await Consulta_resultados()
     
     $('.precios_tbl').each( function() {  
       
@@ -801,7 +909,7 @@ setInterval( async ()=> {
     screen_jp.style.opacity           = 0;
     screen_bono.style.opacity         = 0;
     video_intro.muted = true
-    video_intro.play() 
+    video_intro.play().catch(() => {}) 
 
  
 
@@ -855,9 +963,17 @@ $(document).ready(async()=>{
     	
   }else{ 
 
+    await confirmar_configuracion()
+
     await connectWebSocket();
 
+    // Sin mensaje del WebSocket todavia: estado inicial desde el evento actual
+    if (!id_table) await recuperar_evento_actual()
+
     vd = await Consulta_Tabla(id_table, Number(game_code));
+
+    // Heartbeat periodico (guia 5.5)
+    enviar_heartbeat()
     await mostrando_tablas() 
     
     // Primer arranque de este visor: registrar los ganadores existentes sin anunciarlos

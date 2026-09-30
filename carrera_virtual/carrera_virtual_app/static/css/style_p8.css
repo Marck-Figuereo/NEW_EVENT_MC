@@ -570,3 +570,17 @@ INFO DIRECTAS FINAL DE LA CARRERA
 
 /* Multiplicador del historial: sin imagen no se dibuja el cuadro vacio */
 img[id^="bns"]:not([src]) { visibility: hidden; }
+
+
+/*//////////////////////////////////
+   AJUSTE A 1920x1080
+   La barra de ULTIMO JACKPOT terminaba en 1121px y quedaba cortada.
+   Se reducen los espacios entre bloques.
+/////////////////////////////////*/
+
+.themed-container { margin-bottom: .75rem; }
+
+.box-table   { margin-top: 16px; }
+.body-result { margin-top: 24px; }
+
+.container_j { margin-top: 24px; padding: 10px 10px; }

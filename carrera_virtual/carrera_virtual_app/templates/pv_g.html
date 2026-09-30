@@ -10,7 +10,7 @@
     <link href="static/bootstrap.min.css" rel="stylesheet">
 
     <link rel="stylesheet" href="../static/css/all.min.css">
-    <link rel="stylesheet" type="text/css" href="../static/css/style_g.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/style_g.css?v={{vjs}}">
     
     <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css">
  
@@ -481,9 +481,12 @@
   <script src="static/js/bootstrap.bundle.min.js"></script>
     
 
-  <script src="../static/js/cone_db_p.js"></script>
+  <!-- Unico dato de conexion que recibe el navegador: el WebSocket de conteo (guia sin Redis) -->
+  <script>window.VISOR_CONFIG = { wsUrl: "{{ ws_url|escapejs }}" };</script>
+
+  <script src="../static/js/cone_db_p.js?v={{vjs}}"></script>
   
-  <script src="../static/js/funcionamiento_p.js"></script>
+  <script src="../static/js/funcionamiento_p.js?v={{vjs}}"></script>
   
 
   
