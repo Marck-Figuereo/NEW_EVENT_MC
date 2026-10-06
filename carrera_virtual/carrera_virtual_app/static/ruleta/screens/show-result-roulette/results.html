@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Virtual Storm Roulette — Resultado del sorteo</title>
+<link rel="stylesheet" href="results.css">
+</head>
+<body>
+
+<!-- 16:9 stage. CSS only scales this box; every coordinate lives in results.js -->
+<div id="stage">
+
+    <!-- Z0: the storm stays a real <video>, never drawn into the canvas -->
+    <video id="bg"
+           src="assets/storm_bg.mp4"
+           autoplay muted loop playsinline preload="auto"
+           disablepictureinpicture></video>
+
+    <!-- Z1..Z5: ball, overlay artwork, values, multipliers and light -->
+    <canvas id="scene" width="1920" height="1080"></canvas>
+
+</div>
+
+<button id="tap-hint" hidden>Start display</button>
+
+<script src="../../vendor/gsap-3.12.5.min.js"></script>
+<script src="results.js"></script>
+
+</body>
+</html>

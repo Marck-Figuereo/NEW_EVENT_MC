@@ -11,6 +11,7 @@ import os
 # Guia "Integracion del visor con la API sin Redis": todas las llamadas a la API
 # viven en el cliente HTTP. El visor ya no lee Redis.
 from carrera_virtual_app.helpers.display_api_client import (
+    ADMIN_FRONTEND_URL,
     API_URL,
     start_pairing,
     get_pairing_status,
@@ -23,11 +24,12 @@ from carrera_virtual_app.helpers.display_api_client import (
     get_display_jackpots,
     get_jackpot_winner_events,
     get_display_bonus_event,
+    get_games_by_code,
 )
 
 
 # Configuraciones de entorno
-version = "v7.1.0"
+version = "v7.1.1"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)
@@ -38,7 +40,8 @@ WEBSOCKET_URL = config('WEBSOCKET_URL', default=_WS_POR_DEFECTO).strip().rstrip(
 # asi el navegador nunca mezcla un archivo nuevo con otro viejo guardado en cache.
 _STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 _ARCHIVOS_VISOR = ['js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
-                   'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css']
+                   'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css',
+                   'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css']
 
 def _version_archivos():
     try:
@@ -120,12 +123,40 @@ def _consultar(funcion, **parametros):
 # Si la API ya envia video_code, se respeta tal cual.
 # ==========================================
 
+def _lista_juegos(respuesta):
+    """La lista de juegos puede venir sola o dentro de results / games / data."""
+    if isinstance(respuesta, list):
+        return respuesta
+    if isinstance(respuesta, dict):
+        for clave in ('results', 'games', 'data'):
+            if isinstance(respuesta.get(clave), list):
+                return respuesta[clave]
+    return []
+
+
+def _ids_configurados(display_config):
+    """IDs de config.games (pueden venir como numeros o como objetos con id)."""
+    juegos = ((display_config or {}).get('config') or {}).get('games') or []
+    ids = set()
+    for juego in juegos:
+        valor = juego.get('id', juego.get('game_id')) if isinstance(juego, dict) else juego
+        if valor not in (None, ''):
+            ids.add(str(valor))
+    return ids
+
+
 def _codigo_video(resultado):
     if not isinstance(resultado, dict):
         return None
 
     if resultado.get('video_code'):
         return str(resultado['video_code'])
+
+    # Guia, seccion 21 (gallos): la API puede enviar el codigo aparte en codigo_video.
+    # Si no lo envia, se saca del nombre del video como hasta ahora.
+    for origen in (resultado, resultado.get('result') or {}, resultado.get('settlement') or {}):
+        if isinstance(origen, dict) and origen.get('codigo_video') not in (None, ''):
+            return str(origen['codigo_video'])
 
     video = (resultado.get('settlement') or {}).get('selected_video') or resultado.get('selected_video') or ''
     nombre = str(video).split('?')[0].rsplit('/', 1)[-1].rsplit('.', 1)[0]
@@ -150,7 +181,7 @@ def configuration(request):
                 return _error('api_no_disponible', 'Falla temporal de la API.', 503)
 
             activation_url = (
-                "http://localhost:5173/juegos-virtuales/device/activacion?"
+                f"{ADMIN_FRONTEND_URL}/juegos-virtuales/device/activacion?"
                 + urlencode({
                     "pairing_code": data["pairing_code"]
                 })
@@ -277,7 +308,50 @@ def games(request):
             return JsonResponse(response)
 
 
-        elif realizar == 'evento_actual':
+        elif realizar == 'resolver_juego':
+
+            # Guia de ruleta, seccion 4: el ID no se escribe fijo; se busca por codigo
+            # y debe estar en config.games del visor. Solo lo usa la pantalla de la ruleta.
+            try:
+                permitidos = _ids_configurados(get_display_config(device_token=device_token))
+            except requests.HTTPError as error:
+                return _error_http(error, 'get_display_config')
+            except (requests.RequestException, ValueError):
+                return _error('api_no_disponible', 'Falla temporal de la API.', 503)
+
+            pedido = str(datos.get('code') or 'RULETA').strip().upper()
+            codigos = [pedido] + [c for c in ('RULETA', 'ROULETTE') if c != pedido]
+            sin_endpoint = True
+
+            for codigo in codigos:
+                try:
+                    juegos = _lista_juegos(get_games_by_code(code=codigo))
+                    sin_endpoint = False
+                except requests.HTTPError as error:
+                    print(f"Juegos con codigo {codigo} no disponibles: {error}")
+                    continue
+                except (requests.RequestException, ValueError) as error:
+                    print(f"Juegos con codigo {codigo} no disponibles: {error}")
+                    continue
+
+                for juego in juegos:
+                    if not isinstance(juego, dict):
+                        continue
+                    juego_id = juego.get('id', juego.get('game_id'))
+                    # Si la API no filtra por codigo y devuelve otros juegos, se descartan
+                    codigo_juego = str(juego.get('code') or juego.get('game_code') or codigo).strip().upper()
+                    if codigo_juego not in ('RULETA', 'ROULETTE'):
+                        continue
+                    if juego_id is not None and (not permitidos or str(juego_id) in permitidos):
+                        return JsonResponse({'game_id': juego_id, 'code': juego.get('code', codigo)})
+
+            if sin_endpoint:
+                return _error('endpoint_no_disponible', 'La API no tiene la consulta de juegos.', 501)
+
+            return _error('juego_no_asignado', 'La ruleta no esta en config.games de este visor.', 404)
+
+
+        elif realizar in ('evento_actual', 'display_current_event'):
 
             # Guia 5.6: estado inicial o respaldo del WebSocket (fase, tabla, multiplicativo)
             return _consultar(get_current_event, device_token=device_token, game_id=game_id)
@@ -289,7 +363,7 @@ def games(request):
             return _consultar(get_display_jackpots, device_token=device_token, game_id=game_id)
 
 
-        elif realizar == 'consulta_gandores_jack':
+        elif realizar in ('consulta_gandores_jack', 'consulta_ganadores_jack'):
 
             # Guia 5.11: una sola llamada agregada con los ganadores recientes (30 min)
             return _consultar(get_jackpot_winner_events, device_token=device_token, game_id=game_id)
@@ -299,8 +373,15 @@ def games(request):
 
             # Guia 5.8: ultimos resultados. El grupo lo obtiene la API del device_token.
             # A cada resultado se le agrega video_code (codigo de las peleas en gallos).
+            # Cantidad: 5 por defecto (perros, caballos, gallos). La ruleta pide mas
+            # para calcular sus estadisticas. La API acepta como maximo 50.
             try:
-                payload = get_display_results(device_token=device_token, game_id=game_id, limit=5)
+                limite = min(max(int(datos.get('limit') or 5), 1), 50)
+            except (TypeError, ValueError):
+                limite = 5
+
+            try:
+                payload = get_display_results(device_token=device_token, game_id=game_id, limit=limite)
             except requests.HTTPError as error:
                 return _error_http(error, 'get_display_results')
             except (requests.RequestException, ValueError):
@@ -333,10 +414,13 @@ def games(request):
 
             # Se devuelve el resultado COMPLETO tal como lo manda la API (ningun campo se descarta)
             # y se agregan los campos de uso directo del visor.
+            # El nombre del video puede venir en settlement o en el resultado mismo.
+            video = settlement.get('selected_video') or latest.get('selected_video')
+
             respuesta = dict(latest)
             respuesta.update({
-                'has_video':      bool(settlement.get('selected_video')),
-                'selected_video': settlement.get('selected_video'),
+                'has_video':      bool(video),
+                'selected_video': video,
                 'video_code':     _codigo_video(latest),
                 'resulted_at':    latest.get('resulted_at') or latest.get('settled_at'),
             })
@@ -396,8 +480,12 @@ def HORSES_7(request):
 
 
 
+# Ruleta (game_id 1). Sus pantallas y assets viven en static/ruleta/.
+# /ROULETTE se mantiene por si la API envia ese game_url.
 @csrf_exempt
-def ROULETTE(request): return render(request, "pv_roulette.html", _contexto_visor())
+def RULETA(request): return render(request, "pv_ruleta.html", _contexto_visor())
+
+ROULETTE = RULETA
 
 
 

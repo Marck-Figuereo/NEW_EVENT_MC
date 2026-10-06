@@ -14,6 +14,26 @@ const games = {
 // Sufijo de los intros con multiplicador (caballos usa introX2C.mp4 / introX3C.mp4)
 const sufijo_intro = { 4 : 'C' }
 
+// TODOS los videos (intro y video del evento) se buscan en la carpeta de su juego:
+// BASE_VIDEOS/CARPETA_JUEGO/nombre_video.mp4
+// BASE_VIDEOS es la direccion del equipo donde estan las carpetas de videos en produccion.
+const BASE_VIDEOS = 'http://localhost:3000'
+
+// El nombre llega de la API en selected_video (con o sin .mp4).
+const carpeta_video = {
+                1 : 'RULETA',
+                2 : 'DOGS_6',
+                3 : 'DOGS_8',
+                4 : 'HORSES_7',
+                5 : 'ROOSTERS'
+              }
+
+const url_video_evento = nombre => {
+  let archivo = String(nombre || '').split('?')[0].split('/').pop().trim()
+  if (archivo && !/\.[a-z0-9]{2,4}$/i.test(archivo)) archivo += '.mp4'
+  return `${BASE_VIDEOS}/${carpeta_video[game_code]}/${archivo}`
+}
+
 
 // ==========================================
 // MULTIPLICADORES (solo carreras; gallos y ruleta no tienen)
@@ -25,6 +45,12 @@ var multiplicador_ws = null   // race_multiplier del evento en curso (WebSocket)
 var mult_evento      = 'X'    // multiplicador usado para el intro y el elemento durante la carrera
 
 const es_carrera = () => [2, 3, 4].includes(Number(game_code))
+
+// Carreras cuyo video ya trae el espacio para poner los resultados ENCIMA del video
+// (ultimos 10 s): perros de 6 y de 8.
+// Caballos (4) todavia no: muestra su PANTALLA DE RESULTADOS al terminar el video, como antes.
+// Cuando los videos de caballos esten listos, se agrega el 4 a esta lista y queda igual que los perros.
+const resultado_sobre_video = () => [2, 3].includes(Number(game_code))
 
 const etiqueta_multiplicador = valor => {
   if (!es_carrera()) return 'X'
@@ -78,10 +104,17 @@ var vd = false;
 var nup = ["", ""]
 var nup2 = ["", ""]
 
-// Duracion del video del evento en segundos (valor de prueba; luego llegara de la API
-// junto con el nombre del video). Si el navegador ya leyo la duracion real del archivo
-// (video_event.duration), se usa esa.
+// Duracion del video del evento en segundos. Llega de la API con cada resultado
+// (result.tiempo_video, en milisegundos) porque cada video dura distinto.
+// Si la API no la envia, se usa la del archivo (video_event.duration) y, si tampoco, tiempoVideo.
 var tiempoVideo = 54.920
+var tiempo_video_api = null   // segundos del video del evento en curso (API)
+
+const duracion_video_evento = () => {
+  if (tiempo_video_api > 0) return tiempo_video_api
+  if (isFinite(video_event.duration) && video_event.duration > 0) return video_event.duration
+  return tiempoVideo
+}
 
 var overlay_video   = document.getElementById('overlay-video')   // solo existe en carreras
 var vigilando_resultado = false   // revisa cuadro a cuadro el tiempo real del video
@@ -176,29 +209,60 @@ function detenerConteoAscendente() {
 
 
 
-cerrar_to = () =>{
+// ==========================================
+// ALERTA DE CONEXION
+// Solo se muestra con el visor quieto en las tablas. Si el internet se va durante el
+// intro, el video, el jackpot, el bono o los resultados, el evento sigue sin interrupcion
+// y la alerta sale al volver a las tablas (si la conexion sigue caida).
+// ==========================================
 
-  if (video_event.currentTime == 0 &&  screen_resultados.style.opacity == 0 && screen_bono.style.opacity == 0 && screen_jp.style.opacity == 0){
+var ws_ultimo_mensaje     = Date.now()   // ultimo mensaje recibido del WebSocket
+var ws_caido_desde        = Date.now()   // null mientras el WebSocket esta abierto
+var alerta_conexion       = false        // la alerta esta en pantalla
+var arranque_sin_internet = false        // el visor se abrio sin conexion: al volver se recarga
 
-    internet = false
-    Swal.fire({ title: 'Error de conexion', showConfirmButton: false, icon: 'warning' })
-    video_intro.style.opacity = 0
-    video_event.style.opacity = 0
-    screen_tablas.style.opacity = 0
-    screen_resultados.style.opacity = 0
-    if (menjase_bonos) menjase_bonos.style.opacity = 0
-    screen_jp.style.opacity = 0
-    screen_bono.style.opacity = 0
+const en_tablas = () => screen_tablas.style.opacity == 1
 
+const sin_conexion = () => {
+
+  if (!navigator.onLine) return true
+
+  const ahora = Date.now()
+
+  if (ws_caido_desde)  return ahora - ws_caido_desde > 8000        // WebSocket cerrado y sin lograr reconectar
+  return ahora - ws_ultimo_mensaje > 20000                         // abierto pero sin mensajes (conexion muerta)
+}
+
+const mostrar_alerta_conexion = () => {
+  alerta_conexion = true
+  Swal.fire({ title: 'Sin conexión a internet', text: 'Reconectando...', icon: 'warning',
+              showConfirmButton: false, allowOutsideClick: false, allowEscapeKey: false })
+}
+
+const revisar_conexion = () => {
+
+  const caida = sin_conexion()
+
+  if (caida && !alerta_conexion && en_tablas()) mostrar_alerta_conexion()
+
+  else if (!caida && alerta_conexion) {
+
+    alerta_conexion = false
+    Swal.close()
+
+    if (arranque_sin_internet) { location.reload(); return }
+
+    // Volvio la conexion: tabla, jackpots y ultimos resultados al dia
+    recuperar_evento_actual()
+    sincronizacion()
   }
-
 }
 
-updateConnectionStatus = () => {
+setInterval(revisar_conexion, 1000)
 
-  if(!navigator.onLine) cerrar_to()
+cerrar_to = () => revisar_conexion()
 
-}
+updateConnectionStatus = () => revisar_conexion()
 
 
 
@@ -277,9 +341,6 @@ connectWebSocket = async () => {
     // Una sola conexion activa
     if (websocket && (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING)) return
         
-    if(!internet) location.reload()  
-  
-    Swal.close()
     clearTimeout(ws_temporizador)
     
     const socket = new WebSocket(url_websocket());
@@ -287,12 +348,15 @@ connectWebSocket = async () => {
 
     socket.onopen = () => {
       ws_reintentos = 0
+      ws_caido_desde = null
+      ws_ultimo_mensaje = Date.now()
       if (ws_conecto_antes) recuperar_evento_actual()   // se pudo perder un mensaje
       ws_conecto_antes = true
     }
     
     socket.onmessage = (event) => {
       let data
+      ws_ultimo_mensaje = Date.now()
       try { data = JSON.parse(event.data) } catch (error) { console.log('Mensaje de WebSocket invalido'); return }
       manejar_countdown(data)
     };
@@ -302,6 +366,7 @@ connectWebSocket = async () => {
 
       if (websocket !== socket) return
       websocket = null
+      if (!ws_caido_desde) ws_caido_desde = Date.now()
 
       const espera = Math.min(1000 * Math.pow(2, ws_reintentos), 15000)
       ws_reintentos++
@@ -558,17 +623,14 @@ const excute_race = async () =>{
   preparar_overlay_video()
 
 
-  // video_event.src                = `http://localhost:3000/${games[game_code]}/${nup[0]}`;
-  // PRUEBA: video fijo por juego mientras los videos del resultado no se sirven desde su servidor.
-  // Caballos todavia no tiene video de carrera en static/videos/horses7: usa el de perros 8.
-  const VIDEO_PRUEBA = {
-    2 : 'dogs6/perros6.mp4',
-    3 : 'dogs8/perros8.mp4',
-    4 : 'dogs8/perros8.mp4',
-    5 : 'roosters/065138229.mp4',
-  }
-  video_event.src = `../static/videos/${VIDEO_PRUEBA[game_code] || 'dogs8/perros8.mp4'}`;
+  // Video real del resultado: nombre (selected_video) y duracion en ms (result.tiempo_video) de la API
+  const ms_video = Number(((nup[6] || {})['result'] || {})['tiempo_video'])
+  tiempo_video_api = ms_video > 0 ? ms_video / 1000 : null
+
+  video_event.src                = url_video_evento(nup[0]);
   video_event.type               = 'video/mp4';
+
+  console.log('Video del evento:', video_event.src, 'duracion API (s):', tiempo_video_api)
 
   // Gallos: todo sale del codigo del video (video_code, ej. 132065248):
   // conteo, anuncio de cada pelea y pantalla de resultados. Asi coincide con el resultado
@@ -694,7 +756,31 @@ video_event.addEventListener('ended', async () => {
   }
 
 
-  // Carreras: los resultados ya se vieron dentro del video.
+  // Caballos (por ahora): pantalla de resultados al terminar el video, como antes.
+  // intro -> video -> resultados -> jackpot (si hay ganador) -> bono (si hay ganador) -> tabla
+  if (!resultado_sobre_video()) {
+
+    mostrando_resultado();
+
+    // El ganador puede acreditarse segundos despues del resultado: segunda consulta al terminar el video
+    if (!ver_w_p) ver_w_p = await Consulta_ganador_jack()
+
+    if(ver_w_p){
+      await promesa_win_jackpot()
+      await esperar(18000)
+    }
+
+    if(ver_b){
+      await promesa_bonos()
+      await esperar(18000)
+    }
+
+    await promesa_tablas();
+    return
+  }
+
+
+  // Perros: los resultados ya se vieron dentro del video.
   // intro -> video -> jackpot (si hay ganador) -> bono (si hay ganador) -> tabla
 
   // El ganador puede acreditarse segundos despues del resultado: segunda consulta al terminar el video
@@ -728,7 +814,7 @@ video_event.addEventListener('ended', async () => {
 
 const preparar_overlay_video = () => {
 
-  if (!overlay_video) return
+  if (!overlay_video || !resultado_sobre_video()) return
 
   vigilando_resultado = false
 
@@ -746,7 +832,7 @@ const preparar_overlay_video = () => {
 // el texto espera con el. Asi sale exactamente cuando el video muestra sus resultados.
 const programar_resultado_video = () => {
 
-  if (!overlay_video || vigilando_resultado || overlay_video.classList.contains('con-resultado')) return
+  if (!overlay_video || !resultado_sobre_video() || vigilando_resultado || overlay_video.classList.contains('con-resultado')) return
 
   vigilando_resultado = true
 
@@ -754,7 +840,7 @@ const programar_resultado_video = () => {
 
     if (!vigilando_resultado) return
 
-    const duracion = (isFinite(video_event.duration) && video_event.duration > 0) ? video_event.duration : tiempoVideo
+    const duracion = duracion_video_evento()
 
     if (tiempo_video >= duracion - 10) {
       vigilando_resultado = false
@@ -825,38 +911,25 @@ video_event.addEventListener('playing', async () => {
 })
   
 
-reload_err = true
+// El video del evento no existe o no se puede reproducir: NO se usa ningun video de prueba.
+// Se avisa (sin mencionar el video) y se vuelve a las tablas; el visor sigue con el siguiente sorteo.
 video_event.addEventListener('error', async () => {
 
-  if (reload_err){
+  // Solo cuenta mientras el video del evento esta en pantalla
+  if (video_event.style.opacity != 1) return
 
-    await esperar(3000)
-    excute_race()
-    reload_err = false
+  console.log('No se pudo reproducir el video del evento:', video_event.src)
 
-  }else{
-    
-    $('.precios_tbl').each(function(){
-      
-      $(`#${$(this).attr('id')}`).css("color", "#fff")
-      $($(this).attr('id')).text('- - -') 
-    
-    });
+  ciclo_video++                 // corta lo que esperaba a este video (conteo y peleas de gallos)
+  vigilando_resultado = false
+  if (game_code == 5) detenerConteoAscendente()
 
-    $('#id_sorteos_c_id').text('');
-    ocultar_overlay_video()
-    
-    video_event.style.opacity        = 0;
-    video_intro.style.opacity       = 0;
-    screen_tablas.style.opacity     = 0;
-    screen_resultados.style.opacity = 0;
-    screen_jp.style.opacity         = 0;
-  
-    reload_err = false
-    
-    await Swal.fire({ title: 'Error', text: "Error al transmitir la carrera", showConfirmButton: false, icon: 'warning', timer: 60000 }).then(() => location.reload() )
-  
-  }
+  await mostrando_tablas()
+
+  // El mensaje no menciona el video ni de donde sale: solo que el evento no pudo comenzar
+  Swal.fire({ title: game_code == 5 ? 'Error al comenzar la pelea' : 'Error al comenzar la carrera',
+              text: 'Espere el próximo evento.', icon: 'warning',
+              showConfirmButton: false, timer: 8000 })
 
 });
 
@@ -893,8 +966,8 @@ setInterval( async ()=> {
     // No se usa el de Consulta_resultados: en este momento results[0] todavia es el evento anterior.
     mult_evento = etiqueta_multiplicador(multiplicador_ws)
 
-    if(mult_evento == 'X2' || mult_evento == 'X3') video_intro.src = `../static/videos/${games[game_code]}/intro${mult_evento}${sufijo_intro[game_code] || ''}.mp4`; 
-    else                                          video_intro.src = `../static/videos/${games[game_code]}/intro.mp4`; 
+    if(mult_evento == 'X2' || mult_evento == 'X3') video_intro.src = `${BASE_VIDEOS}/${carpeta_video[game_code]}/intro${mult_evento}${sufijo_intro[game_code] || ''}.mp4`; 
+    else                                          video_intro.src = `${BASE_VIDEOS}/${carpeta_video[game_code]}/intro.mp4`; 
 
     console.log('intro', video_intro.src, 'multiplicador:', mult_evento);
  
@@ -954,9 +1027,13 @@ $(document).ready(async()=>{
   //Evitar que se pueda sombrar textos
   document.onselectstart = () => false;
   
-  if (!navigator.onLine) cerrar_to()
+  if (!navigator.onLine) {
 
-  else if(localStorage.getItem('dkg') == null){
+    // El visor se abrio sin internet: alerta y recarga completa cuando vuelva
+    arranque_sin_internet = true
+    mostrar_alerta_conexion()
+
+  }else if(localStorage.getItem('dkg') == null){
    
     localStorage.clear(); 
     window.location.href = "/";

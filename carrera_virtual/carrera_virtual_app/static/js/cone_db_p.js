@@ -690,11 +690,14 @@ const Consulta_resultados = async (sorteo_esperado = null) => {
 
             document.getElementById("n_race").innerHTML = data['event_number']
 
-            document.getElementById("img_win").src = `static/img/numeros/p6/n${pos1}.svg`;
+            // Imagenes de los numeros de cada juego (caballos tiene 7; con las de perros de 6 el 7 no existe)
+            const numeros = ({ 2 : 'p6', 3 : 'p8', 4 : 'h7' })[game] || 'p6'
+
+            document.getElementById("img_win").src = `static/img/numeros/${numeros}/n${pos1}.svg`;
             document.getElementById("p_win").innerHTML = pago_win
            
-            document.getElementById("img1_ext").src = `static/img/numeros/p6/n${pos1}.svg`;
-            document.getElementById("img2_ext").src = `static/img/numeros/p6/n${pos2}.svg`;
+            document.getElementById("img1_ext").src = `static/img/numeros/${numeros}/n${pos1}.svg`;
+            document.getElementById("img2_ext").src = `static/img/numeros/${numeros}/n${pos2}.svg`;
             document.getElementById("p_ext").innerHTML = pago_pale
         }
 
@@ -896,7 +899,7 @@ const Consulta_ultimas_carreras = async () => {
         }     
 
         data['results'].map((races, cont)=>{
-
+            
             dc = { 2 : 'p6',3 : 'p8',4 : 'h7'}
 
             // Guia: race_multiplier viene en cada resultado (2, 3 o null). Solo carreras.

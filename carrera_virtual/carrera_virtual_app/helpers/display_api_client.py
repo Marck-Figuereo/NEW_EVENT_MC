@@ -121,6 +121,14 @@ def get_jackpot_winner_events(*, device_token, game_id):
     })
 
 
+def get_games_by_code(*, code):
+    """Juegos activos con ese codigo (guia de ruleta: GET api/core/games/?status=active&code=RULETA)."""
+    return api_get("api/core/games/", params={
+        "status": "active",
+        "code": code,
+    })
+
+
 def get_display_bonus_event(*, device_token, game_id, sorteo_id):
     """El lugar se deriva del device_token en la API: no se envia lugar_id."""
     return api_get("api/core/display/bonuses/event/", params={

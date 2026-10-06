@@ -14,6 +14,7 @@ urlpatterns=[
     path('DOGS_6',	    views.DOGS_6,	        name="DOGS_6"),
     path('DOGS_8',	    views.DOGS_8,	        name="DOGS_8"),
     path('HORSES_7',	views.HORSES_7,	        name="HORSES_7"),
+    path('RULETA',	    views.RULETA,	        name="RULETA"),
     path('ROULETTE',	views.ROULETTE,	        name="ROULETTE"),
     path('ROOSTERS',	views.ROOSTERS,	        name="ROOSTERS"),
     path('configuration',            views.configuration,    name="configuration"),

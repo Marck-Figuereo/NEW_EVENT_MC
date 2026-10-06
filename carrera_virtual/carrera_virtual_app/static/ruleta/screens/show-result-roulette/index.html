@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Virtual Storm Roulette</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 16:9 stage. CSS is responsible ONLY for scaling this box. -->
+<div id="stage">
+
+    <!-- Background stays a real <video>. It is never drawn into the canvas. -->
+    <video id="bg"
+           src="assets/storm_bg.mp4"
+           autoplay muted loop playsinline preload="auto"
+           disablepictureinpicture></video>
+
+    <!-- Un unico canvas 1920x1080, igual que antes.
+         Lo que cambia es que ya no se repinta entero cada frame:
+
+           - la banda de la ruleta se limpia y redibuja a 60 FPS;
+           - cada seccion de la interfaz solo se repinta cuando su contenido
+             cambia, y solo dentro de su rectangulo;
+           - la luz ambiental se suma encima cada frame restaurando
+             unicamente las tiras que toca. -->
+    <canvas id="scene" width="1920" height="1080"></canvas>
+
+
+</div>
+
+<!-- Shown only if the browser blocks muted autoplay. -->
+<button id="tap-hint" hidden>Start display</button>
+
+<!-- GSAP. For an offline TV player, download this file and load it locally. -->
+<script src="../../vendor/gsap-3.12.5.min.js"></script>
+<script src="ui.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

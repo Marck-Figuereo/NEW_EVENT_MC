@@ -1,0 +1,94 @@
+/* =========================================================================
+   Virtual Storm Roulette — styles.css
+
+   CSS is responsible for THREE things only:
+     1. full-screen layout
+     2. scaling one 16:9 stage
+     3. stacking the video and the canvas
+
+   No element positions live here. Every coordinate is in CONFIG (app.js).
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: none;                 /* kiosk / TV display */
+    -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+}
+
+/* -------------------------------------------------------------------------
+   The stage: always exactly 16:9, always as large as the viewport allows.
+   Both dimensions derive from the same limiting axis, so it can never skew.
+   ------------------------------------------------------------------------- */
+#stage {
+    position: relative;
+    width: min(100vw, 177.7778vh);   /* 16/9  = 1.777... */
+    height: min(56.25vw, 100vh);     /* 9/16  = 0.5625   */
+    overflow: hidden;
+    background: #05070c;
+    contain: layout paint;           /* isolates the stage for the compositor */
+}
+
+/* Video and canvas fill the stage identically and stack. */
+#stage > video,
+#stage > canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Background layer. The canvas backing store stays 1920x1080; the browser
+   scales it on the GPU, so no devicePixelRatio multiplication is needed. */
+#bg {
+    z-index: 0;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+#scene {
+    z-index: 1;
+    pointer-events: none;
+}
+
+
+/* -------------------------------------------------------------------------
+   Autoplay fallback. Hidden unless the browser refuses muted autoplay.
+   ------------------------------------------------------------------------- */
+#tap-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: rgba(4, 8, 16, 0.82);
+    color: #cfe4ff;
+    font: 500 clamp(18px, 2.2vw, 34px)/1 system-ui, -apple-system, "Segoe UI", sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+#tap-hint[hidden] {
+    display: none;
+}

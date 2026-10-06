@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Virtual Storm Roulette — Visor</title>
+<!-- Todas las rutas relativas de la ruleta (iframes, assets, videos, JSON de prueba) viven en static/ruleta/ -->
+<base href="/static/ruleta/">
+<link rel="stylesheet" href="roulette_integration.css?v={{vjs}}">
+</head>
+<body>
+
+<!-- =======================================================================
+     ESCENARIO ÚNICO 1920 x 1080
+
+     Aquí NO se diseña nada. Solo se unen las pantallas que ya existen:
+
+       #view-table    -> screens/show-result-roulette/index.html   (ZIP entregado)
+       #view-intro    -> screens/show-intro-roulette/index.html    (ZIP entregado)
+       #view-video    -> assets/video.mp4                          (video de prueba)
+       #view-jackpot  -> title_jk.png    + show_jackpots.png
+       #view-bonus    -> title_bono.png  + show_bono.png
+       #view-result   -> screens/show-result-roulette/results.html (ZIP entregado)
+     ======================================================================= -->
+
+<div id="stage">
+
+    <!-- Fondo compartido para JACKPOT y BONO.
+         Es el storm_bg.mp4 que ya viene dentro de show-result-roulette. -->
+    <video id="panel-bg"
+           src="screens/show-result-roulette/assets/storm_bg.mp4"
+           autoplay muted loop playsinline preload="auto"
+           disablepictureinpicture></video>
+    <div id="panel-veil"></div>
+
+
+    <!-- 1 y 7. PANTALLA PRINCIPAL (ruleta, contador, ronda, jackpots,
+         estadísticas, HOT/COLD, tabla de pagos, últimos números...) -->
+    <iframe id="view-table"
+            class="view"
+            src="screens/show-result-roulette/index.html"
+            scrolling="no"
+            title="Pantalla principal"></iframe>
+
+
+    <!-- 2. INTRO (canvas + GSAP + multiplicativos + bolas) -->
+    <iframe id="view-intro"
+            class="view"
+            src="screens/show-intro-roulette/index.html"
+            scrolling="no"
+            title="Intro"></iframe>
+
+
+    <!-- 3. VIDEO DEL SORTEO.
+         La ruta la fija funcionamiento_roulette.js -> CONFIG.videoSorteo
+         (ahí es donde se cambian los videos definitivos). -->
+    <video id="view-video"
+           class="view"
+           muted playsinline preload="auto"
+           disablepictureinpicture></video>
+           
+     <div id="video-multipliers" aria-hidden="true"></div>
+
+    <!-- 4. GANADOR DEL JACKPOT -->
+    <section id="view-jackpot" class="view">
+        <img id="jk-title" class="art" src="assets/title_jk.png"    alt="">
+        <img id="jk-panel" class="art" src="assets/show_jackpots.png" alt="">
+
+        <div id="jk-type"   class="slot"></div>
+        <div id="jk-place"  class="slot"></div>
+        <div id="jk-ticket" class="slot"></div>
+        <div id="jk-amount" class="slot"></div>
+    </section>
+
+
+    <!-- 5. GANADOR DEL BONO -->
+    <section id="view-bonus" class="view">
+        <img id="bn-title" class="art" src="assets/title_bono.png" alt="">
+        <img id="bn-panel" class="art" src="assets/show_bono.png"  alt="">
+
+        <div id="bn-ticket" class="slot"></div>
+        <div id="bn-amount" class="slot"></div>
+    </section>
+
+
+    <!-- 6. RESULTADO DEL SORTEO -->
+    <iframe id="view-result"
+            class="view"
+            src="screens/show-result-roulette/results.html"
+            scrolling="no"
+            title="Resultado"></iframe>
+
+</div>
+
+<!-- Solo aparece si el navegador bloquea el autoplay silenciado. -->
+<button id="tap-hint" hidden>Iniciar visor</button>
+
+<!-- Solo con ?debug=1 -->
+<div id="flow-hud" hidden></div>
+
+<!-- Unico dato de conexion que recibe el navegador: el WebSocket de conteo (guia sin Redis) -->
+<script>window.VISOR_CONFIG = { wsUrl: "{{ ws_url|escapejs }}" };</script>
+
+<script src="cone_db_roulette.js?v={{vjs}}"></script>
+<script src="funcionamiento_roulette.js?v={{vjs}}"></script>
+
+</body>
+</html>

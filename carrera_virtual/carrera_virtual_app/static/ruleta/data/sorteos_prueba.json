@@ -1,0 +1,2658 @@
+{
+  "start_event": 1240,
+  "jackpots": {
+    "niveles": [
+      {
+        "key": "MEGA",
+        "name": "MEGA",
+        "amount": 351162.36
+      },
+      {
+        "key": "MAYOR",
+        "name": "MAYOR",
+        "amount": 48211.9
+      },
+      {
+        "key": "MENOR",
+        "name": "MENOR",
+        "amount": 9120.44
+      },
+      {
+        "key": "MINI",
+        "name": "MINI",
+        "amount": 1204.18
+      }
+    ],
+    "ultimo": {
+      "type": "MAYOR",
+      "ticket": 40264320,
+      "amount": 45875.5,
+      "place": "SUCURSAL NORTE",
+      "date": "16/09/2026"
+    }
+  },
+  "sorteos": [
+    {
+      "event_number": 1240,
+      "table_odds_id": 9240,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 23,
+          "multiplier": 100
+        },
+        {
+          "number": 12,
+          "multiplier": 150
+        },
+        {
+          "number": 8,
+          "multiplier": 200
+        }
+      ],
+      "resultado": {
+        "draw_number": 1240,
+        "winner_number": 23,
+        "color": "ROJO",
+        "parity": "IMPAR",
+        "row": "2DA FILA",
+        "dozen": "13-24",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 23,
+            "multiplier": 100
+          },
+          {
+            "number": 12,
+            "multiplier": 150
+          },
+          {
+            "number": 8,
+            "multiplier": 200
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        },
+        {
+          "n": 14,
+          "multiplier": 0
+        },
+        {
+          "n": 29,
+          "multiplier": 0
+        },
+        {
+          "n": 5,
+          "multiplier": 0
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 26,
+          "multiplier": 0
+        },
+        {
+          "n": 31,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112400,
+          "monto": 2500
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 351162.36
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 48211.9
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 9120.44
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 1204.18
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 1,
+        "negro": 7,
+        "low": 7,
+        "high": 7,
+        "par": 7,
+        "impar": 7,
+        "d1": 6,
+        "d2": 4,
+        "d3": 4,
+        "c1": 5,
+        "c2": 8,
+        "c3": 1,
+        "total": 15,
+        "hot": [
+          0,
+          2,
+          5,
+          7,
+          8,
+          11
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          6,
+          9,
+          10
+        ]
+      }
+    },
+    {
+      "event_number": 1241,
+      "table_odds_id": 9241,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 17,
+          "multiplier": 50
+        },
+        {
+          "number": 31,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1241,
+        "winner_number": 20,
+        "color": "NEGRO",
+        "parity": "PAR",
+        "row": "2DA FILA",
+        "dozen": "13-24",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 17,
+            "multiplier": 50
+          },
+          {
+            "number": 31,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        },
+        {
+          "n": 14,
+          "multiplier": 0
+        },
+        {
+          "n": 29,
+          "multiplier": 0
+        },
+        {
+          "n": 5,
+          "multiplier": 0
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 26,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 353290.48
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 49193.74
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 9579.49
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 1372.46
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 1,
+        "negro": 7,
+        "low": 7,
+        "high": 7,
+        "par": 8,
+        "impar": 6,
+        "d1": 6,
+        "d2": 5,
+        "d3": 3,
+        "c1": 4,
+        "c2": 9,
+        "c3": 1,
+        "total": 15,
+        "hot": [
+          0,
+          2,
+          5,
+          7,
+          8,
+          11
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          6,
+          9,
+          10
+        ]
+      }
+    },
+    {
+      "event_number": 1242,
+      "table_odds_id": 9242,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 13,
+          "multiplier": 500
+        },
+        {
+          "number": 14,
+          "multiplier": 150
+        },
+        {
+          "number": 27,
+          "multiplier": 200
+        },
+        {
+          "number": 35,
+          "multiplier": 100
+        },
+        {
+          "number": 8,
+          "multiplier": 300
+        }
+      ],
+      "resultado": {
+        "draw_number": 1242,
+        "winner_number": 0,
+        "color": "VERDE",
+        "parity": null,
+        "row": null,
+        "dozen": null,
+        "half": null,
+        "multipliers": [
+          {
+            "number": 13,
+            "multiplier": 500
+          },
+          {
+            "number": 14,
+            "multiplier": 150
+          },
+          {
+            "number": 27,
+            "multiplier": 200
+          },
+          {
+            "number": 35,
+            "multiplier": 100
+          },
+          {
+            "number": 8,
+            "multiplier": 300
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        },
+        {
+          "n": 14,
+          "multiplier": 0
+        },
+        {
+          "n": 29,
+          "multiplier": 0
+        },
+        {
+          "n": 5,
+          "multiplier": 0
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112420,
+          "monto": 3150.0
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 354785.62
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 50080.4
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 10010.9
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 1605.19
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 2,
+        "negro": 6,
+        "low": 7,
+        "high": 6,
+        "par": 7,
+        "impar": 6,
+        "d1": 6,
+        "d2": 5,
+        "d3": 2,
+        "c1": 4,
+        "c2": 8,
+        "c3": 1,
+        "total": 15,
+        "hot": [
+          0,
+          2,
+          5,
+          7,
+          8,
+          11
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          6,
+          9,
+          10
+        ]
+      }
+    },
+    {
+      "event_number": 1243,
+      "table_odds_id": 9243,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 5,
+          "multiplier": 50
+        },
+        {
+          "number": 18,
+          "multiplier": 300
+        },
+        {
+          "number": 29,
+          "multiplier": 150
+        },
+        {
+          "number": 32,
+          "multiplier": 200
+        }
+      ],
+      "resultado": {
+        "draw_number": 1243,
+        "winner_number": 11,
+        "color": "NEGRO",
+        "parity": "IMPAR",
+        "row": "2DA FILA",
+        "dozen": "1-12",
+        "half": "1-18",
+        "multipliers": [
+          {
+            "number": 5,
+            "multiplier": 50
+          },
+          {
+            "number": 18,
+            "multiplier": 300
+          },
+          {
+            "number": 29,
+            "multiplier": 150
+          },
+          {
+            "number": 32,
+            "multiplier": 200
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        },
+        {
+          "n": 14,
+          "multiplier": 0
+        },
+        {
+          "n": 29,
+          "multiplier": 0
+        },
+        {
+          "n": 5,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 356610.15
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 50933.79
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 10576.23
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 1806.96
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 2,
+        "negro": 6,
+        "low": 7,
+        "high": 6,
+        "par": 7,
+        "impar": 6,
+        "d1": 6,
+        "d2": 5,
+        "d3": 2,
+        "c1": 4,
+        "c2": 8,
+        "c3": 1,
+        "total": 15,
+        "hot": [
+          0,
+          2,
+          5,
+          7,
+          8,
+          11
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          6,
+          9,
+          10
+        ]
+      }
+    },
+    {
+      "event_number": 1244,
+      "table_odds_id": 9244,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 7,
+          "multiplier": 100
+        },
+        {
+          "number": 22,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1244,
+        "winner_number": 22,
+        "color": "NEGRO",
+        "parity": "PAR",
+        "row": "1RA FILA",
+        "dozen": "13-24",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 7,
+            "multiplier": 100
+          },
+          {
+            "number": 22,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        },
+        {
+          "n": 14,
+          "multiplier": 0
+        },
+        {
+          "n": 29,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112440,
+          "monto": 4275.25
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 358819.19
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 51902.19
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 10937.4
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 1960.1
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 6,
+        "verde": 2,
+        "negro": 7,
+        "low": 6,
+        "high": 7,
+        "par": 8,
+        "impar": 5,
+        "d1": 5,
+        "d2": 6,
+        "d3": 2,
+        "c1": 5,
+        "c2": 7,
+        "c3": 1,
+        "total": 15,
+        "hot": [
+          0,
+          22,
+          2,
+          7,
+          8,
+          11
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          5,
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "event_number": 1245,
+      "table_odds_id": 9245,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 1,
+          "multiplier": 150
+        },
+        {
+          "number": 16,
+          "multiplier": 200
+        },
+        {
+          "number": 30,
+          "multiplier": 300
+        }
+      ],
+      "resultado": {
+        "draw_number": 1245,
+        "winner_number": 36,
+        "color": "ROJO",
+        "parity": "PAR",
+        "row": "3RA FILA",
+        "dozen": "25-36",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 1,
+            "multiplier": 150
+          },
+          {
+            "number": 16,
+            "multiplier": 200
+          },
+          {
+            "number": 30,
+            "multiplier": 300
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        },
+        {
+          "n": 14,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 360392.25
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 52667.21
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 11480.91
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 2121.24
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 2,
+        "negro": 6,
+        "low": 6,
+        "high": 7,
+        "par": 9,
+        "impar": 4,
+        "d1": 5,
+        "d2": 6,
+        "d3": 2,
+        "c1": 5,
+        "c2": 6,
+        "c3": 2,
+        "total": 15,
+        "hot": [
+          0,
+          22,
+          2,
+          7,
+          8,
+          11
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          5,
+          6,
+          9
+        ]
+      }
+    },
+    {
+      "event_number": 1246,
+      "table_odds_id": 9246,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 9,
+          "multiplier": 50
+        },
+        {
+          "number": 12,
+          "multiplier": 100
+        },
+        {
+          "number": 25,
+          "multiplier": 300
+        },
+        {
+          "number": 34,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1246,
+        "winner_number": 9,
+        "color": "ROJO",
+        "parity": "IMPAR",
+        "row": "3RA FILA",
+        "dozen": "1-12",
+        "half": "1-18",
+        "multipliers": [
+          {
+            "number": 9,
+            "multiplier": 50
+          },
+          {
+            "number": 12,
+            "multiplier": 100
+          },
+          {
+            "number": 25,
+            "multiplier": 300
+          },
+          {
+            "number": 34,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        },
+        {
+          "n": 2,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 362592.31
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 53396.65
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 11839.83
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 2342.94
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 2,
+        "negro": 6,
+        "low": 6,
+        "high": 7,
+        "par": 8,
+        "impar": 5,
+        "d1": 6,
+        "d2": 5,
+        "d3": 2,
+        "c1": 5,
+        "c2": 5,
+        "c3": 3,
+        "total": 15,
+        "hot": [
+          0,
+          22,
+          2,
+          7,
+          8,
+          9
+        ],
+        "cold": [
+          1,
+          3,
+          4,
+          5,
+          6,
+          10
+        ]
+      }
+    },
+    {
+      "event_number": 1247,
+      "table_odds_id": 9247,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 3,
+          "multiplier": 100
+        },
+        {
+          "number": 10,
+          "multiplier": 150
+        },
+        {
+          "number": 19,
+          "multiplier": 200
+        },
+        {
+          "number": 4,
+          "multiplier": 300
+        },
+        {
+          "number": 36,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1247,
+        "winner_number": 28,
+        "color": "NEGRO",
+        "parity": "PAR",
+        "row": "1RA FILA",
+        "dozen": "25-36",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 3,
+            "multiplier": 100
+          },
+          {
+            "number": 10,
+            "multiplier": 150
+          },
+          {
+            "number": 19,
+            "multiplier": 200
+          },
+          {
+            "number": 4,
+            "multiplier": 300
+          },
+          {
+            "number": 36,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        },
+        {
+          "n": 7,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112470,
+          "monto": 1950.75
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 364119.73
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 54539.21
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 12320.55
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 2561.29
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 7,
+        "verde": 2,
+        "negro": 6,
+        "low": 5,
+        "high": 8,
+        "par": 8,
+        "impar": 5,
+        "d1": 5,
+        "d2": 5,
+        "d3": 3,
+        "c1": 6,
+        "c2": 4,
+        "c3": 3,
+        "total": 15,
+        "hot": [
+          0,
+          22,
+          7,
+          8,
+          9,
+          11
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1248,
+      "table_odds_id": 9248,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 4,
+          "multiplier": 200
+        },
+        {
+          "number": 21,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1248,
+        "winner_number": 15,
+        "color": "NEGRO",
+        "parity": "IMPAR",
+        "row": "3RA FILA",
+        "dozen": "13-24",
+        "half": "1-18",
+        "multipliers": [
+          {
+            "number": 4,
+            "multiplier": 200
+          },
+          {
+            "number": 21,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        },
+        {
+          "n": 34,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 366469.88
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 55348.47
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 12727.65
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 2705.32
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 6,
+        "verde": 2,
+        "negro": 7,
+        "low": 5,
+        "high": 8,
+        "par": 8,
+        "impar": 5,
+        "d1": 4,
+        "d2": 6,
+        "d3": 3,
+        "c1": 5,
+        "c2": 4,
+        "c3": 4,
+        "total": 15,
+        "hot": [
+          0,
+          22,
+          8,
+          9,
+          11,
+          12
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1249,
+      "table_odds_id": 9249,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 6,
+          "multiplier": 50
+        },
+        {
+          "number": 23,
+          "multiplier": 300
+        },
+        {
+          "number": 33,
+          "multiplier": 150
+        }
+      ],
+      "resultado": {
+        "draw_number": 1249,
+        "winner_number": 23,
+        "color": "ROJO",
+        "parity": "IMPAR",
+        "row": "2DA FILA",
+        "dozen": "13-24",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 6,
+            "multiplier": 50
+          },
+          {
+            "number": 23,
+            "multiplier": 300
+          },
+          {
+            "number": 33,
+            "multiplier": 150
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 23,
+          "multiplier": 300
+        },
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112490,
+          "monto": 5620
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 368166.37
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 56259.32
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 13200.13
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 2858.4
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 6,
+        "verde": 2,
+        "negro": 7,
+        "low": 5,
+        "high": 8,
+        "par": 7,
+        "impar": 6,
+        "d1": 4,
+        "d2": 7,
+        "d3": 2,
+        "c1": 4,
+        "c2": 5,
+        "c3": 4,
+        "total": 15,
+        "hot": [
+          0,
+          22,
+          23,
+          8,
+          9,
+          11
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1250,
+      "table_odds_id": 9250,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 2,
+          "multiplier": 100
+        },
+        {
+          "number": 11,
+          "multiplier": 200
+        },
+        {
+          "number": 26,
+          "multiplier": 500
+        },
+        {
+          "number": 35,
+          "multiplier": 150
+        }
+      ],
+      "resultado": {
+        "draw_number": 1250,
+        "winner_number": 0,
+        "color": "VERDE",
+        "parity": null,
+        "row": null,
+        "dozen": null,
+        "half": null,
+        "multipliers": [
+          {
+            "number": 2,
+            "multiplier": 100
+          },
+          {
+            "number": 11,
+            "multiplier": 200
+          },
+          {
+            "number": 26,
+            "multiplier": 500
+          },
+          {
+            "number": 35,
+            "multiplier": 150
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 300
+        },
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 19,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 370326.32
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 57445.84
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 13744.52
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 3026.78
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 6,
+        "verde": 3,
+        "negro": 6,
+        "low": 5,
+        "high": 7,
+        "par": 6,
+        "impar": 6,
+        "d1": 4,
+        "d2": 6,
+        "d3": 2,
+        "c1": 3,
+        "c2": 5,
+        "c3": 4,
+        "total": 15,
+        "hot": [
+          0,
+          23,
+          8,
+          9,
+          11,
+          12
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1251,
+      "table_odds_id": 9251,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 8,
+          "multiplier": 300
+        },
+        {
+          "number": 30,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1251,
+        "winner_number": 17,
+        "color": "NEGRO",
+        "parity": "IMPAR",
+        "row": "2DA FILA",
+        "dozen": "13-24",
+        "half": "1-18",
+        "multipliers": [
+          {
+            "number": 8,
+            "multiplier": 300
+          },
+          {
+            "number": 30,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 17,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 300
+        },
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112510,
+          "monto": 2200
+        },
+        {
+          "ticket": 88112511,
+          "monto": 1450.25
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 371759.86
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 58260.29
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 14267.98
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 3248.54
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 5,
+        "verde": 3,
+        "negro": 7,
+        "low": 6,
+        "high": 6,
+        "par": 6,
+        "impar": 6,
+        "d1": 4,
+        "d2": 6,
+        "d3": 2,
+        "c1": 2,
+        "c2": 6,
+        "c3": 4,
+        "total": 15,
+        "hot": [
+          0,
+          23,
+          8,
+          9,
+          11,
+          12
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1252,
+      "table_odds_id": 9252,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 13,
+          "multiplier": 50
+        },
+        {
+          "number": 20,
+          "multiplier": 100
+        },
+        {
+          "number": 24,
+          "multiplier": 150
+        },
+        {
+          "number": 31,
+          "multiplier": 300
+        },
+        {
+          "number": 34,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1252,
+        "winner_number": 24,
+        "color": "NEGRO",
+        "parity": "PAR",
+        "row": "3RA FILA",
+        "dozen": "13-24",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 13,
+            "multiplier": 50
+          },
+          {
+            "number": 20,
+            "multiplier": 100
+          },
+          {
+            "number": 24,
+            "multiplier": 150
+          },
+          {
+            "number": 31,
+            "multiplier": 300
+          },
+          {
+            "number": 34,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 24,
+          "multiplier": 150
+        },
+        {
+          "n": 17,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 300
+        },
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        },
+        {
+          "n": 8,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 373429.85
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 59226.81
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 14854.06
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 3411.12
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 5,
+        "verde": 2,
+        "negro": 8,
+        "low": 6,
+        "high": 7,
+        "par": 7,
+        "impar": 6,
+        "d1": 4,
+        "d2": 7,
+        "d3": 2,
+        "c1": 2,
+        "c2": 6,
+        "c3": 5,
+        "total": 15,
+        "hot": [
+          0,
+          23,
+          8,
+          9,
+          11,
+          12
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1253,
+      "table_odds_id": 9253,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 5,
+          "multiplier": 200
+        },
+        {
+          "number": 16,
+          "multiplier": 300
+        },
+        {
+          "number": 27,
+          "multiplier": 500
+        }
+      ],
+      "resultado": {
+        "draw_number": 1253,
+        "winner_number": 10,
+        "color": "NEGRO",
+        "parity": "PAR",
+        "row": "1RA FILA",
+        "dozen": "1-12",
+        "half": "1-18",
+        "multipliers": [
+          {
+            "number": 5,
+            "multiplier": 200
+          },
+          {
+            "number": 16,
+            "multiplier": 300
+          },
+          {
+            "number": 27,
+            "multiplier": 500
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 10,
+          "multiplier": 0
+        },
+        {
+          "n": 24,
+          "multiplier": 150
+        },
+        {
+          "n": 17,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 300
+        },
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        },
+        {
+          "n": 12,
+          "multiplier": 0
+        }
+      ],
+      "jackpot": null,
+      "bonos": [
+        {
+          "ticket": 88112530,
+          "monto": 3785.8
+        }
+      ],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 375478.5
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 60392.86
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 15324.35
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 3592.07
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 5,
+        "verde": 2,
+        "negro": 8,
+        "low": 6,
+        "high": 7,
+        "par": 7,
+        "impar": 6,
+        "d1": 4,
+        "d2": 7,
+        "d3": 2,
+        "c1": 3,
+        "c2": 5,
+        "c3": 5,
+        "total": 15,
+        "hot": [
+          0,
+          23,
+          9,
+          10,
+          11,
+          12
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "event_number": 1254,
+      "table_odds_id": 9254,
+      "selected_video": null,
+      "multiplicadores": [
+        {
+          "number": 1,
+          "multiplier": 50
+        },
+        {
+          "number": 14,
+          "multiplier": 100
+        },
+        {
+          "number": 22,
+          "multiplier": 150
+        },
+        {
+          "number": 8,
+          "multiplier": 300
+        }
+      ],
+      "resultado": {
+        "draw_number": 1254,
+        "winner_number": 32,
+        "color": "ROJO",
+        "parity": "PAR",
+        "row": "2DA FILA",
+        "dozen": "25-36",
+        "half": "19-36",
+        "multipliers": [
+          {
+            "number": 1,
+            "multiplier": 50
+          },
+          {
+            "number": 14,
+            "multiplier": 100
+          },
+          {
+            "number": 22,
+            "multiplier": 150
+          },
+          {
+            "number": 8,
+            "multiplier": 300
+          }
+        ]
+      },
+      "historial": [
+        {
+          "n": 32,
+          "multiplier": 0
+        },
+        {
+          "n": 10,
+          "multiplier": 0
+        },
+        {
+          "n": 24,
+          "multiplier": 150
+        },
+        {
+          "n": 17,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 300
+        },
+        {
+          "n": 15,
+          "multiplier": 0
+        },
+        {
+          "n": 28,
+          "multiplier": 0
+        },
+        {
+          "n": 9,
+          "multiplier": 50
+        },
+        {
+          "n": 36,
+          "multiplier": 0
+        },
+        {
+          "n": 22,
+          "multiplier": 500
+        },
+        {
+          "n": 11,
+          "multiplier": 0
+        },
+        {
+          "n": 0,
+          "multiplier": 0
+        },
+        {
+          "n": 20,
+          "multiplier": 0
+        },
+        {
+          "n": 23,
+          "multiplier": 100
+        }
+      ],
+      "jackpot": null,
+      "bonos": [],
+      "jackpots": {
+        "niveles": [
+          {
+            "key": "MEGA",
+            "name": "MEGA",
+            "amount": 377384.49
+          },
+          {
+            "key": "MAYOR",
+            "name": "MAYOR",
+            "amount": 61532.23
+          },
+          {
+            "key": "MENOR",
+            "name": "MENOR",
+            "amount": 15851.1
+          },
+          {
+            "key": "MINI",
+            "name": "MINI",
+            "amount": 3792.81
+          }
+        ],
+        "ultimo": {
+          "type": "MAYOR",
+          "ticket": 40264320,
+          "amount": 45875.5,
+          "place": "SUCURSAL NORTE",
+          "date": "16/09/2026"
+        }
+      },
+      "estadisticas": {
+        "rojo": 5,
+        "verde": 2,
+        "negro": 8,
+        "low": 5,
+        "high": 8,
+        "par": 7,
+        "impar": 6,
+        "d1": 3,
+        "d2": 7,
+        "d3": 3,
+        "c1": 3,
+        "c2": 6,
+        "c3": 4,
+        "total": 15,
+        "hot": [
+          0,
+          23,
+          9,
+          10,
+          11,
+          15
+        ],
+        "cold": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    }
+  ]
+}

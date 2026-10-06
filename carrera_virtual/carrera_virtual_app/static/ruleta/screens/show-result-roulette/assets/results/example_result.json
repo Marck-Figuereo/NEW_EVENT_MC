@@ -1,0 +1,26 @@
+{
+  "draw_number": 1234,
+  "winner_number": 23,
+  "color": "ROJO",
+  "parity": "IMPAR",
+  "row": "2DA FILA",
+  "dozen": "13-24",
+  "half": "19-36",
+  "multipliers": [
+    {
+      "number": 23,
+      "value": "x100",
+      "color": "red"
+    },
+    {
+      "number": 12,
+      "value": "x150",
+      "color": "red"
+    },
+    {
+      "number": 1,
+      "value": "x50",
+      "color": "red"
+    }
+  ]
+}

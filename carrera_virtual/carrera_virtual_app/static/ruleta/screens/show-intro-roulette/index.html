@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette Multipliers - Canvas + GSAP + Video 2K60</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="stage">
+
+    <!--
+      VIDEO DE FONDO
+      2560x1440 / 60 FPS
+      No controla las animaciones de Canvas.
+      Solo vive detrás del overlay.
+    -->
+    <video
+      id="backgroundVideo"
+      class="background-video"
+      src="../../optimized/background_1080p.mp4"
+      poster="assets/poster_2k.jpg"
+      muted
+      loop
+      playsinline
+      preload="auto">
+    </video>
+
+    <!--
+      MISMO CANVAS DE LA VERSION ANTERIOR.
+      Toda la composición y animación sigue ocurriendo aquí.
+    -->
+    <div id="rouletteOverlay">
+      <canvas id="fxCanvas" width="1920" height="1080"></canvas>
+    </div>
+
+    <!-- Solo aparece con index.html?debug=1 -->
+    <button id="repeatButton" type="button">REPETIR DEMO</button>
+
+  </div>
+
+  <script src="../../vendor/gsap-3.13.0.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
