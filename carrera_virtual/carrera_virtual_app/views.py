@@ -181,7 +181,7 @@ def configuration(request):
                 return _error('api_no_disponible', 'Falla temporal de la API.', 503)
 
             activation_url = (
-                f"{ADMIN_FRONTEND_URL}/juegos-virtuales/device/activacion?"
+                f"{ADMIN_FRONTEND_URL}/juegos-virtuales/displays/vinculacion?"
                 + urlencode({
                     "pairing_code": data["pairing_code"]
                 })
