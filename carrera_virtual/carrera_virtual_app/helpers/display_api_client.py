@@ -16,6 +16,10 @@ from decouple import config
 
 API_URL = config("API_URL").strip().rstrip("/") + "/"
 
+# Direccion del panel de administracion (pantalla de activacion del visor).
+# Se define en el .env; si no esta, se usa la de desarrollo.
+ADMIN_FRONTEND_URL = config("ADMIN_FRONTEND_URL", default="http://localhost:5173").strip().rstrip("/")
+
 # (conexion, lectura) en segundos, como recomienda la guia
 TIMEOUT = (1.5, 4)
 
@@ -48,8 +52,11 @@ def api_post(path, *, json=None, timeout=TIMEOUT):
 # EMPAREJAMIENTO (5.1 y 5.2)
 # ==========================================
 
-def start_pairing():
-    return api_post("api/core/display/pairing/start/", json={})
+def start_pairing(*, device_token=None):
+    """Sin token inicia un emparejamiento nuevo. Con el token guardado en el visor
+    recupera el MISMO dispositivo y su codigo (por ejemplo al recargar la pantalla)."""
+    cuerpo = {"device_token": device_token} if device_token else {}
+    return api_post("api/core/display/pairing/start/", json=cuerpo)
 
 
 def get_pairing_status(*, device_token):

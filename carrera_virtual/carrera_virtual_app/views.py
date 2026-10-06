@@ -29,7 +29,7 @@ from carrera_virtual_app.helpers.display_api_client import (
 
 
 # Configuraciones de entorno
-version = "v7.1.1"
+version = "v7.1.2"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)
@@ -174,8 +174,17 @@ def configuration(request):
 
         if datos["realizar"] == "activacion":
 
+            # Si el visor ya tiene un token (pantalla recargada antes de activarse), se
+            # recupera el mismo emparejamiento. Si la API ya no lo reconoce, se inicia uno nuevo.
+            token_guardado = str(datos.get("device_token") or "").strip()
+
             try:
-                data = start_pairing()
+                try:
+                    data = start_pairing(device_token=token_guardado or None)
+                except requests.HTTPError:
+                    if not token_guardado:
+                        raise
+                    data = start_pairing()
             except (requests.RequestException, ValueError) as error:
                 print(f"No se pudo iniciar el emparejamiento: {error}")
                 return _error('api_no_disponible', 'Falla temporal de la API.', 503)

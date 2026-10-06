@@ -110,8 +110,11 @@ const peticion = async () => {
       localStorage.setItem('url', data['config']['game_url']) 
       
       window.location.href = "/" + data['config']['game_url']
+      return true
     
     }
+
+    return false
 
     
 
@@ -126,12 +129,24 @@ const peticion = async () => {
 
 $(document).ready(async () => {console.log(localStorage.getItem('url'));
 
-  if(localStorage.getItem('dkg') == null){
+  // Pantalla del juego ya asignada a este visor (solo si de verdad hay una)
+  const url_guardada = localStorage.getItem('url')
+  const tiene_url    = !!url_guardada && url_guardada !== 'null' && url_guardada !== 'undefined'
 
-    console.log("d");
+  if(localStorage.getItem('dkg') == null || !tiene_url){
+
+    // Se recargo esta pantalla con un token guardado: si ese visor ya fue activado
+    // mientras tanto, entra directo a su juego. (Antes redirigia a "/null".)
+    if (localStorage.getItem('dkg') != null) {
+      try { if (await peticion()) return } catch (error) { console.error("Estado de activacion no disponible:", error) }
+    }
+
+    // Sin activar: cada carga de esta pantalla genera un codigo y un token NUEVOS para la verificacion.
     await fetch("/", { method: "POST", body:JSON.stringify({'realizar' : 'activacion'}), headers: { "X-CSRFToken": getCookie2("csrftoken") }
     }).then(res => res.json()) .then(data => {
 
+        // Falla temporal de la API: no se guarda nada; se vuelve a intentar al recargar
+        if (!data || !data.device_token) { console.error("Activacion no disponible:", data); return }
 
         $("#activation_id").text(data.device_token);
         $("#terminalCode").text(data.pairing_code);
@@ -150,7 +165,7 @@ $(document).ready(async () => {console.log(localStorage.getItem('url'));
 
     reconnectTimeout = setInterval(peticion, 4000);
         
-  }else window.location.href = "/" + localStorage.getItem('url')
+  }else window.location.href = "/" + url_guardada
 
 });
 
