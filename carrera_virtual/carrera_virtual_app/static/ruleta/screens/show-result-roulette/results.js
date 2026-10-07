@@ -163,7 +163,9 @@ const RESULT = {
     row: null,
     dozen: null,
     half: null,
-    multipliers: []
+    multipliers: [],
+    /* true cuando el numero ganador multiplico en este sorteo (lo dice la API). */
+    gold: false
 };
 
 /* Colour word -> ball asset. Accepts Spanish and English, any case. */
@@ -412,6 +414,7 @@ const Renderer = {
 
         this.drawWinnerBall(ctx);     // Z1 — behind the overlay
         this.drawOverlay(ctx);        // Z2 — the supplied artwork, unchanged
+        this.drawGoldRing(ctx);       // borde dorado: solo si el ganador multiplico
         this.drawDrawNumber(ctx);     // Z3
         this.drawWinnerNumber(ctx);
         this.drawTable(ctx);
@@ -428,6 +431,56 @@ const Renderer = {
         // Sits inside the opening; the overlay's ring is drawn after it.
         const d = W.r * 2 * 0.92 * (0.86 + 0.14 * A.ball) * (1 + A.ballPop * 0.05);
         drawAsset(ctx, key, W.cx - d / 2, W.cy - d / 2, d, d, A.ball);
+    },
+
+    /* ---- Borde dorado del ganador que multiplica --------------------------
+       La bola conserva su color (rojo / negro / verde); solo se le suma un aro
+       dorado alrededor. Sin placa ni valor: el valor ya sale abajo. */
+    drawGoldRing(ctx) {
+        if (!RESULT.gold || RESULT.winner_number === null || A.ball <= 0.001) return;
+        const W = CONFIG.slots.winner;
+        const d = W.r * 2 * 0.92 * (0.86 + 0.14 * A.ball) * (1 + A.ballPop * 0.05);
+        const grosor = d * 0.052;
+        const radio = d / 2 + grosor * 0.36;
+
+        ctx.save();
+        ctx.globalAlpha = A.ball;
+
+        // Resplandor suave por fuera del aro.
+        ctx.shadowColor = 'rgba(255, 190, 60, 0.85)';
+        ctx.shadowBlur = grosor * 1.6;
+        ctx.strokeStyle = '#f0b445';
+        ctx.lineWidth = grosor;
+        ctx.beginPath();
+        ctx.arc(W.cx, W.cy, radio, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Aro con brillo metalico (claro arriba, mas oscuro abajo).
+        const g = ctx.createLinearGradient(W.cx, W.cy - radio, W.cx, W.cy + radio);
+        g.addColorStop(0.00, '#fff3c4');
+        g.addColorStop(0.28, '#ffd15c');
+        g.addColorStop(0.55, '#e9a521');
+        g.addColorStop(0.82, '#b9770e');
+        g.addColorStop(1.00, '#f6c653');
+        ctx.strokeStyle = g;
+        ctx.lineWidth = grosor;
+        ctx.beginPath();
+        ctx.arc(W.cx, W.cy, radio, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Filos finos para que el aro se lea como un borde y no como un halo.
+        ctx.lineWidth = Math.max(1, grosor * 0.10);
+        ctx.strokeStyle = 'rgba(255, 248, 215, 0.85)';
+        ctx.beginPath();
+        ctx.arc(W.cx, W.cy, radio + grosor / 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(110, 66, 6, 0.80)';
+        ctx.beginPath();
+        ctx.arc(W.cx, W.cy, radio - grosor / 2, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
     },
 
     /* ---- Z2: the overlay, exactly as supplied ---------------------------- */
@@ -710,6 +763,11 @@ function renderResult(data) {
     RESULT.half   = d.half   !== undefined ? d.half   : null;
 
     RESULT.multipliers = Array.isArray(d.multipliers) ? d.multipliers.slice(0, 5) : [];
+
+    /* El ganador multiplico: winning_multiplier solo llega con valor cuando la
+       API lo marca activo (lo filtra cone_db_roulette.js). */
+    RESULT.gold = d.winning_multiplier !== null && d.winning_multiplier !== undefined
+               && Number(d.winning_multiplier) > 0;
 
     // The animated-alpha array follows the item count exactly.
     A.mults.length = RESULT.multipliers.length;

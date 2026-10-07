@@ -655,6 +655,7 @@ const Puente = {
     },
 
     setHistorial(lista, forzar = false) {
+        if (historialCongelado) return;      // sorteo que no pudo mostrarse: ver recargaPorFallo()
         if (!Array.isArray(lista) || !lista.length) return;
 
         if (forzar) {
@@ -674,6 +675,7 @@ const Puente = {
     },
 
     pushResultado(n, mult) {
+        if (historialCongelado) return;
         this.feed.resultados.push({ n: n, mult: mult || 0 });
         this.volcarFeed();
     },
@@ -803,6 +805,31 @@ function pintarBono(bn) {
      durante el intro, el video, el jackpot, el bono o el resultado, el ciclo
      sigue y la alerta sale al volver a la tabla (si la conexión sigue caída).
    ========================================================================= */
+/* Sorteo que no pudo mostrarse: los ultimos numeros y las estadisticas NO se
+   actualizan (el cliente veria aparecer un numero que nunca vio salir). Se espera
+   ESPERA_RECARGA_FALLO y el visor se recarga solo; la recarga nunca interrumpe un
+   sorteo: solo ocurre quieto en la tabla y lejos del cierre. */
+const ESPERA_RECARGA_FALLO = 60000;   // 1 minuto
+let historialCongelado = false;
+let recargaPendiente = null;
+
+function recargaPorFallo() {
+    historialCongelado = true;
+    if (recargaPendiente) return;
+
+    const desde = Date.now();
+
+    recargaPendiente = setInterval(() => {
+        if (Date.now() - desde < ESPERA_RECARGA_FALLO) return;
+        if (STATE.vista !== 'table' || STATE.ciclando) return;
+        if (typeof alertaConexion !== 'undefined' && alertaConexion) return;
+        if (!(Number(STATE.segundos) > 15)) return;
+
+        clearInterval(recargaPendiente);
+        location.reload();
+    }, 1000);
+}
+
 const Alerta = {
     caja: null,
     temporizador: null,
@@ -1246,13 +1273,12 @@ const Ciclo = {
             : false;
 
         /* El video no existe o no se pudo reproducir: alerta y de vuelta a la tabla
-           (el finally la muestra). El numero ganador si queda en los ultimos numeros. */
+           (el finally la muestra). El numero ganador NO se agrega a los ultimos
+           numeros: quedan como estaban y el visor se recarga solo a los 2-3 minutos. */
         if (!videoOk && !TEST_MODE) {
             Puente.ocultarIntro();
 
-            if (resultado && resultado.winner_number !== null) {
-                Puente.pushResultado(resultado.winner_number, Number(resultado.winning_multiplier || 0));
-            }
+            recargaPorFallo();
 
             /* El mensaje no menciona el video ni de donde sale. */
             Alerta.mostrar('Error al comenzar el sorteo', 'Espere el próximo sorteo.', 8000);

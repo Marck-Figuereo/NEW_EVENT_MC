@@ -554,7 +554,14 @@ const mostrando_tablas = async () =>{
   screen_tablas.style.opacity     = 1;
   screen_bono.style.opacity         = 0
 
-  
+  // Ultimos resultados consultados mientras el evento estaba en pantalla:
+  // se pintan ahora, salvo que el evento haya fallado (ver recarga_por_fallo)
+  if (window.historial_en_espera) {
+    const pendiente = window.historial_en_espera
+    window.historial_en_espera = null
+    if (!window.historial_congelado) pintar_ultimas_carreras(pendiente)
+  }
+
 }
 
 
@@ -911,6 +918,34 @@ video_event.addEventListener('playing', async () => {
 })
   
 
+// Evento que no pudo mostrarse: los ultimos resultados NO se actualizan (el cliente veria
+// aparecer un resultado que nunca vio en pantalla). Se espera ESPERA_RECARGA_FALLO y el visor
+// se recarga solo; la recarga nunca interrumpe un evento: solo ocurre quieto en las tablas.
+const ESPERA_RECARGA_FALLO        = 60000    // carreras (perros y caballos): 1 minuto
+const ESPERA_RECARGA_FALLO_GALLOS = 120000   // gallos: 2 minutos
+var   recarga_pendiente    = null
+
+const recarga_por_fallo = () => {
+
+  window.historial_congelado = true
+  window.historial_en_espera = null
+  if (recarga_pendiente) return
+
+  const desde = Date.now()
+
+  recarga_pendiente = setInterval(() => {
+
+    if (Date.now() - desde < (game_code == 5 ? ESPERA_RECARGA_FALLO_GALLOS : ESPERA_RECARGA_FALLO)) return
+    // En las tablas, sin alerta de conexion y lejos del cierre del sorteo
+    if (!en_tablas() || alerta_conexion || !(Number(tiempo) > 15)) return
+
+    clearInterval(recarga_pendiente)
+    location.reload()
+
+  }, 1000)
+}
+
+
 // El video del evento no existe o no se puede reproducir: NO se usa ningun video de prueba.
 // Se avisa (sin mencionar el video) y se vuelve a las tablas; el visor sigue con el siguiente sorteo.
 video_event.addEventListener('error', async () => {
@@ -923,6 +958,8 @@ video_event.addEventListener('error', async () => {
   ciclo_video++                 // corta lo que esperaba a este video (conteo y peleas de gallos)
   vigilando_resultado = false
   if (game_code == 5) detenerConteoAscendente()
+
+  recarga_por_fallo()           // congela los ultimos resultados y programa la recarga
 
   await mostrando_tablas()
 

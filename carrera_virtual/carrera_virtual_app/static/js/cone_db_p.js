@@ -874,6 +874,10 @@ const consult_gallos = data => {
 
 const Consulta_ultimas_carreras = async () => {
 
+    // El evento no pudo mostrarse: los ultimos resultados quedan como estaban
+    // hasta que el visor se recarga (ver recarga_por_fallo en funcionamiento_p.js).
+    if (window.historial_congelado) return
+
  
     // try{
 
@@ -890,6 +894,23 @@ const Consulta_ultimas_carreras = async () => {
 
         // API no disponible: se conserva el historial que ya esta en pantalla
         if (!data || !Array.isArray(data['results'])) return
+
+        // La falla del evento llego mientras se consultaba
+        if (window.historial_congelado) return
+
+        // Hay un evento en pantalla (intro, video, jackpot, bono o resultados): los ultimos
+        // resultados no se pintan por detras; se guardan y se pintan al volver a las tablas
+        // (mostrando_tablas). Si el evento falla, no se pintan y el visor se recarga solo.
+        const tablas = document.getElementById('cuerpo')
+        if (tablas && tablas.style.opacity === '0') { window.historial_en_espera = data; return }
+
+        pintar_ultimas_carreras(data)
+
+}
+
+
+// Pinta los ultimos resultados con la respuesta de history_results
+const pintar_ultimas_carreras = (data) => {
 
         if (localStorage.getItem('game_id') == 5){
 

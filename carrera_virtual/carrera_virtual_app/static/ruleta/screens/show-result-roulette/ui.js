@@ -309,8 +309,8 @@ const GAME = {
        Sin multiplicativo paga 36 y no participa; con multiplicativo paga 27
        y participa en los multiplicativos de la ronda. */
     payoutDirecto: [
-        { title: 'DIRECTO NORMAL',         value: '36 a 1', note: 'NO PARTICIPA EN MULTIPLICATIVOS', destacado: false },
-        { title: 'DIRECTO MULTIPLICATIVO', value: '27 a 1', note: 'PARTICIPA EN MULTIPLICATIVOS',    destacado: true }
+        { title: 'DIRECTO NORMAL',         value: '35 a 1', note: 'NO PARTICIPA EN MULTIPLICATIVOS', destacado: false },
+        { title: 'DIRECTO MULTIPLICATIVO', value: '26 a 1', note: 'PARTICIPA EN MULTIPLICATIVOS',    destacado: true }
     ],
 
     /* Payout table (resto de apuestas). Split across two columns automatically. */
@@ -1875,6 +1875,27 @@ const Live = {
                 ctx.globalCompositeOperation = 'lighter';
                 ctx.globalAlpha = alpha * strike * UI.fx.lightningBall;
                 ctx.drawImage(UIA.tint[key], x - d / 2, chip.cy - d / 2, d, d);
+                ctx.restore();
+            }
+
+            /* Numero que multiplico: borde dorado alrededor de su bola. */
+            if (res.mult > 0) {
+                const grosor = Math.max(2, d * 0.085);
+                const radio = d / 2 + grosor * 0.30;
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                const oro = ctx.createLinearGradient(x, chip.cy - radio, x, chip.cy + radio);
+                oro.addColorStop(0.00, '#fff3c4');
+                oro.addColorStop(0.30, '#ffd15c');
+                oro.addColorStop(0.60, '#e9a521');
+                oro.addColorStop(1.00, '#c98a14');
+                ctx.shadowColor = 'rgba(255, 190, 60, 0.75)';
+                ctx.shadowBlur = grosor * 1.4;
+                ctx.strokeStyle = oro;
+                ctx.lineWidth = grosor;
+                ctx.beginPath();
+                ctx.arc(x, chip.cy, radio, 0, TAU);
+                ctx.stroke();
                 ctx.restore();
             }
 
