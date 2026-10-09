@@ -363,8 +363,9 @@ connectWebSocket = async () => {
     
     const socket = new WebSocket(url_websocket());
     websocket = socket
-
+    
     socket.onopen = () => {
+      (window.ControlVisor ? ControlVisor.logEvento : console.log)('conectado | autenticacion: ' + acceso.modo, socket.url)
       if (acceso.modo === 'auth') socket.send(JSON.stringify({ type : 'authenticate', ticket : acceso.ticket }))
       ws_caido_desde = null
       ws_ultimo_mensaje = Date.now()
@@ -375,8 +376,9 @@ connectWebSocket = async () => {
     socket.onmessage = (event) => {
       let data
       ws_ultimo_mensaje = Date.now()
-      try { data = JSON.parse(event.data) } catch (error) { console.log('Mensaje de WebSocket invalido'); return }
 
+      try { data = JSON.parse(event.data) } catch (error) { console.log('Mensaje de WebSocket invalido'); return }
+      (window.ControlVisor ? ControlVisor.logEvento : console.log)(data, socket.url)
       // Este canal tambien trae mensajes de control (device.*): esos no son conteo
       const tipo = window.ControlVisor ? ControlVisor.mensajeCountdown(data) : 'conteo'
 
@@ -390,7 +392,6 @@ connectWebSocket = async () => {
       if (tipo !== 'conteo') return
 
       ws_reintentos = 0          // conexion autenticada y estable: la espera vuelve a 1 s
-      console.log(data);
       manejar_countdown(data)
     };
 
@@ -398,6 +399,7 @@ connectWebSocket = async () => {
     // 4403: grupo/juego/suspension; antes de volver se consulta el estado del visor.
     socket.onclose = async (evento) => {
 
+      (window.ControlVisor ? ControlVisor.logEvento : console.log)('cerrado, codigo ' + evento.code, socket.url)
       if (websocket !== socket) return
       websocket = null
       if (!ws_caido_desde) ws_caido_desde = Date.now()

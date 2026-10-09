@@ -1634,8 +1634,7 @@ let socketPidiendo = false;     /* ticket en camino: no se abre otra conexion */
 function urlSocket() {
     /* WEBSOCKET_URL la inyecta Django en la plantilla (guia sin Redis). */
     const base = String((window.VISOR_CONFIG || {}).wsUrl || ('ws://' + CONFIG.socket.host)).replace(/\/+$/, '');
-    return base + '/ws/pos/grupos/' + localStorage.getItem('grupo') +
-                  '/games/' + (localStorage.getItem('game_id_ruleta') || localStorage.getItem('game_id')) + '/countdown/';
+    return base + '/ws/pos/grupos/' + localStorage.getItem('grupo') + '/games/' + (localStorage.getItem('game_id_ruleta') || localStorage.getItem('game_id')) + '/countdown/';
 }
 
 async function conectarSocket() {
@@ -1676,6 +1675,7 @@ async function conectarSocket() {
     socketActual = ws;
 
     ws.onopen = () => {
+        (window.ControlVisor ? ControlVisor.logEvento : console.log)('conectado | autenticacion: ' + acceso.modo, ws.url);
         if (acceso.modo === 'auth') ws.send(JSON.stringify({ type: 'authenticate', ticket: acceso.ticket }));
         wsCaidoDesde = null;
         wsUltimoMensaje = Date.now();
@@ -1690,7 +1690,7 @@ async function conectarSocket() {
         wsUltimoMensaje = Date.now();
         let data;
         try { data = JSON.parse(ev.data); } catch (_) { return; }
-
+        (window.ControlVisor ? ControlVisor.logEvento : console.log)(data, ws.url);
         /* Este canal tambien trae mensajes de control (device.*): esos no son conteo. */
         const tipo = window.ControlVisor ? ControlVisor.mensajeCountdown(data) : 'conteo';
 
@@ -1710,6 +1710,7 @@ async function conectarSocket() {
     /* Reconexión con espera creciente (1, 2, 4, 8, 16 y 30 s, con variacion).
        4403: grupo/juego/suspension; antes de volver se consulta el estado del visor. */
     ws.onclose = async evento => {
+        (window.ControlVisor ? ControlVisor.logEvento : console.log)('cerrado, codigo ' + evento.code, ws.url);
         if (socketActual !== ws) return;
         socketActual = null;
         if (!wsCaidoDesde) wsCaidoDesde = Date.now();

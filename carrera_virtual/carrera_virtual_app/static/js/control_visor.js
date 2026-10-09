@@ -488,6 +488,7 @@
         S.autenticado = false;
 
         ws.onopen = () => {
+            logControl('conectado', ws.url);
             ws.send(JSON.stringify({ type: 'authenticate', ticket: t.ticket }));
         };
 
@@ -498,11 +499,13 @@
             S.ultimoMsg = Date.now();
             let msg;
             try { msg = JSON.parse(ev.data); } catch (_) { return; }
+            logControl(msg, ws.url);
             if (msg && msg.type === 'device.ready') { S.autenticado = true; S.intentos = 0; }
             if (!recibir(msg, 'control')) log('mensaje de control desconocido:', msg && msg.type);
         };
 
         ws.onclose = ev => {
+            logControl('cerrado, codigo ' + ev.code, ws.url);
             if (S.socket !== ws) return;
             S.socket = null;
             S.autenticado = false;
@@ -647,7 +650,53 @@
         if (!document.hidden && S.iniciado) { reconciliar('visible'); conectarControl(); }
     });
 
+    /* ---------------- consola: que trae cada WebSocket ---------------- */
+
+    const ETQ_EVENTO  = ['%c[WS EVENTO] tiempo de venta, cierre e informacion del sorteo', 'color:#1a7f37;font-weight:bold'];
+    const ETQ_CONTROL = ['%c[WS CONTROL] cambios del panel para este visor (no es el tiempo del sorteo)', 'color:#1f6feb;font-weight:bold'];
+
+    const hora = iso => {
+        if (!iso) return '-';
+        const d = new Date(iso);
+        return isNaN(d) ? String(iso) : d.toLocaleTimeString('es-DO', { hour12: false });
+    };
+
+    /* Socket del juego: /ws/pos/grupos/<grupo>/games/<juego>/countdown/ */
+    function logEvento(data, url) {
+        const donde = url ? '| ' + url : '';
+        if (typeof data === 'string') { console.log(ETQ_EVENTO[0], ETQ_EVENTO[1], '|', data, donde); return; }
+        const d = data || {};
+        let resumen;
+        if (d.type === 'countdown.update') {
+            const abierto = d.state === 'selling';
+            resumen = 'Sorteo ' + d.event_number + ' (' + (d.game_code || 'juego ' + d.game_id) + ') | ' +
+                (abierto ? 'VENTA ABIERTA: cierra en ' + d.seconds_left + ' s' : 'VENTAS CERRADAS (' + (d.phase || d.state) + ')') +
+                ' | cierre de venta ' + hora(d.sales_close_at) + ' | evento ' + hora(d.scheduled_at);
+        } else if (d.type === 'countdown.empty') {
+            resumen = 'Sin sorteo programado';
+        } else if (String(d.type || '').indexOf('device.') === 0) {
+            resumen = 'aviso de control recibido por este canal (' + d.type + '), no cambia el tiempo';
+        } else {
+            resumen = d.type || '(sin type)';
+        }
+        console.log(ETQ_EVENTO[0], ETQ_EVENTO[1], '|', resumen, donde, d);
+    }
+
+    /* Socket de control: /ws/device-control/ */
+    function logControl(msg, url) {
+        const donde = url ? '| ' + url : '';
+        if (typeof msg === 'string') { console.log(ETQ_CONTROL[0], ETQ_CONTROL[1], '|', msg, donde); return; }
+        const m = msg || {};
+        let resumen;
+        if (m.type === 'device.ready')       resumen = 'autenticado: visor ' + m.device_id + ' "' + (m.name || '') + '" version ' + m.config_version + ' | puede operar: ' + m.can_operate;
+        else if (m.type === 'device.status') resumen = 'estado cada ~30 s: version ' + m.config_version + ' | puede operar: ' + m.can_operate + ((m.blocked_reasons || []).length ? ' | motivos: ' + m.blocked_reasons.join(', ') : '');
+        else                                 resumen = 'aviso del panel: ' + (m.type || '(sin type)') + (m.action ? ' / ' + m.action : '') + (m.config_version !== undefined ? ' | version ' + m.config_version : '');
+        console.log(ETQ_CONTROL[0], ETQ_CONTROL[1], '|', resumen, donde, m);
+    }
+
     const ControlVisor = window.ControlVisor = {
+        logEvento: logEvento,
+        logControl: logControl,
         iniciar: iniciar,
         reconciliar: reconciliar,
         recibir: recibir,
