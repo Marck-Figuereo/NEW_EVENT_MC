@@ -252,6 +252,9 @@ const revisar_conexion = () => {
 
     if (arranque_sin_internet) { location.reload(); return }
 
+    // Evento fallido pendiente: vuelve su aviso y la tabla sigue en "- - -"
+    if (window.historial_congelado) { mostrar_alerta_fallo(); return }
+
     // Volvio la conexion: tabla, jackpots y ultimos resultados al dia
     recuperar_evento_actual()
     sincronizacion()
@@ -358,6 +361,7 @@ connectWebSocket = async () => {
       let data
       ws_ultimo_mensaje = Date.now()
       try { data = JSON.parse(event.data) } catch (error) { console.log('Mensaje de WebSocket invalido'); return }
+      console.log(data);
       manejar_countdown(data)
     };
 
@@ -819,6 +823,9 @@ video_event.addEventListener('ended', async () => {
 // exactamente a (duracion - 10 s), que es cuando el video muestra su pantalla de resultados.
 // ==========================================
 
+var overlay_listo = false   // textos preparados, a la espera del primer cuadro del video
+const ov_suerte   = document.getElementById('ov_suerte')   // solo existe en perros de 6
+
 const preparar_overlay_video = () => {
 
   if (!overlay_video || !resultado_sobre_video()) return
@@ -829,8 +836,11 @@ const preparar_overlay_video = () => {
   document.getElementById('ov_win').textContent    = nup[4] ?? ''
   document.getElementById('ov_exacta').textContent = nup[5] ?? ''
 
-  overlay_video.classList.remove('con-resultado')
-  overlay_video.classList.add('visible')
+  // Los textos quedan listos, pero NO se muestran todavia: el numero de carrera aparece
+  // con el primer cuadro del video (ver programar_resultado_video). Antes salia sobre el
+  // final del intro mientras el video terminaba de cargar.
+  overlay_video.classList.remove('visible', 'con-resultado', 'con-suerte')
+  overlay_listo = true
 }
 
 
@@ -847,10 +857,18 @@ const programar_resultado_video = () => {
 
     if (!vigilando_resultado) return
 
+    // Primer cuadro del video en pantalla: ahora si se muestra el numero de carrera
+    if (overlay_listo && !overlay_video.classList.contains('visible')) overlay_video.classList.add('visible')
+
     const duracion = duracion_video_evento()
+
+    // "BUENA SUERTE" sobre la barra roja inferior izquierda del video (solo las plantillas que
+    // tienen #ov_suerte: perros de 6). La barra esta en el video hasta duracion - 15 s.
+    if (ov_suerte) overlay_video.classList.toggle('con-suerte', overlay_listo && tiempo_video < duracion - 15)
 
     if (tiempo_video >= duracion - 10) {
       vigilando_resultado = false
+      overlay_video.classList.remove('con-suerte')
       overlay_video.classList.add('con-resultado')
       console.log(`Resultados sobre el video: segundo ${tiempo_video.toFixed(2)} (esperado ${(duracion - 10).toFixed(2)} de ${duracion.toFixed(2)})`)
       return
@@ -878,7 +896,8 @@ const ocultar_overlay_video = () => {
   if (!overlay_video) return
 
   vigilando_resultado = false
-  overlay_video.classList.remove('visible', 'con-resultado')
+  overlay_listo = false
+  overlay_video.classList.remove('visible', 'con-resultado', 'con-suerte')
 }
 
 
@@ -918,12 +937,27 @@ video_event.addEventListener('playing', async () => {
 })
   
 
-// Evento que no pudo mostrarse: los ultimos resultados NO se actualizan (el cliente veria
-// aparecer un resultado que nunca vio en pantalla). Se espera ESPERA_RECARGA_FALLO y el visor
-// se recarga solo; la recarga nunca interrumpe un evento: solo ocurre quieto en las tablas.
+// Evento que no pudo mostrarse: el aviso queda en pantalla sobre las tablas en "- - -" (nadie
+// juega con las cuotas del sorteo que cerro) y los ultimos resultados no cambian. Pasado
+// ESPERA_RECARGA_FALLO se actualiza todo POR DETRAS del aviso (tabla del sorteo en venta,
+// ultimos resultados y jackpots) y recien entonces se quita el aviso: el cliente vuelve a una
+// tabla ya al dia, sin recargar la pagina. Nunca interrumpe un evento.
 const ESPERA_RECARGA_FALLO        = 60000    // carreras (perros y caballos): 1 minuto
 const ESPERA_RECARGA_FALLO_GALLOS = 120000   // gallos: 2 minutos
 var   recarga_pendiente    = null
+
+// Todas las cuotas a "- - -" (carreras: .precios_tbl, gallos: .ods)
+const limpiar_tablas = () => {
+  $('.precios_tbl').css("color", "#fff").text('- - -')
+  $('.ods').css("color", "").text('- - -')
+}
+
+// Aviso de evento fallido: se queda en pantalla hasta que todo se actualiza
+const mostrar_alerta_fallo = () => {
+  Swal.fire({ title: game_code == 5 ? 'Error al comenzar la pelea' : 'Error al comenzar la carrera',
+              text: 'Espere el próximo evento.', icon: 'warning',
+              showConfirmButton: false, allowOutsideClick: false, allowEscapeKey: false })
+}
 
 const recarga_por_fallo = () => {
 
@@ -936,13 +970,41 @@ const recarga_por_fallo = () => {
   recarga_pendiente = setInterval(() => {
 
     if (Date.now() - desde < (game_code == 5 ? ESPERA_RECARGA_FALLO_GALLOS : ESPERA_RECARGA_FALLO)) return
-    // En las tablas, sin alerta de conexion y lejos del cierre del sorteo
-    if (!en_tablas() || alerta_conexion || !(Number(tiempo) > 15)) return
+    // Quieto en las tablas y sin alerta de conexion
+    if (!en_tablas() || alerta_conexion) return
 
     clearInterval(recarga_pendiente)
-    location.reload()
+    recarga_pendiente = null
+    actualizar_tras_fallo()
 
   }, 1000)
+}
+
+// Se descongela y se pide todo de nuevo con el aviso todavia encima; al terminar, se quita
+const actualizar_tras_fallo = async () => {
+
+  window.historial_congelado = false
+  window.historial_en_espera = null
+
+  try {
+    await recuperar_evento_actual()                       // sorteo en venta (tabla y numero)
+    vd = await Consulta_Tabla(id_table, Number(game_code))  // cuotas (y jackpots)
+    await Consulta_ultimas_carreras()                     // ultimos resultados ya con el evento fallido
+    await esperar(800)                                    // que el navegador termine de pintar
+  } catch (error) { console.log('Actualizacion tras el evento fallido:', error) }
+
+  if (!alerta_conexion) Swal.close()
+  console.log('Evento fallido: tablas y resultados actualizados, aviso retirado')
+}
+
+// Empieza un evento nuevo antes de que se cumpliera la espera: se suelta el congelamiento
+// (al terminar ese evento todo se actualiza como siempre)
+const soltar_fallo = () => {
+  if (!window.historial_congelado) return
+  clearInterval(recarga_pendiente)
+  recarga_pendiente = null
+  window.historial_congelado = false
+  Swal.close()
 }
 
 
@@ -959,14 +1021,14 @@ video_event.addEventListener('error', async () => {
   vigilando_resultado = false
   if (game_code == 5) detenerConteoAscendente()
 
-  recarga_por_fallo()           // congela los ultimos resultados y programa la recarga
+  recarga_por_fallo()           // congela ultimos resultados y tablas, y programa la recarga
 
+  limpiar_tablas()              // las cuotas del sorteo que cerro no se pueden jugar
   await mostrando_tablas()
 
-  // El mensaje no menciona el video ni de donde sale: solo que el evento no pudo comenzar
-  Swal.fire({ title: game_code == 5 ? 'Error al comenzar la pelea' : 'Error al comenzar la carrera',
-              text: 'Espere el próximo evento.', icon: 'warning',
-              showConfirmButton: false, timer: 8000 })
+  // El mensaje no menciona el video ni de donde sale: solo que el evento no pudo comenzar.
+  // Se queda hasta que todo se actualiza (1 minuto; gallos 2).
+  mostrar_alerta_fallo()
 
 });
 
@@ -987,12 +1049,11 @@ setInterval( async ()=> {
     entra_sincro_2 = true
     entra_sincro_3 = true
     
-    $('.precios_tbl').each( function() {  
-      
-      $(`#${$(this).attr('id')}`).css("color", "#fff")
-      $($(this).attr('id')).text('- - -')
+    // Al empezar el evento las cuotas de ese sorteo se quitan: nadie debe jugar con ellas
+    limpiar_tablas()
 
-    });
+    // Si quedo en pantalla el aviso de un evento fallido, el evento nuevo se ve sin el
+    soltar_fallo()
 
     $('#id_sorteos_c_id').text('');
 

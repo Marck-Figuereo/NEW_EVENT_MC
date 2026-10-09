@@ -805,10 +805,11 @@ function pintarBono(bn) {
      durante el intro, el video, el jackpot, el bono o el resultado, el ciclo
      sigue y la alerta sale al volver a la tabla (si la conexión sigue caída).
    ========================================================================= */
-/* Sorteo que no pudo mostrarse: los ultimos numeros y las estadisticas NO se
-   actualizan (el cliente veria aparecer un numero que nunca vio salir). Se espera
-   ESPERA_RECARGA_FALLO y el visor se recarga solo; la recarga nunca interrumpe un
-   sorteo: solo ocurre quieto en la tabla y lejos del cierre. */
+/* Sorteo que no pudo mostrarse: el aviso queda en pantalla y los ultimos numeros y
+   las estadisticas NO cambian (el cliente veria aparecer un numero que nunca vio
+   salir). Pasado ESPERA_RECARGA_FALLO se actualiza todo POR DETRAS del aviso
+   (historial, estadisticas y jackpots) y recien entonces se quita: el cliente vuelve
+   a una tabla ya al dia, sin recargar la pagina. Nunca interrumpe un sorteo. */
 const ESPERA_RECARGA_FALLO = 60000;   // 1 minuto
 let historialCongelado = false;
 let recargaPendiente = null;
@@ -823,11 +824,35 @@ function recargaPorFallo() {
         if (Date.now() - desde < ESPERA_RECARGA_FALLO) return;
         if (STATE.vista !== 'table' || STATE.ciclando) return;
         if (typeof alertaConexion !== 'undefined' && alertaConexion) return;
-        if (!(Number(STATE.segundos) > 15)) return;
 
         clearInterval(recargaPendiente);
-        location.reload();
+        recargaPendiente = null;
+        actualizarTrasFallo();
     }, 1000);
+}
+
+/* Se descongela y se pide todo de nuevo con el aviso encima; al terminar, se quita. */
+async function actualizarTrasFallo() {
+    historialCongelado = false;
+    try {
+        await sincronizar(STATE.tableOddsId, false);           // jackpots
+        const hist = await RouletteDB.consultarHistorial();    // ya trae el sorteo fallido
+        if (hist) Puente.setHistorial(hist, true);             // numeros y estadisticas
+        await new Promise(r => setTimeout(r, 800));            // que termine de pintar
+    } catch (e) { console.warn('[flow] actualizacion tras el sorteo fallido:', e.message); }
+
+    if (!alertaConexion) Alerta.ocultar();
+    console.log('[flow] sorteo fallido: historial y estadisticas actualizados, aviso retirado');
+}
+
+/* Empieza un sorteo nuevo antes de que se cumpliera la espera: se suelta el
+   congelamiento y se quita el aviso. */
+function soltarFallo() {
+    if (!historialCongelado) return;
+    clearInterval(recargaPendiente);
+    recargaPendiente = null;
+    historialCongelado = false;
+    if (!alertaConexion) Alerta.ocultar();
 }
 
 const Alerta = {
@@ -900,6 +925,9 @@ function revisarConexion() {
     } else if (!caida && alertaConexion) {
         alertaConexion = false;
         Alerta.ocultar();
+
+        /* Sorteo fallido pendiente: vuelve su aviso. */
+        if (historialCongelado) { Alerta.mostrar('Error al comenzar el sorteo', 'Espere el próximo sorteo.'); return; }
 
         /* Volvio la conexion: jackpots al dia. */
         sincronizar(STATE.tableOddsId, false);
@@ -1201,6 +1229,9 @@ const Ciclo = {
 
     console.log('[flow] ===== ciclo de la ronda', eventNumber, '=====');
 
+    /* Si quedo el aviso de un sorteo fallido, el sorteo nuevo se ve sin el. */
+    soltarFallo();
+
     try {
         const ronda =
             await RouletteDB.consultarResultados(eventNumber, sorteoId);
@@ -1281,7 +1312,8 @@ const Ciclo = {
             recargaPorFallo();
 
             /* El mensaje no menciona el video ni de donde sale. */
-            Alerta.mostrar('Error al comenzar el sorteo', 'Espere el próximo sorteo.', 8000);
+            /* Se queda en pantalla hasta que todo se actualiza (1 minuto). */
+            Alerta.mostrar('Error al comenzar el sorteo', 'Espere el próximo sorteo.');
             return;
         }
 

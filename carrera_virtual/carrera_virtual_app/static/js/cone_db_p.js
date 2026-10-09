@@ -409,6 +409,10 @@ var tabla_cargada = null   // table_odds_id que esta dibujado en la tabla
 
 const Consulta_Tabla = async (id_table, game) => {
 
+    // El evento anterior no pudo mostrarse: la tabla queda en "- - -" (nadie juega con esas
+    // cuotas) hasta que se actualiza todo (ver recarga_por_fallo en funcionamiento_p.js)
+    if (window.historial_congelado) return true
+
     console.log('Consulta_Tabla', id_table, game);
         $('.txt_lgr').text(localStorage.getItem('lugar'))
 
@@ -446,7 +450,7 @@ const Consulta_Tabla = async (id_table, game) => {
     
                 if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(parseFloat(odds).toFixed(1))
                 else if (game == 5)                                   $('#ods_' + cmb).text(isNaN(parseFloat(odds)) ? odds : parseFloat(odds).toFixed(1));
-                else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(odds)
+                else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(isNaN(parseFloat(odds)) ? odds : parseFloat(odds).toFixed(1))
     
             }) 
 
@@ -465,13 +469,14 @@ const Consulta_Tabla = async (id_table, game) => {
                     const pcMayor = combinaciones.reduce((a, b) => Number(a[1]) > Number(b[1]) ? a : b);
                     const pcMenor = combinaciones.reduce((a, b) => Number(a[1]) < Number(b[1]) ? a : b);
                 
+                    // Colores: la que MAS paga va en ROJO y la que MENOS paga va en VERDE
                     if(game == 5){
-                        $(`#ods_${pcMayor[0]}`).css("color", "#09ff00");
-                        $(`#ods_${pcMenor[0]}`).css("color", "#ff0000");
+                        $(`#ods_${pcMayor[0]}`).css("color", "#ff0000");
+                        $(`#ods_${pcMenor[0]}`).css("color", "#09ff00");
 
                     }else{
-                        $(`#${pcMayor[0]}`).css("color", "#09ff00");
-                        $(`#${pcMenor[0]}`).css("color", "#ff0000");
+                        $(`#${pcMayor[0]}`).css("color", "#ff0000");
+                        $(`#${pcMenor[0]}`).css("color", "#09ff00");
                     }
                 }
 
@@ -485,8 +490,9 @@ const Consulta_Tabla = async (id_table, game) => {
                     const mayorKey = winMayor[0].replace("WIN ", "");
                     const menorKey = winMenor[0].replace("WIN ", "");
 
-                    $(`#${mayorKey}-${mayorKey}`).css("color", "#09ff00");
-                    $(`#${menorKey}-${menorKey}`).css("color", "#ff0000");
+                    // Ganador: el que MAS paga en ROJO, el que MENOS paga en VERDE
+                    $(`#${mayorKey}-${mayorKey}`).css("color", "#ff0000");
+                    $(`#${menorKey}-${menorKey}`).css("color", "#09ff00");
                 }
             
             }catch(error){console.log("Error: ", error)}
@@ -767,7 +773,8 @@ const consult_gallos = data => {
 
     $('.sidebar_ult').append('<div class="row row-title">HISTORIAL DE TORNEO</div>');
  
-    data.results.forEach(dts => {
+    // Solo los 5 torneos mas recientes: la API puede mandar muchos mas y la lista se sale del diseno
+    data.results.slice(0, 5).forEach(dts => {
 
         if (!dts || !dts.result) return;
 
@@ -875,7 +882,7 @@ const consult_gallos = data => {
 const Consulta_ultimas_carreras = async () => {
 
     // El evento no pudo mostrarse: los ultimos resultados quedan como estaban
-    // hasta que el visor se recarga (ver recarga_por_fallo en funcionamiento_p.js).
+    // hasta que se actualiza todo (ver recarga_por_fallo en funcionamiento_p.js).
     if (window.historial_congelado) return
 
  

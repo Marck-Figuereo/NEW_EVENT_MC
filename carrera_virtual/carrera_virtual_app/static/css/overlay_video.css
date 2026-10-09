@@ -48,6 +48,12 @@
 #ov_win     { left: 50.7%; top: 33.3%; width: 20.2%; height: 23.9%; font-size: 11cqh; }
 #ov_exacta  { left: 56.4%; top: 65.7%; width: 29.3%; height: 23.7%; font-size: 11cqh; }
 
+/* Barra roja inferior izquierda del video de perros de 6 (medida sobre DOGS_6/video.mp4:
+   x 0-324 px, y 1015-1077 px de 1920x1080). Esta en el video desde el inicio hasta
+   duracion - 15 s; el texto solo se ve en ese tramo (clase con-suerte, la pone el JS). */
+#ov_suerte  { left: 0%;    top: 93.98%; width: 16.9%; height: 5.75%; font-size: 2.9cqh; letter-spacing: .04em; opacity: 0; }
+#overlay-video.con-suerte #ov_suerte { opacity: 1; }
+
 /* Entrada igual a la del video (medida cuadro a cuadro sobre perros8.mp4, desde duracion - 10 s):
    +0,02 s a +0,44 s  las cajas aparecen con un fundido lento al inicio y rapido al final
    +0,44 s a +0,85 s  pasa un destello por encima de las cajas (maximo cerca de +0,50 s)
