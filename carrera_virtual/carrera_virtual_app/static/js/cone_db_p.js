@@ -572,10 +572,17 @@ const confirmar_configuracion = async () => {
 
         const response = await post_visor({'realizar':'display_config', "device_token" : localStorage.getItem('dkg')})
 
-        if (response.status == 404) { volver_a_configuracion(); return }
+        const con_control = window.ControlVisor && ControlVisor.conControl
+
+        // 404 de contenido: puede ser suspension o juego no disponible. Con el control de
+        // dispositivo lo decide el snapshot; nunca se borra la vinculacion por este 404.
+        if (response.status == 404) { if (con_control) ControlVisor.reconciliar('display_config 404'); else volver_a_configuracion(); return }
         if (!response.ok) return   // API no disponible: se conserva la configuracion actual
 
         const data = await response.json()
+
+        // Estado, grupo y juegos los decide el snapshot de control; de aqui solo el jackpot
+        if (con_control) { if (data['jackpot_id'] !== undefined) localStorage.setItem('jk', data['jackpot_id']); return }
 
         if (data['config_version'] != localStorage.getItem("version")) aplicar_configuracion(data)
 

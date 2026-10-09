@@ -532,6 +532,9 @@
   <!-- Unico dato de conexion que recibe el navegador: el WebSocket de conteo (guia sin Redis) -->
   <script>window.VISOR_CONFIG = { wsUrl: "{{ ws_url|escapejs }}" };</script>
 
+  <!-- Control del visor en tiempo real (estado, suspension, revocacion) -->
+  <script src="/static/js/control_visor.js?v={{vjs}}"></script>
+
   <script src="static/js/cone_db_p.js?v={{vjs}}"></script>
 
   

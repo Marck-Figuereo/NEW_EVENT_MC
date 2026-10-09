@@ -64,6 +64,29 @@ def get_pairing_status(*, device_token):
 
 
 # ==========================================
+# CONTROL DEL DISPOSITIVO EN TIEMPO REAL (guia de terminales y visores, 2026-10-09)
+# El visor se identifica siempre como device_type "display" (no "visor").
+# Devuelven la respuesta cruda: views.py distingue 403 device_revoked de 400/429/red.
+# ==========================================
+
+def post_device(path, *, device_token):
+    return _enviar("POST", path, json={
+        "device_type": "display",
+        "device_token": device_token,
+    }, timeout=TIMEOUT)
+
+
+def request_device_ticket(*, device_token):
+    """Ticket firmado de 60 s para el primer frame de control y countdown."""
+    return post_device("api/core/devices/realtime-ticket/", device_token=device_token)
+
+
+def request_device_snapshot(*, device_token):
+    """Snapshot vigente del visor: estado, can_operate, grupo, juegos y config_version."""
+    return post_device("api/core/devices/config/", device_token=device_token)
+
+
+# ==========================================
 # CONFIGURACION Y HEARTBEAT (5.4 y 5.5)
 # ==========================================
 

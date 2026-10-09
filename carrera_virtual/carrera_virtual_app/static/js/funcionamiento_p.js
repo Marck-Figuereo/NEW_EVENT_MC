@@ -241,6 +241,9 @@ const mostrar_alerta_conexion = () => {
 
 const revisar_conexion = () => {
 
+  // Visor suspendido: su pantalla de bloqueo ya esta encima y no corre contenido
+  if (window.ControlVisor && ControlVisor.bloqueado) return
+
   const caida = sin_conexion()
 
   if (caida && !alerta_conexion && en_tablas()) mostrar_alerta_conexion()
@@ -280,6 +283,7 @@ var websocket        = null   // una sola conexion activa
 var ws_reintentos    = 0
 var ws_temporizador  = null
 var ws_conecto_antes = false
+var ws_pidiendo      = false  // ticket en camino: no se abre otra conexion
 
 const url_websocket = () => {
   const base = String((window.VISOR_CONFIG || {}).wsUrl || '').replace(/\/+$/, '')
@@ -343,14 +347,25 @@ connectWebSocket = async () => {
 
     // Una sola conexion activa
     if (websocket && (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING)) return
+    if (ws_pidiendo) return
         
     clearTimeout(ws_temporizador)
+
+    // Guia de tiempo real: ticket de dispositivo NUEVO en cada conexion y primer frame "authenticate".
+    // Si la API todavia no tiene el control de dispositivos, se conecta como antes.
+    ws_pidiendo = true
+    let acceso = { modo : 'sin_auth' }
+    try { if (window.ControlVisor) acceso = await ControlVisor.ticketCountdown() } finally { ws_pidiendo = false }
+
+    if (acceso.modo === 'parar') return                       // visor suspendido o revocado
+    if (acceso.modo === 'esperar') { clearTimeout(ws_temporizador); ws_temporizador = setTimeout(connectWebSocket, acceso.ms); return }
+    if (websocket && (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING)) return
     
     const socket = new WebSocket(url_websocket());
     websocket = socket
 
     socket.onopen = () => {
-      ws_reintentos = 0
+      if (acceso.modo === 'auth') socket.send(JSON.stringify({ type : 'authenticate', ticket : acceso.ticket }))
       ws_caido_desde = null
       ws_ultimo_mensaje = Date.now()
       if (ws_conecto_antes) recuperar_evento_actual()   // se pudo perder un mensaje
@@ -361,20 +376,38 @@ connectWebSocket = async () => {
       let data
       ws_ultimo_mensaje = Date.now()
       try { data = JSON.parse(event.data) } catch (error) { console.log('Mensaje de WebSocket invalido'); return }
+
+      // Este canal tambien trae mensajes de control (device.*): esos no son conteo
+      const tipo = window.ControlVisor ? ControlVisor.mensajeCountdown(data) : 'conteo'
+
+      if (tipo === 'contexto') {
+        // Cambio de contexto: se cierra este contador; el control decide si se vuelve a abrir
+        socket.onclose = null; websocket = null; socket.close()
+        clearTimeout(ws_temporizador)
+        ws_temporizador = setTimeout(connectWebSocket, 3000)
+        return
+      }
+      if (tipo !== 'conteo') return
+
+      ws_reintentos = 0          // conexion autenticada y estable: la espera vuelve a 1 s
       console.log(data);
       manejar_countdown(data)
     };
 
-    // Reconexion con espera incremental: 1, 2, 4, 8 y maximo 15 segundos
-    socket.onclose = () => {
+    // Reconexion con espera creciente (1, 2, 4, 8, 16 y 30 s, con variacion).
+    // 4403: grupo/juego/suspension; antes de volver se consulta el estado del visor.
+    socket.onclose = async (evento) => {
 
       if (websocket !== socket) return
       websocket = null
       if (!ws_caido_desde) ws_caido_desde = Date.now()
 
-      const espera = Math.min(1000 * Math.pow(2, ws_reintentos), 15000)
+      const espera = window.ControlVisor
+        ? await ControlVisor.cierreCountdown(evento.code, ws_reintentos)
+        : Math.min(1000 * Math.pow(2, ws_reintentos), 15000)
       ws_reintentos++
 
+      if (espera === null) return
       clearTimeout(ws_temporizador)
       ws_temporizador = setTimeout(connectWebSocket, espera)
     }
@@ -1138,6 +1171,13 @@ $(document).ready(async()=>{
     	
   }else{ 
 
+    // Estado del visor antes de mostrar contenido: suspendido, revocado, juego o grupo nuevos
+    if (window.ControlVisor) {
+      ControlVisor.estaQuieto = () => en_tablas()
+      const estado = await ControlVisor.iniciar({ recargarSiCambiaJuego : true })
+      if (estado === 'navegando' || estado === 'bloqueado' || estado === 'sin_juego') return
+    }
+
     await confirmar_configuracion()
 
     await connectWebSocket();
@@ -1147,8 +1187,8 @@ $(document).ready(async()=>{
 
     vd = await Consulta_Tabla(id_table, Number(game_code));
 
-    // Heartbeat periodico (guia 5.5)
-    enviar_heartbeat()
+    // Heartbeat periodico (guia 5.5). Con el control de dispositivo lo envia control_visor.js
+    if (!window.ControlVisor) enviar_heartbeat()
     await mostrando_tablas() 
     
     // Primer arranque de este visor: registrar los ganadores existentes sin anunciarlos

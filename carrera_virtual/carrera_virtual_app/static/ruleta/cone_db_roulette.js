@@ -614,12 +614,20 @@ const RouletteDB = {
                 device_token: ls('dkg')
             });
 
+            /* Estado, grupo y juegos los decide el snapshot de control (control_visor.js). */
+            if (window.ControlVisor && ControlVisor.conControl) return true;
+
             if (data.config_version != ls('version')) aplicarConfiguracion(data);
 
             return true;
 
         } catch (e) {
-            if (e.status === 404) volverAConfiguracion();
+            /* 404 de contenido: puede ser suspension; con control lo decide el snapshot y
+               nunca se borra la vinculacion por este 404. */
+            if (e.status === 404) {
+                if (window.ControlVisor && ControlVisor.conControl) ControlVisor.reconciliar('display_config 404');
+                else volverAConfiguracion();
+            }
             console.warn('[DB] confirmarConfiguracion:', e.message);
             return false;
         }

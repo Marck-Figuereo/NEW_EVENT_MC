@@ -914,6 +914,8 @@ function sinConexion() {
 
 function revisarConexion() {
     if (TEST_MODE) return;
+    /* Visor suspendido: su pantalla de bloqueo ya esta encima. */
+    if (window.ControlVisor && ControlVisor.bloqueado) return;
 
     const caida  = sinConexion();
     const quieto = STATE.vista === 'table' && !STATE.ciclando;
@@ -1627,6 +1629,7 @@ async function bootstrapRuleta() {
 }
 let socketReintentos = 0;
 let socketTemporizador = null;
+let socketPidiendo = false;     /* ticket en camino: no se abre otra conexion */
 
 function urlSocket() {
     /* WEBSOCKET_URL la inyecta Django en la plantilla (guia sin Redis). */
@@ -1635,7 +1638,7 @@ function urlSocket() {
                   '/games/' + (localStorage.getItem('game_id_ruleta') || localStorage.getItem('game_id')) + '/countdown/';
 }
 
-function conectarSocket() {
+async function conectarSocket() {
 
     if (!navigator.onLine) {
         console.warn('[flow] sin conexión; reintentando.');
@@ -1646,8 +1649,19 @@ function conectarSocket() {
 
     /* Una sola conexión activa. */
     if (socketActual && (socketActual.readyState === WebSocket.OPEN || socketActual.readyState === WebSocket.CONNECTING)) return;
+    if (socketPidiendo) return;
 
     clearTimeout(socketTemporizador);
+
+    /* Guia de tiempo real: ticket de dispositivo NUEVO en cada conexion y primer frame
+       "authenticate". Si la API aun no tiene el control de dispositivos, se conecta como antes. */
+    socketPidiendo = true;
+    let acceso = { modo: 'sin_auth' };
+    try { if (window.ControlVisor) acceso = await ControlVisor.ticketCountdown(); } finally { socketPidiendo = false; }
+
+    if (acceso.modo === 'parar') return;
+    if (acceso.modo === 'esperar') { clearTimeout(socketTemporizador); socketTemporizador = setTimeout(conectarSocket, acceso.ms); return; }
+    if (socketActual && (socketActual.readyState === WebSocket.OPEN || socketActual.readyState === WebSocket.CONNECTING)) return;
 
     const url = urlSocket();
     let ws;
@@ -1662,7 +1676,7 @@ function conectarSocket() {
     socketActual = ws;
 
     ws.onopen = () => {
-        socketReintentos = 0;
+        if (acceso.modo === 'auth') ws.send(JSON.stringify({ type: 'authenticate', ticket: acceso.ticket }));
         wsCaidoDesde = null;
         wsUltimoMensaje = Date.now();
         console.log('[flow] socket conectado:', url);
@@ -1676,18 +1690,36 @@ function conectarSocket() {
         wsUltimoMensaje = Date.now();
         let data;
         try { data = JSON.parse(ev.data); } catch (_) { return; }
+
+        /* Este canal tambien trae mensajes de control (device.*): esos no son conteo. */
+        const tipo = window.ControlVisor ? ControlVisor.mensajeCountdown(data) : 'conteo';
+
+        if (tipo === 'contexto') {
+            /* Cambio de contexto: se cierra este contador; el control decide si se reabre. */
+            ws.onclose = null; socketActual = null; ws.close();
+            clearTimeout(socketTemporizador);
+            socketTemporizador = setTimeout(conectarSocket, 3000);
+            return;
+        }
+        if (tipo !== 'conteo') return;
+
+        socketReintentos = 0;      /* conexion autenticada y estable */
         onCountdown(data);
     };
 
-    /* Reconexión con espera incremental: 1, 2, 4, 8 y máximo 15 segundos. */
-    ws.onclose = () => {
+    /* Reconexión con espera creciente (1, 2, 4, 8, 16 y 30 s, con variacion).
+       4403: grupo/juego/suspension; antes de volver se consulta el estado del visor. */
+    ws.onclose = async evento => {
         if (socketActual !== ws) return;
         socketActual = null;
         if (!wsCaidoDesde) wsCaidoDesde = Date.now();
 
-        const espera = Math.min(1000 * Math.pow(2, socketReintentos), 15000);
+        const espera = window.ControlVisor
+            ? await ControlVisor.cierreCountdown(evento.code, socketReintentos)
+            : Math.min(1000 * Math.pow(2, socketReintentos), 15000);
         socketReintentos++;
 
+        if (espera === null) return;
         clearTimeout(socketTemporizador);
         socketTemporizador = setTimeout(conectarSocket, espera);
     };
@@ -1869,6 +1901,14 @@ document.addEventListener('visibilitychange', () => {
 async function main() {
 
     RouletteDB.testMode = TEST_MODE;
+
+    /* Estado del visor antes de mostrar contenido: suspendido, revocado, juego o grupo nuevos.
+       En la ruleta el juego se guarda en game_id_ruleta (no hace falta recargar). */
+    if (!TEST_MODE && window.ControlVisor) {
+        ControlVisor.estaQuieto = () => STATE.vista === 'table' && !STATE.ciclando;
+        const estado = await ControlVisor.iniciar({ claveJuego: 'game_id_ruleta' });
+        if (estado === 'navegando' || estado === 'bloqueado' || estado === 'sin_juego') return;
+    }
     
     if (TEST_MODE) {
         await RouletteDB.cargarDatosPrueba();
@@ -1897,7 +1937,8 @@ async function main() {
        Si el backend no responde, el visor NO se queda bloqueado: el ciclo
        depende del socket, no de estas consultas. */
     try {
-        if (!TEST_MODE) await RouletteDB.resolverJuego();
+        /* Con el control de dispositivo el juego ya salio del snapshot (por codigo). */
+        if (!TEST_MODE && !(window.ControlVisor && ControlVisor.conControl)) await RouletteDB.resolverJuego();
         await sincronizar(null, true);
     } catch (e) {
         console.warn('[flow] sincronización inicial fallida:', e.message);
@@ -1923,7 +1964,8 @@ async function main() {
         /* Guia 5.4 y 5.5: configuracion al iniciar y heartbeat periodico. */
         RouletteDB.onGrupoCambiado = bootstrapRuleta;
         await RouletteDB.confirmarConfiguracion();
-        RouletteDB.enviarHeartbeat();
+        /* Con el control de dispositivo el heartbeat lo envia control_visor.js. */
+        if (!window.ControlVisor) RouletteDB.enviarHeartbeat();
 
         /* Estado inicial: evento actual antes del primer mensaje del WebSocket. */
         await recuperarEvento();

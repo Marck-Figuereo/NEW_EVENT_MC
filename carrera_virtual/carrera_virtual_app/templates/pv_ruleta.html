@@ -101,6 +101,9 @@
 <!-- Unico dato de conexion que recibe el navegador: el WebSocket de conteo (guia sin Redis) -->
 <script>window.VISOR_CONFIG = { wsUrl: "{{ ws_url|escapejs }}" };</script>
 
+<!-- Control del visor en tiempo real (estado, suspension, revocacion), comun a todos los juegos -->
+<script src="/static/js/control_visor.js?v={{vjs}}"></script>
+
 <script src="cone_db_roulette.js?v={{vjs}}"></script>
 <script src="funcionamiento_roulette.js?v={{vjs}}"></script>
 

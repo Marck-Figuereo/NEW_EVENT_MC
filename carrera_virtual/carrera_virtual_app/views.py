@@ -25,11 +25,13 @@ from carrera_virtual_app.helpers.display_api_client import (
     get_jackpot_winner_events,
     get_display_bonus_event,
     get_games_by_code,
+    request_device_ticket,
+    request_device_snapshot,
 )
 
 
 # Configuraciones de entorno
-version = "v7.1.4"
+version = "v7.1.5"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)
@@ -39,7 +41,7 @@ WEBSOCKET_URL = config('WEBSOCKET_URL', default=_WS_POR_DEFECTO).strip().rstrip(
 # Version de los JS y CSS del visor: cambia sola cada vez que se modifica un archivo,
 # asi el navegador nunca mezcla un archivo nuevo con otro viejo guardado en cache.
 _STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-_ARCHIVOS_VISOR = ['js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
+_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
                    'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css',
                    'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css']
 
@@ -100,6 +102,53 @@ def _error_http(error, nombre):
         return resp
 
     return _error('api_no_disponible', 'Falla temporal de la API.', 503, **extra)
+
+
+def _control_dispositivo(funcion, device_token):
+    """Ticket o snapshot del dispositivo (guia de terminales y visores en tiempo real).
+
+    Solo un 403 con code "device_revoked" significa credencial invalida; se reenvia tal cual
+    para que el visor vuelva al pairing. 400, 429, 5xx, otros 403 y fallas de red NO son
+    revocacion: el visor conserva su device_token y reintenta."""
+    try:
+        respuesta = funcion(device_token=device_token)
+    except requests.RequestException as error:
+        print(f"API no disponible en {funcion.__name__}: {error}")
+        return _error('api_no_disponible', 'Falla temporal de la API.', 503)
+
+    try:
+        cuerpo = respuesta.json()
+    except ValueError:
+        cuerpo = None
+
+    status = respuesta.status_code
+
+    if status == 200 and isinstance(cuerpo, dict):
+        return JsonResponse(cuerpo)
+
+    print(f"API {status} en {funcion.__name__}: {(respuesta.text or '')[:200]}")
+
+    if status == 403 and isinstance(cuerpo, dict) and cuerpo.get('code') == 'device_revoked':
+        return _error('device_revoked', cuerpo.get('detail') or 'Dispositivo no autorizado.', 403, code='device_revoked')
+
+    # Estas rutas responden 403 (no 404) a una credencial desconocida: un 404 es que la API
+    # todavia no tiene el control de dispositivos. El visor sigue funcionando como antes.
+    if status == 404:
+        return _error('endpoint_no_disponible', 'La API no tiene este endpoint desplegado.', 501)
+
+    if status == 429:
+        resp = _error('limite_temporal', 'Demasiadas solicitudes.', 429)
+        if respuesta.headers.get('Retry-After'):
+            resp['Retry-After'] = respuesta.headers['Retry-After']
+        return resp
+
+    if status == 400:
+        return _error('parametros_invalidos', 'La API rechazo la solicitud de control.', 400, api_respuesta=cuerpo)
+
+    if status == 403:
+        return _error('prohibido', 'La API rechazo la solicitud (no es revocacion).', 403, api_respuesta=cuerpo)
+
+    return _error('api_no_disponible', 'Falla temporal de la API.', 503, api_status=status)
 
 
 def _consultar(funcion, **parametros):
@@ -283,7 +332,19 @@ def games(request):
         game_id = datos.get('game_id')
 
 
-        if realizar == 'display_config':
+        if realizar == 'dispositivo_ticket':
+
+            # Ticket de 60 s para autenticar control y countdown (primer frame "authenticate")
+            return _control_dispositivo(request_device_ticket, device_token)
+
+
+        elif realizar == 'dispositivo_snapshot':
+
+            # Estado vigente del visor: decide suspension, juegos permitidos y grupo
+            return _control_dispositivo(request_device_snapshot, device_token)
+
+
+        elif realizar == 'display_config':
 
             return _consultar(get_display_config, device_token=device_token)
 
