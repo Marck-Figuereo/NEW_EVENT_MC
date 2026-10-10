@@ -4,7 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Roulette Multipliers - Canvas + GSAP + Video 2K60</title>
-  <link rel="stylesheet" href="style.css">
+<script>
+/* Recursos versionados con el ?v= del iframe (vjs de Django): el navegador nunca
+   mezcla un archivo nuevo con otro viejo guardado en cache. */
+(function () {
+    var v = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || String(Date.now());
+    document.write('<link rel="stylesheet" href="style.css?v=' + v + '">');
+})();
+</script>
 </head>
 <body>
 
@@ -41,6 +48,13 @@
   </div>
 
   <script src="../../vendor/gsap-3.13.0.min.js"></script>
-  <script src="app.js"></script>
+<script>
+/* Recursos versionados con el ?v= del iframe (vjs de Django): el navegador nunca
+   mezcla un archivo nuevo con otro viejo guardado en cache. */
+(function () {
+    var v = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || String(Date.now());
+    document.write('<script src="app.js?v=' + v + '"><\/script>');
+})();
+</script>
 </body>
 </html>

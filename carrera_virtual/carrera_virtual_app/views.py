@@ -31,7 +31,7 @@ from carrera_virtual_app.helpers.display_api_client import (
 
 
 # Configuraciones de entorno
-version = "v7.1.5"
+version = "v7.1.6"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)
@@ -43,7 +43,14 @@ WEBSOCKET_URL = config('WEBSOCKET_URL', default=_WS_POR_DEFECTO).strip().rstrip(
 _STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
 _ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
                    'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css',
-                   'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css']
+                   'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css',
+                   # Pantallas de la ruleta (iframes): su HTML y sus recursos internos tambien
+                   'ruleta/screens/show-result-roulette/index.html', 'ruleta/screens/show-result-roulette/ui.js',
+                   'ruleta/screens/show-result-roulette/app.js', 'ruleta/screens/show-result-roulette/styles.css',
+                   'ruleta/screens/show-result-roulette/results.html', 'ruleta/screens/show-result-roulette/results.js',
+                   'ruleta/screens/show-result-roulette/results.css',
+                   'ruleta/screens/show-intro-roulette/index.html', 'ruleta/screens/show-intro-roulette/app.js',
+                   'ruleta/screens/show-intro-roulette/style.css']
 
 def _version_archivos():
     try:

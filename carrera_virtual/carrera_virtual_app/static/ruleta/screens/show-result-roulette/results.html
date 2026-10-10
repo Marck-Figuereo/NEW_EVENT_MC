@@ -4,7 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Virtual Storm Roulette — Resultado del sorteo</title>
-<link rel="stylesheet" href="results.css">
+<script>
+/* Recursos versionados con el ?v= del iframe (vjs de Django): el navegador nunca
+   mezcla un archivo nuevo con otro viejo guardado en cache. */
+(function () {
+    var v = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || String(Date.now());
+    document.write('<link rel="stylesheet" href="results.css?v=' + v + '">');
+})();
+</script>
 </head>
 <body>
 
@@ -25,7 +32,14 @@
 <button id="tap-hint" hidden>Start display</button>
 
 <script src="../../vendor/gsap-3.12.5.min.js"></script>
-<script src="results.js"></script>
+<script>
+/* Recursos versionados con el ?v= del iframe (vjs de Django): el navegador nunca
+   mezcla un archivo nuevo con otro viejo guardado en cache. */
+(function () {
+    var v = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || String(Date.now());
+    document.write('<script src="results.js?v=' + v + '"><\/script>');
+})();
+</script>
 
 </body>
 </html>

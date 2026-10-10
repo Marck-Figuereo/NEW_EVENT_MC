@@ -4,7 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Virtual Storm Roulette</title>
-<link rel="stylesheet" href="styles.css">
+<script>
+/* Recursos versionados con el ?v= del iframe (vjs de Django): el navegador nunca
+   mezcla un archivo nuevo con otro viejo guardado en cache. */
+(function () {
+    var v = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || String(Date.now());
+    document.write('<link rel="stylesheet" href="styles.css?v=' + v + '">');
+})();
+</script>
 </head>
 <body>
 
@@ -35,8 +42,15 @@
 
 <!-- GSAP. For an offline TV player, download this file and load it locally. -->
 <script src="../../vendor/gsap-3.12.5.min.js"></script>
-<script src="ui.js"></script>
-<script src="app.js"></script>
+<script>
+/* Recursos versionados con el ?v= del iframe (vjs de Django): el navegador nunca
+   mezcla un archivo nuevo con otro viejo guardado en cache. */
+(function () {
+    var v = (location.search.match(/[?&]v=([^&]+)/) || [])[1] || String(Date.now());
+    document.write('<script src="ui.js?v=' + v + '"><\/script>' +
+                   '<script src="app.js?v=' + v + '"><\/script>');
+})();
+</script>
 
 </body>
 </html>

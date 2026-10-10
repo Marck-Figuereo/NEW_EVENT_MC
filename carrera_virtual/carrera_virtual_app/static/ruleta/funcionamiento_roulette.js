@@ -130,6 +130,11 @@ const CONFIG = {
        Mismo criterio que funcionamiento_p.js (60 y 120). */
     marcasSincro: [120, 60],
 
+    /* Guia completa del visor: plazos del CLIENTE (no son duraciones del sorteo). */
+    sinDatosMs: 5000,             // sin instantaneas del countdown -> datos del sorteo no disponibles
+    reintentoResultadoMs: 10000,  // resultado pendiente: se vuelve a consultar cada 10 s
+    minVideoTardioMs: 15000,      // entrar con el video ya corriendo: se acompana solo si quedan >= 15 s
+
    ciclo: {
         roundSeconds: 180,
 
@@ -163,9 +168,18 @@ const STATE = {
     segundos: null,         // seconds_left del socket
     tableOddsId: null,
 
-    rondaEjecutada: null,   // event_number cuyo ciclo ya se disparó
+    rondaEjecutada: null,   // (ya no decide el ciclo: ver STATE.sorteos)
     rondaSincronizada: {},  // { event_number: [marcas ya usadas] }
     ciclando: false,
+
+    /* Por UUID del sorteo: venta | ciclo | pendiente | finalizado | omitido | abandonado */
+    sorteos: {},
+    sorteo: null,           // UUID del sorteo vigente
+    fase: null,             // phase del ultimo countdown.update
+    estadoWS: null,         // state del ultimo countdown.update
+    ultimoConteo: 0,        // ultimo countdown.update/empty VALIDO (salud del sorteo)
+    sinDatos: false,
+    retryAfter: 0,          // segundos sugeridos por countdown.unavailable
 
     listeners: []
 };
@@ -619,6 +633,11 @@ const Puente = {
             f.hotCold = null;
         }
 
+        if (f.sinDatos && typeof a.setSinDatos === 'function') {
+            a.setSinDatos(f.sinDatos.on, f.sinDatos.ronda);
+            f.sinDatos = null;
+        }
+
         /* setRound crea una tween: solo cuando la ronda cambia de verdad. */
         if (f.ronda !== null && f.ronda !== f.rondaAplicada) {
             a.setRound(f.ronda);
@@ -631,6 +650,14 @@ const Puente = {
     setRonda(n) {
         if (n === null || n === undefined) return;
         this.feed.ronda = n;
+        this.volcarFeed();
+    },
+
+    /* Datos del sorteo no disponibles: reloj en --:--; con ronda=true tambien se retira la ronda. */
+    setSinDatos(on, ronda) {
+        this.feed.sinDatos = { on: !!on, ronda: !!ronda };
+        if (on) this.feed.segundos = null;
+        if (on && ronda) { this.feed.ronda = null; this.feed.rondaAplicada = null; }
         this.volcarFeed();
     },
 
@@ -994,7 +1021,7 @@ const Video = {
         return CONFIG.videoApiBase + archivo;
     },
 
-    reproducir(selectedVideo, duracionMs = null) {
+    reproducir(selectedVideo, duracionMs = null, quedanMs = null) {
         const v = el.video;
         let src = this.ruta(selectedVideo);
 
@@ -1104,7 +1131,16 @@ const Video = {
                 v.load();
             }
 
-            try { v.currentTime = 0; } catch (_) {}
+            /* Incorporacion tardia: el video arranca donde va el del servidor
+               (duracion oficial - video_milliseconds_left). Normal: desde 0. */
+            const inicio = (quedanMs > 0 && duracionMs > 0) ? Math.max(0, (duracionMs - quedanMs) / 1000) : 0;
+            try { v.currentTime = inicio; } catch (_) {}
+            if (inicio > 0) {
+                console.log('[flow] incorporacion tardia: el video empieza en', inicio.toFixed(1), 's');
+                v.addEventListener('loadedmetadata', () => {
+                    if (v.currentTime < inicio - 1) { try { v.currentTime = inicio; } catch (_) {} }
+                }, { once: true });
+            }
 
             v.play().catch(err => {
                 /* Solo un bloqueo real de autoplay muestra el botón; un
@@ -1151,14 +1187,14 @@ const Ciclo = {
     },
 
     /* --- PASO 5 : VIDEO DEL SORTEO --------------------------------------- */
-    async mostrarVideo(selectedVideo, multiplicadores, duracionMs = null) {
+    async mostrarVideo(selectedVideo, multiplicadores, duracionMs = null, quedanMs = null) {
         setVista('video');
 
         pintarMultiplicadoresVideo( multiplicadores, el.videoMultipliers);
 
         mostrar(el.video, false);
 
-        const reproducido = await Video.reproducir(selectedVideo, duracionMs);
+        const reproducido = await Video.reproducir(selectedVideo, duracionMs, quedanMs);
 
         Puente.ocultarIntro();
 
@@ -1217,7 +1253,7 @@ const Ciclo = {
     /* =====================================================================
        CICLO COMPLETO DE UNA RONDA
        ===================================================================== */
-    async ejecutar(eventNumber, sorteoId = null) {
+    async ejecutar(eventNumber, sorteoId = null, opciones = {}, clave = null) {
     if (STATE.ciclando) return;
 
     STATE.ciclando = true;
@@ -1242,7 +1278,10 @@ const Ciclo = {
            de ESTE sorteo, no se muestra intro ni video ni un resultado viejo;
            el finally devuelve la tabla y se espera el siguiente cierre. */
         if (!TEST_MODE && !(ronda && ronda.resultado)) {
-            console.warn('[flow] sin resultado de la ronda', eventNumber, '; se vuelve a la tabla');
+            /* Guia completa: el sorteo queda PENDIENTE y se vuelve a consultar mas tarde
+               mientras el servidor siga en ese sorteo; no se da por terminado. */
+            console.warn('[flow] sin resultado de la ronda', eventNumber, '; queda pendiente y se vuelve a la tabla');
+            if (clave) marcarSorteo(clave, 'pendiente');
             return;
         }
 
@@ -1296,13 +1335,14 @@ const Ciclo = {
 
         if (selectedVideo) Video.precargar(selectedVideo);
 
-        await Ciclo.mostrarIntro(multiplicadores);
+        /* Incorporacion tardia (el video del servidor ya corria): sin intro. */
+        if (!opciones.sinIntro) await Ciclo.mostrarIntro(multiplicadores);
 
         console.log('[flow] video del sorteo:', selectedVideo ? Video.ruta(selectedVideo) : '(la API no envio video)',
                     'duracion API (ms):', ronda && ronda.tiempo_video);
 
         const videoOk = (selectedVideo || TEST_MODE)
-            ? await Ciclo.mostrarVideo(selectedVideo, multiplicadores, ronda && ronda.tiempo_video)
+            ? await Ciclo.mostrarVideo(selectedVideo, multiplicadores, ronda && ronda.tiempo_video, opciones.videoQuedanMs)
             : false;
 
         /* El video no existe o no se pudo reproducir: alerta y de vuelta a la tabla
@@ -1421,6 +1461,9 @@ const Ciclo = {
         console.error('[flow] fallo en el ciclo:', e);
 
     } finally {
+        /* Terminado solo si no quedo pendiente de resultado. */
+        if (clave && STATE.sorteos[clave] && STATE.sorteos[clave].estado === 'ciclo') marcarSorteo(clave, 'finalizado');
+
         await Ciclo.mostrarTabla();
         STATE.ciclando = false;
 
@@ -1497,91 +1540,188 @@ async function sincronizar(tableOddsId, cargarHistorial = false) {
    Nunca se cuenta hacia atrás en local: se obedece seconds_left.
    ========================================================================= */
 
-function onCountdown(data) {
+/* Reloj de ventas con la hora del servidor (guia completa del visor):
+   restante = sales_close_at - (server_time + tiempo local transcurrido). El reloj del
+   equipo no decide el cierre. Sin server_time se usa seconds_left tal cual. */
+const Reloj = {
+    base: null,
+    actualizar(d) {
+        const servidor = Date.parse(d.server_time);
+        const cierre   = Date.parse(d.sales_close_at);
+        this.base = (d.state === 'selling' && Number.isFinite(servidor) && Number.isFinite(cierre))
+            ? { recibido: performance.now(), servidor: servidor, cierre: cierre }
+            : null;
+    },
+    restante(d) {
+        if (d.state && d.state !== 'selling') return 0;                 // ventas cerradas: cero
+        if (this.base) return Math.max(0, (this.base.cierre - (this.base.servidor + performance.now() - this.base.recibido)) / 1000);
+        const s = Number(d.seconds_left);
+        return Number.isFinite(s) ? Math.max(0, s) : 0;
+    },
+    limpiar() { this.base = null; }
+};
 
-    /* Sin evento programado: no trae ronda, tabla ni segundos. */
-    if (!data || data.type === 'countdown.empty' || data.state === 'no_event') return;
+const claveSorteo = d => d.sorteo_id || ('evento-' + d.event_number);
 
-    /* El WebSocket manda DOS sorteos mezclados mientras corre el video: el que se
-       esta reproduciendo (state "in_progress", seconds_left 0) y el siguiente que ya
-       esta en venta (state "selling"). La pantalla (RONDA y contador) solo sigue al
-       sorteo EN VENTA; el mensaje del sorteo en curso solo sirve para arrancar su
-       ciclo si todavia no se ha reproducido. */
-    if (data.state && data.state !== 'selling') {
-        if (Number(data.seconds_left) === 0 &&
-            data.event_number !== undefined && data.event_number !== null &&
-            STATE.rondaEjecutada !== data.event_number && !STATE.ciclando) {
+function marcarSorteo(clave, estado) {
+    const st = STATE.sorteos[clave] || (STATE.sorteos[clave] = {});
+    st.estado = estado;
+    st.cuando = Date.now();
+    console.log('[flow] sorteo', clave, '->', estado);
+}
 
-            console.log('[flow] sorteo en curso (' + data.state + ') de la ronda ' + data.event_number + ': se reproduce');
-            STATE.rondaEjecutada = data.event_number;
-            Ciclo.ejecutar(data.event_number, data.sorteo_id || null);
+/* Instantanea valida del countdown: confirma que el flujo del sorteo esta vivo. */
+function marcarConteo() {
+    STATE.ultimoConteo = Date.now();
+    STATE.sinDatos = false;
+}
+
+/* countdown.empty: sin sorteo; se retiran ronda, tabla y tiempo del anterior. */
+function sinSorteo() {
+    Reloj.limpiar();
+    STATE.ronda = null;
+    STATE.tableOddsId = null;
+    STATE.fase = null;
+    STATE.estadoWS = null;
+    Puente.setSinDatos(true, true);
+}
+
+/* Datos del sorteo temporalmente no disponibles: sin tiempo inventado. */
+function sinDatosDeSorteo(motivo) {
+    if (STATE.sinDatos) return;
+    STATE.sinDatos = true;
+    Reloj.limpiar();
+    console.warn('[flow] datos del sorteo no disponibles:', motivo);
+    Puente.setSinDatos(true, false);
+}
+
+/* Inicia (o reintenta) el ciclo de UN sorteo, identificado por su UUID. */
+function intentarCiclo(clave, data, ronda) {
+    if (STATE.ciclando) return;
+
+    const st = STATE.sorteos[clave] || (STATE.sorteos[clave] = { estado: 'nuevo' });
+
+    if (['ciclo', 'finalizado', 'omitido', 'abandonado'].indexOf(st.estado) !== -1) return;
+    if (st.estado === 'pendiente' && (Date.now() - st.cuando < CONFIG.reintentoResultadoMs || STATE.vista !== 'table')) return;
+
+    const opciones = {};
+
+    /* Incorporacion tardia: el primer dato de este sorteo llega con el video del
+       servidor ya corriendo. Se acompana desde donde va si queda tiempo suficiente;
+       si no, se omite (no se reproduce indefinidamente el mismo sorteo). */
+    if (data.phase === 'video_playing' && st.estado === 'nuevo') {
+        let quedan = Number(data.video_milliseconds_left);
+        if (!Number.isFinite(quedan)) {
+            const fin = Date.parse(data.video_ends_at), srv = Date.parse(data.server_time);
+            quedan = (Number.isFinite(fin) && Number.isFinite(srv)) ? fin - srv : NaN;
         }
+        if (!(quedan >= CONFIG.minVideoTardioMs)) {
+            console.log('[flow] video del sorteo', ronda, 'ya casi termina (' + quedan + ' ms): se omite');
+            marcarSorteo(clave, 'omitido');
+            return;
+        }
+        opciones.sinIntro = true;
+        opciones.videoQuedanMs = quedan;
+    }
+
+    console.log('[flow] sorteo cerrado (' + (data.phase || data.state || 'seconds_left 0') + ') de la ronda ' + ronda +
+                (st.estado === 'pendiente' ? ': se vuelve a buscar el resultado' : ': se reproduce'));
+    marcarSorteo(clave, 'ciclo');
+    Ciclo.ejecutar(ronda, data.sorteo_id || null, opciones, clave);
+}
+
+function onCountdown(data, origen = 'ws') {
+
+    if (!data) return;
+
+    const tipo = data.type || 'countdown.update';      // el modo prueba no manda type
+
+    /* Sin evento programado. */
+    if (tipo === 'countdown.empty' || data.state === 'no_event') {
+        if (origen !== 'rest') marcarConteo();
+        sinSorteo();
+        return;
+    }
+    if (tipo !== 'countdown.update') return;
+
+    /* Contexto vigente: un mensaje de otro grupo o juego no cuenta ni se aplica. */
+    if (!TEST_MODE && data.grupo_id != null && localStorage.getItem('grupo') &&
+        String(data.grupo_id) !== String(localStorage.getItem('grupo'))) {
+        console.warn('[flow] countdown de otro grupo (' + data.grupo_id + '): se ignora');
+        return;
+    }
+    const juegoActual = localStorage.getItem('game_id_ruleta') || localStorage.getItem('game_id');
+    if (!TEST_MODE && data.game_id != null && juegoActual && String(data.game_id) !== String(juegoActual)) {
+        console.warn('[flow] countdown de otro juego (' + data.game_id + '): se ignora');
         return;
     }
 
+    if (origen !== 'rest') marcarConteo();
+
+    if (data.event_number === undefined || data.event_number === null) return;
+
     const ronda    = data.event_number;
-    const segundos = Number(data.seconds_left);
+    const abierto  = !data.state || data.state === 'selling';
+
+    Reloj.actualizar(Object.assign({ state: abierto ? 'selling' : data.state }, data));
+    const restante = Reloj.restante(Object.assign({ state: abierto ? 'selling' : data.state }, data));
+    const segundos = Math.ceil(restante);
+    /* Con ventas abiertas solo hay tiempo real si llego server_time + sales_close_at
+       o seconds_left; sin ellos (p. ej. un REST incompleto) no se inventa ni se cierra. */
+    const hayTiempo = !!Reloj.base || (data.seconds_left !== null && data.seconds_left !== undefined &&
+                                       Number.isFinite(Number(data.seconds_left)));
 
     const rondaAnterior = STATE.ronda;
+    const nuevaRonda = rondaAnterior === null || rondaAnterior === undefined || String(rondaAnterior) !== String(ronda);
 
-    const nuevaRonda =
-        rondaAnterior === null ||
-        rondaAnterior === undefined ||
-        String(rondaAnterior) !== String(ronda);
-
-    if (
-        TEST_MODE &&
-        typeof RouletteDB.seleccionarSorteo === 'function'
-    ) {
+    if (TEST_MODE && typeof RouletteDB.seleccionarSorteo === 'function') {
         RouletteDB.seleccionarSorteo(ronda);
     }
 
-    /* Diagnostico: cada vez que cambia la ronda se escribe el mensaje tal como llego.
-       Dentro de un mismo sorteo_id la ronda no deberia cambiar. */
     if (nuevaRonda) {
-        const mismoSorteo = data.sorteo_id && data.sorteo_id === STATE.sorteo;
-        console[mismoSorteo ? 'warn' : 'log'](
-            '[flow] WS ronda ' + rondaAnterior + ' -> ' + ronda +
-            (mismoSorteo ? ' (CAMBIO DENTRO DEL MISMO SORTEO)' : ''), JSON.stringify(data));
+        console.log('[flow] ronda ' + rondaAnterior + ' -> ' + ronda + ' (' + (data.phase || data.state || '-') + ')');
     }
 
+    /* Identidad, tabla y fase SIEMPRE, tambien con ventas cerradas (guia completa). */
     STATE.ronda       = ronda;
     STATE.segundos    = segundos;
     STATE.tableOddsId = data.table_odds_id;
     STATE.sorteo      = data.sorteo_id || null;
+    STATE.fase        = data.phase || null;
+    STATE.estadoWS    = data.state || null;
 
-    if (nuevaRonda) {
-        void sincronizar(data.table_odds_id, false);
-    }
+    if (nuevaRonda) void sincronizar(data.table_odds_id, false);
 
-    /* El visor principal muestra el contador y la ronda del servidor. */
+    /* Ronda y tiempo del servidor: cero con ventas cerradas. */
     Puente.setRonda(ronda);
-    Puente.setSegundos(segundos);
+    if (!abierto || hayTiempo) Puente.setSegundos(restante);
 
     hud();
 
-    /* --- re-sincronización en las marcas configuradas ------------------- */
-    const marcas = STATE.rondaSincronizada[ronda] || (STATE.rondaSincronizada[ronda] = []);
+    const clave = claveSorteo(data);
 
-    if (CONFIG.marcasSincro.indexOf(segundos) !== -1 && marcas.indexOf(segundos) === -1) {
-        marcas.push(segundos);
-        sincronizar(data.table_odds_id, false);
+    if (abierto && (segundos > 0 || !hayTiempo)) {
+        if (!STATE.sorteos[clave]) STATE.sorteos[clave] = { estado: 'venta' };
+
+        /* Un sorteo nuevo en venta: los pendientes de otros sorteos ya no se muestran. */
+        for (const k in STATE.sorteos) {
+            if (k !== clave && STATE.sorteos[k].estado === 'pendiente') marcarSorteo(k, 'abandonado');
+        }
+
+        /* Re-sincronizacion por tramos, una vez por sorteo, aunque se salten segundos. */
+        const marcas = STATE.rondaSincronizada[clave] || (STATE.rondaSincronizada[clave] = []);
+        for (const m of CONFIG.marcasSincro) {
+            if (hayTiempo && segundos <= m && marcas.indexOf(m) === -1) {
+                marcas.push(m);
+                sincronizar(data.table_odds_id, false);
+                break;
+            }
+        }
+        return;
     }
 
-    /* --- PASO 3 : el contador llega a 0 --------------------------------- */
-    if (segundos !== 0) return;
-
-    console.log('[flow] seconds_left=0 recibido para la ronda ' + ronda);
-
-    /* UNA RONDA, UN SOLO CICLO.
-       El socket puede repetir seconds_left = 0 muchas veces. */
-    if (STATE.rondaEjecutada === ronda) return;
-    if (STATE.ciclando) return;
-
-    STATE.rondaEjecutada = ronda;
-
-    /* Se pasa el sorteo que cerro: el WebSocket anuncia enseguida el siguiente. */
-    Ciclo.ejecutar(ronda, STATE.sorteo);
+    /* Ventas cerradas (in_progress / awaiting_result / video_playing) o 0. */
+    if (origen === 'ws' || origen === 'rest') intentarCiclo(clave, data, ronda);
 }
 
 
@@ -1601,15 +1741,20 @@ async function recuperarEvento() {
 
     console.log('[flow] evento actual:', evento.event_number, evento.phase);
 
-    if (evento.phase && evento.phase !== 'sales_open') return;
     if (evento.event_number === undefined || evento.event_number === null) return;
 
-    STATE.ronda       = evento.event_number;
-    STATE.tableOddsId = evento.table_odds_id;
-    STATE.sorteo      = evento.sorteo_id || null;
-
-    Puente.setRonda(evento.event_number);
+    /* Se aplica igual que una instantanea del countdown: identidad, tabla, fase y
+       tiempos (guia completa). Sin state, se deduce de la fase. */
+    const d = Object.assign({ type: 'countdown.update' }, evento);
+    if (!d.state) d.state = (!d.phase || d.phase === 'sales_open') ? 'selling' : 'in_progress';
+    onCountdown(d, 'rest');
 }
+
+/* Salud del countdown: el control puede seguir vivo mientras el sorteo calla. */
+setInterval(() => {
+    if (TEST_MODE || STATE.vista !== 'table') return;
+    if (Date.now() - STATE.ultimoConteo > CONFIG.sinDatosMs) sinDatosDeSorteo('sin instantaneas del countdown en ' + (CONFIG.sinDatosMs / 1000) + ' s');
+}, 1000);
 
 /* Cambio de configuracion (grupo o juego): canal nuevo y bootstrap de la ruleta
    otra vez -> evento actual, jackpots e historial (guia, seccion 6). */
@@ -1695,10 +1840,16 @@ async function conectarSocket() {
         const tipo = window.ControlVisor ? ControlVisor.mensajeCountdown(data) : 'conteo';
 
         if (tipo === 'contexto') {
-            /* Cambio de contexto: se cierra este contador; el control decide si se reabre. */
-            ws.onclose = null; socketActual = null; ws.close();
-            clearTimeout(socketTemporizador);
-            socketTemporizador = setTimeout(conectarSocket, 3000);
+            /* countdown.context_changed: sin datos del sorteo; el servidor cierra con 4403
+               y el cierre reconcilia antes de abrir otra suscripcion. */
+            sinDatosDeSorteo('countdown.context_changed');
+            setTimeout(() => { if (socketActual === ws) ws.close(); }, 5000);
+            return;
+        }
+        if (tipo === 'no_disponible') {
+            /* countdown.unavailable: el servidor cierra con 1011; se reconecta tras retry_after. */
+            STATE.retryAfter = Number(data.retry_after) || 3;
+            sinDatosDeSorteo('countdown.unavailable');
             return;
         }
         if (tipo !== 'conteo') return;
@@ -1716,8 +1867,9 @@ async function conectarSocket() {
         if (!wsCaidoDesde) wsCaidoDesde = Date.now();
 
         const espera = window.ControlVisor
-            ? await ControlVisor.cierreCountdown(evento.code, socketReintentos)
+            ? await ControlVisor.cierreCountdown(evento.code, socketReintentos, STATE.retryAfter)
             : Math.min(1000 * Math.pow(2, socketReintentos), 15000);
+        STATE.retryAfter = 0;
         socketReintentos++;
 
         if (espera === null) return;

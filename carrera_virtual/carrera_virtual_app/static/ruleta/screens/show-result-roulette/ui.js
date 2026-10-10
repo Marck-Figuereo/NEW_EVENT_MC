@@ -246,10 +246,20 @@ const WHEEL = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23
    2. GAME DATA — the single source the renderer reads
    ========================================================================= */
 
+/* Integrado en el visor: sin ronda ficticia ni cuenta local. La ronda y el
+   tiempo se muestran solo cuando llegan del servidor (guia completa del visor). */
+const EN_VISOR = (() => {
+    try { return !!(window.frameElement && window.frameElement.id === 'view-table'); }
+    catch (_) { return window.parent !== window; }
+})();
+
 const GAME = {
-    round: 81,
-    countdown: 0,
-    countdownSource: 'host',    // 'host' = app.js spin timer, 'feed' = external
+    round: EN_VISOR ? null : 81,
+    countdown: EN_VISOR ? null : 0,
+    /* 'host' = reloj de animacion de app.js (solo demo aislada),
+       'feed' = tiempo del servidor, 'pendiente' = aun sin datos del sorteo */
+    countdownSource: EN_VISOR ? 'pendiente' : 'host',
+    sinDatos: false,
     feedCountdown: 0,
     feedAt: 0,
     spinning: false,
@@ -812,6 +822,11 @@ function drawOdometer(ctx, lv, text, rightX, baseline, size) {
 }   
 function pct(part, total) { return total ? part / total * 100 : 0; }
 
+/* Reloj de ventas: --:-- mientras no hay un tiempo valido del servidor. */
+function textoReloj() {
+    return (GAME.countdown === null || GAME.sinDatos) ? '--:--' : clockText(GAME.countdown);
+}
+
 function clockText(sec) {
     sec = Math.max(0, Math.floor(sec));
     const m = Math.floor(sec / 60), s = sec % 60;
@@ -1333,7 +1348,7 @@ const Live = {
                 return GAME.round + '|' + A.roundFlash.toFixed(2);
 
             case 'timer':
-                return clockText(GAME.countdown) + '|' +
+                return textoReloj() + '|' +
                        A.timerUrgent.toFixed(2) + '|' + (GAME.spinning ? 1 : 0);
 
             case 'jackpots': {
@@ -1616,7 +1631,7 @@ const Live = {
 
     drawRound(ctx) {
         const b = L.round;
-        const text = String(GAME.round);
+        const text = GAME.round === null || GAME.round === undefined || GAME.round === '' ? '—' : String(GAME.round);
         ctx.save();
         ctx.textAlign = 'center';
         const size = fitFont(ctx, text, b.w - 34, Math.round(b.h * 0.46), '700', UI.font.display);
@@ -1630,7 +1645,7 @@ const Live = {
 
     drawTimer(ctx) {
         const b = L.timer;
-        const text = clockText(GAME.countdown);
+        const text = textoReloj();
         const urgent = A.timerUrgent;
         ctx.save();
         ctx.textAlign = 'left';
@@ -2245,12 +2260,16 @@ const Demo = {
     },
 
     tick() {
-        if (GAME.countdownSource === 'host') {
+        if (GAME.countdownSource === 'host' && !INTEGRADO) {
+            /* Solo la demo aislada: el giro de ambiente (rouletteAmbient.wait) */
             GAME.countdown = api.getCountdown ? api.getCountdown() : 0;
+        } else if (GAME.countdownSource === 'feed') {
+            /* Tiempo de ventas del servidor, descontado con el reloj monotono local */
+            GAME.countdown = Math.max(0, Math.ceil(GAME.feedCountdown - (performance.now() - GAME.feedAt) / 1000));
         } else {
-            GAME.countdown = Math.max(0, GAME.feedCountdown - (performance.now() - GAME.feedAt) / 1000);
+            GAME.countdown = null;          // sin datos del sorteo: --:--
         }
-        const urgent = !GAME.spinning && GAME.countdown <= 5 && GAME.countdown > 0;
+        const urgent = GAME.countdown !== null && !GAME.sinDatos && !GAME.spinning && GAME.countdown <= 5 && GAME.countdown > 0;
         A.timerUrgent = urgent ? (0.5 + 0.5 * Math.sin(GAME.countdown * Math.PI * 2)) : 0;
     }
 };
@@ -2733,6 +2752,7 @@ window.StormUI = {
         setRemainingTime(seconds) {
             FEED = true;
             GAME.countdownSource = 'feed';
+            GAME.sinDatos = false;
             GAME.feedCountdown = Math.max(0, Number(seconds) || 0);
             GAME.feedAt = performance.now();
 
@@ -2740,7 +2760,16 @@ window.StormUI = {
                segundo mostrado no cambia, drawUI no repinta nada. */
             repintar();
         },
-        useHostTimer() { GAME.countdownSource = 'host'; },
+        useHostTimer() { if (!INTEGRADO) GAME.countdownSource = 'host'; },
+
+        /* Datos del sorteo no disponibles (countdown mudo, vacio o caido):
+           reloj en --:--. Con ronda=true tambien se retira la ronda. */
+        setSinDatos(on, ronda) {
+            FEED = true;
+            GAME.sinDatos = !!on;
+            if (on && ronda) { GAME.round = null; GAME.countdownSource = 'pendiente'; }
+            repintar();
+        },
 
         /* levels: [{ key, name, icon, theme, amount, rate }] — 1 to 6.
            The panel re-flows and the chrome cache rebuilds itself. */

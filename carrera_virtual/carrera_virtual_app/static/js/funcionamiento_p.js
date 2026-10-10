@@ -291,23 +291,116 @@ const url_websocket = () => {
 }
 
 
-const manejar_countdown = data => {
+// ==========================================
+// COUNTDOWN DEL SORTEO (guia completa del visor)
+// - Identidad, tabla y fase se aplican siempre, tambien con ventas cerradas.
+// - El tiempo de venta sale de la hora del servidor: sales_close_at - (server_time + tiempo
+//   local transcurrido). El reloj del equipo no decide el cierre. Cero con ventas cerradas.
+// - Cada sorteo (UUID) tiene su estado: venta, ciclo, pendiente, reproduciendo, finalizado,
+//   omitido o abandonado. El intro sale por fase y UUID, no por un segundo exacto.
+// ==========================================
 
-  // Sin evento programado: no trae tabla, numero ni segundos
-  if (data['type'] === 'countdown.empty' || data['state'] === 'no_event') return
+var estado_ws        = null   // state del ultimo countdown.update (selling, in_progress...)
+var fase_ws          = null   // phase (sales_open, in_progress, awaiting_result, video_playing)
+var dato_ws          = null   // ultimo countdown.update aplicado
+var reloj_base       = null   // { recibido, servidor, cierre } para el tiempo de venta
+var tiempo_valido    = false  // hay un tiempo de venta real (no inventado)
+var ultimo_conteo    = 0      // ultima instantanea VALIDA del countdown (salud del sorteo)
+var sin_datos_sorteo = false
+var ciclo_en_curso   = false  // intro / video / resultados de un sorteo en pantalla
+var estados_sorteo   = {}     // { sorteo_id: { estado, cuando } }
+var sincronizados    = {}     // { sorteo_id: { s1, s2, s3 } }
+var countdown_retry  = 0      // segundos sugeridos por countdown.unavailable
+
+const SIN_DATOS_MS          = 5000    // plazo del cliente, no es una duracion del sorteo
+const REINTENTO_RESULTADO_MS = 10000  // resultado pendiente: se vuelve a buscar cada 10 s
+const MIN_VIDEO_TARDIO_MS    = 20000  // entrar con el video ya corriendo: solo si quedan >= 20 s
+
+const marcar_sorteo = (clave, estado) => {
+  const st = estados_sorteo[clave] || (estados_sorteo[clave] = {})
+  st.estado = estado
+  st.cuando = Date.now()
+  console.log('Sorteo', clave, '->', estado)
+}
+
+const tiempo_restante = () => {
+  if (estado_ws && estado_ws !== 'selling') return 0
+  if (reloj_base) return Math.max(0, Math.ceil((reloj_base.cierre - (reloj_base.servidor + performance.now() - reloj_base.recibido)) / 1000))
+  return Number(tiempo) || 0
+}
+
+const marcar_conteo = () => {
+  ultimo_conteo = Date.now()
+  sin_datos_sorteo = false
+}
+
+// Datos del sorteo temporalmente no disponibles: sin tiempo inventado
+const mostrar_sin_datos = motivo => {
+  if (sin_datos_sorteo) return
+  sin_datos_sorteo = true
+  reloj_base = null
+  tiempo_valido = false
+  console.log('Datos del sorteo no disponibles:', motivo)
+  $('#tiempo_regresivo').text('--:--')
+}
+
+// countdown.empty: sin sorteo; se retiran ronda, tabla y tiempo del anterior
+const sin_sorteo = () => {
+  reloj_base = null
+  tiempo_valido = false
+  estado_ws = null
+  fase_ws = null
+  id_table = null
+  $('#id_sorteos_c_id').text('')
+  $('#tiempo_regresivo').text('--:--')
+  if (typeof limpiar_tablas === 'function') limpiar_tablas()
+}
+
+const manejar_countdown = (data, origen = 'ws') => {
+
+  const tipo = data['type'] || 'countdown.update'
+
+  // Sin evento programado
+  if (tipo === 'countdown.empty' || data['state'] === 'no_event') {
+    if (origen !== 'rest') marcar_conteo()
+    sin_sorteo()
+    return
+  }
+  if (tipo !== 'countdown.update') return
+
+  // Contexto vigente: un mensaje de otro grupo o juego no cuenta ni se aplica
+  if (data['grupo_id'] != null && localStorage.getItem('grupo') && String(data['grupo_id']) !== String(localStorage.getItem('grupo'))) { console.log('Countdown de otro grupo: se ignora', data['grupo_id']); return }
+  if (data['game_id'] != null && String(data['game_id']) !== String(game_code)) { console.log('Countdown de otro juego: se ignora', data['game_id']); return }
+
+  if (origen !== 'rest') marcar_conteo()
 
   const sorteo_nuevo = data['sorteo_id'] && data['sorteo_id'] != sorteo_ws
 
   id_table  = data['table_odds_id']
-  tiempo    = data['seconds_left']
   sorteo_ws = data['sorteo_id'] || sorteo_ws
+  estado_ws = data['state'] || 'selling'
+  fase_ws   = data['phase'] || null
+  dato_ws   = data
+
+  // Reloj de venta con la hora del servidor
+  const servidor = Date.parse(data['server_time'])
+  const cierre   = Date.parse(data['sales_close_at'])
+  if (estado_ws === 'selling' && Number.isFinite(servidor) && Number.isFinite(cierre)) {
+    reloj_base = { recibido : performance.now(), servidor : servidor, cierre : cierre }
+    tiempo_valido = true
+  } else {
+    reloj_base = null
+    if (Number.isFinite(Number(data['seconds_left'])) && data['seconds_left'] !== null) { tiempo = Number(data['seconds_left']); tiempo_valido = true }
+    else tiempo_valido = estado_ws !== 'selling'
+  }
+  tiempo = tiempo_restante()
 
   // Duracion configurable de la venta (panel de administracion): el primer conteo del sorteo
-  if (sorteo_nuevo && data['state'] === 'selling' && Number(tiempo) > 0) event_tiempo = Number(tiempo)
+  if (sorteo_nuevo && estado_ws === 'selling' && Number(tiempo) > 0) event_tiempo = Math.max(Number(tiempo), Number(data['seconds_left']) || 0)
 
   // Sorteo siguiente en venta: su tabla se pide enseguida, aunque la carrera o pelea
   // anterior siga en pantalla, para que este lista al volver a las tablas.
-  if (data['state'] === 'selling' && id_table && (sorteo_nuevo || id_table != tabla_cargada) && !cargando_tabla) {
+  if (estado_ws === 'selling' && id_table && (sorteo_nuevo || id_table != tabla_cargada) && !cargando_tabla) {
     cargando_tabla = true
     Consulta_Tabla(id_table, Number(game_code)).then(ok => { vd = ok }).finally(() => { cargando_tabla = false })
   }
@@ -315,11 +408,29 @@ const manejar_countdown = data => {
   // Multiplicativo (solo carreras): se revela en los ultimos 5 s de venta y se mantiene
   // durante in_progress / awaiting_result. Un evento nuevo en venta llega sin el.
   if (data['race_multiplier'] != null) multiplicador_ws = data['race_multiplier']
-  else if (data['state'] === 'selling' && Number(data['seconds_left']) > 5) multiplicador_ws = null
-  
+  else if (estado_ws === 'selling' && Number(data['seconds_left']) > 5) multiplicador_ws = null
+
+  // Sorteo en venta: queda registrado y los pendientes de otros sorteos ya no se muestran
+  if (estado_ws === 'selling' && sorteo_ws && tiempo > 0) {
+    if (!estados_sorteo[sorteo_ws]) estados_sorteo[sorteo_ws] = { estado : 'venta', cuando : Date.now() }
+    for (const k in estados_sorteo) if (k !== sorteo_ws && estados_sorteo[k].estado === 'pendiente') marcar_sorteo(k, 'abandonado')
+  }
+
   $('#id_sorteos_c_id').text(data['event_number']);
-  $('#tiempo_regresivo').text(formatoTiempo(tiempo));
+  $('#tiempo_regresivo').text(tiempo_valido ? formatoTiempo(tiempo) : '--:--');
 }
+
+// El tiempo de venta se descuenta con el reloj monotono local entre instantaneas
+setInterval(() => {
+  if (!reloj_base || sin_datos_sorteo) return
+  tiempo = tiempo_restante()
+  $('#tiempo_regresivo').text(formatoTiempo(tiempo))
+}, 250)
+
+// Salud del sorteo: el control puede seguir vivo mientras el countdown calla
+setInterval(() => {
+  if (en_tablas() && Date.now() - ultimo_conteo > SIN_DATOS_MS) mostrar_sin_datos('sin instantaneas del countdown en ' + (SIN_DATOS_MS / 1000) + ' s')
+}, 1000)
 
 
 // Estado inicial o recuperacion tras reconectar (guia 5.6): una sola consulta, no polling
@@ -328,11 +439,11 @@ const recuperar_evento_actual = async () => {
   const evento = await consultar_evento_actual()
   if (!evento) return
 
-  if (evento['table_odds_id']) id_table = evento['table_odds_id']
-  if (evento['sorteo_id'])     sorteo_ws = evento['sorteo_id']
-  if (evento['race_multiplier'] != null) multiplicador_ws = evento['race_multiplier']
-
-  $('#id_sorteos_c_id').text(evento['event_number'] ?? '');
+  // Se aplica igual que una instantanea del countdown: identidad, tabla, fase y tiempos.
+  // Sin state, se deduce de la fase.
+  const d = Object.assign({ type : 'countdown.update' }, evento)
+  if (!d['state']) d['state'] = (!d['phase'] || d['phase'] === 'sales_open') ? 'selling' : 'in_progress'
+  manejar_countdown(d, 'rest')
 }
 
 
@@ -383,10 +494,16 @@ connectWebSocket = async () => {
       const tipo = window.ControlVisor ? ControlVisor.mensajeCountdown(data) : 'conteo'
 
       if (tipo === 'contexto') {
-        // Cambio de contexto: se cierra este contador; el control decide si se vuelve a abrir
-        socket.onclose = null; websocket = null; socket.close()
-        clearTimeout(ws_temporizador)
-        ws_temporizador = setTimeout(connectWebSocket, 3000)
+        // countdown.context_changed: sin datos del sorteo; el servidor cierra con 4403 y el
+        // cierre reconcilia la configuracion antes de abrir otra suscripcion
+        mostrar_sin_datos('countdown.context_changed')
+        setTimeout(() => { if (websocket === socket) socket.close() }, 5000)
+        return
+      }
+      if (tipo === 'no_disponible') {
+        // countdown.unavailable: el servidor cierra con 1011; se reconecta tras retry_after
+        countdown_retry = Number(data['retry_after']) || 3
+        mostrar_sin_datos('countdown.unavailable')
         return
       }
       if (tipo !== 'conteo') return
@@ -405,8 +522,9 @@ connectWebSocket = async () => {
       if (!ws_caido_desde) ws_caido_desde = Date.now()
 
       const espera = window.ControlVisor
-        ? await ControlVisor.cierreCountdown(evento.code, ws_reintentos)
+        ? await ControlVisor.cierreCountdown(evento.code, ws_reintentos, countdown_retry)
         : Math.min(1000 * Math.pow(2, ws_reintentos), 15000)
+      countdown_retry = 0
       ws_reintentos++
 
       if (espera === null) return
@@ -566,6 +684,11 @@ const mostrando_resultado = async () => {
 
 const mostrando_tablas = async () =>{
 
+  // Fin del ciclo del sorteo: terminado, salvo que haya quedado pendiente de resultado
+  if (ciclo_en_curso && sorteo_cierre && estados_sorteo[sorteo_cierre] &&
+      ['ciclo', 'reproduciendo'].includes(estados_sorteo[sorteo_cierre].estado)) marcar_sorteo(sorteo_cierre, 'finalizado')
+  ciclo_en_curso = false
+
   detener_bono()
   ocultar_overlay_video()
 
@@ -642,7 +765,7 @@ const showGallos = async (peleas) =>{
 
 }
 
-const excute_race = async () =>{
+const excute_race = async (opciones = {}) =>{
 
   const ciclo = ++ciclo_video
 
@@ -659,11 +782,16 @@ const excute_race = async () =>{
   console.log("race",   nup);
 
   if (!nup) {
-    console.log('Sin resultado del sorteo en curso: se vuelve a la tabla')
+    // Guia completa: el sorteo queda PENDIENTE y se vuelve a buscar mas tarde mientras
+    // el servidor siga en ese sorteo; no se da por terminado
+    console.log('Sin resultado del sorteo en curso: queda pendiente y se vuelve a la tabla')
+    if (sorteo_cierre) marcar_sorteo(sorteo_cierre, 'pendiente')
     video_intro.style.opacity = 0
     mostrando_tablas()
     return
   }
+
+  if (sorteo_cierre) marcar_sorteo(sorteo_cierre, 'reproduciendo')
 
   // Carreras: numero de carrera visible desde el inicio del video y cuotas listas para duracion - 10 s
   preparar_overlay_video()
@@ -675,6 +803,15 @@ const excute_race = async () =>{
 
   video_event.src                = url_video_evento(nup[0]);
   video_event.type               = 'video/mp4';
+
+  // Incorporacion tardia: el video arranca donde va el del servidor
+  // (duracion oficial - video_milliseconds_left)
+  if (opciones.quedanMs > 0 && tiempo_video_api > 0) {
+    const inicio = Math.max(0, tiempo_video_api - opciones.quedanMs / 1000)
+    console.log('Incorporacion tardia: el video empieza en', inicio.toFixed(1), 's')
+    try { video_event.currentTime = inicio } catch (e) {}
+    video_event.addEventListener('loadedmetadata', () => { if (video_event.currentTime < inicio - 1) { try { video_event.currentTime = inicio } catch (e) {} } }, { once : true })
+  }
 
   console.log('Video del evento:', video_event.src, 'duracion API (s):', tiempo_video_api)
 
@@ -1071,9 +1208,52 @@ video_event.addEventListener('error', async () => {
 
   
 
-setInterval( async ()=> { 
-    
-  if(tiempo == 0 && vd && entra_intro){entra_intro = false
+// Inicia (o reintenta) el ciclo del sorteo cerrado, identificado por su UUID
+const intentar_evento = () => {
+
+  const clave = sorteo_ws
+  const st = estados_sorteo[clave] || (estados_sorteo[clave] = { estado : 'nuevo', cuando : Date.now() })
+
+  if (['ciclo', 'reproduciendo', 'finalizado', 'omitido', 'abandonado'].includes(st.estado)) return
+
+  // Resultado pendiente: se vuelve a buscar (sin repetir el intro) mientras siga ese sorteo
+  if (st.estado === 'pendiente') {
+    if (!en_tablas() || Date.now() - st.cuando < REINTENTO_RESULTADO_MS) return
+    console.log('Se vuelve a buscar el resultado del sorteo', clave)
+    marcar_sorteo(clave, 'ciclo')
+    ciclo_en_curso = true
+    sorteo_cierre = clave
+    limpiar_tablas()
+    excute_race()
+    return
+  }
+
+  // Incorporacion tardia: el primer dato de este sorteo llega con el video del servidor
+  // ya corriendo. Se acompana desde donde va si queda tiempo; si no, se omite.
+  // Gallos no se incorpora tarde: el conteo de sus peleas empieza con el video.
+  if (fase_ws === 'video_playing' && st.estado === 'nuevo') {
+    let quedan = Number((dato_ws || {})['video_milliseconds_left'])
+    if (!Number.isFinite(quedan)) {
+      const fin = Date.parse((dato_ws || {})['video_ends_at']), srv = Date.parse((dato_ws || {})['server_time'])
+      quedan = (Number.isFinite(fin) && Number.isFinite(srv)) ? fin - srv : NaN
+    }
+    if (game_code == 5 || !(quedan >= MIN_VIDEO_TARDIO_MS)) {
+      console.log('El video del sorteo ya esta corriendo (' + quedan + ' ms): se omite este sorteo')
+      marcar_sorteo(clave, 'omitido')
+      return
+    }
+    marcar_sorteo(clave, 'ciclo')
+    ciclo_en_curso = true
+    sorteo_cierre = clave
+    limpiar_tablas()
+    soltar_fallo()
+    mult_evento = etiqueta_multiplicador(multiplicador_ws)
+    excute_race({ quedanMs : quedan })
+    return
+  }
+
+  marcar_sorteo(clave, 'ciclo')
+  ciclo_en_curso = true
 
     sorteo_cierre = sorteo_ws   // el sorteo que acaba de cerrar: es el que se va a reproducir
 
@@ -1115,35 +1295,26 @@ setInterval( async ()=> {
     screen_jp.style.opacity           = 0;
     screen_bono.style.opacity         = 0;
     video_intro.muted = true
-    video_intro.play().catch(() => {}) 
+    video_intro.play().catch(() => {})
+}
 
- 
+setInterval( async ()=> {
 
-  }else if(tiempo == 60 && entra_sincro_1){ entra_sincro_1 = false  
+  // Ventas cerradas (in_progress / awaiting_result / video_playing) o tiempo de venta en cero:
+  // intro y evento del sorteo por su UUID. Funciona aunque el visor arranque tarde (por
+  // ejemplo con 20 s restantes) o se salten segundos.
+  const cerrado = (estado_ws && estado_ws !== 'selling') || (estado_ws === 'selling' && tiempo_valido && tiempo == 0)
 
-    console.log("entra_sincro_1");
-    sincronizacion()
-    entra_intro = true
-  
-     
-  }else if(tiempo == 120 && entra_sincro_2){ entra_sincro_2 = false 
-    
-    ver_w_p = false
-    ver_b = false
+  if (cerrado && vd && sorteo_ws && !ciclo_en_curso) { intentar_evento(); return }
 
-    console.log("entra_sincro_2");
-    sincronizacion()
-    entra_intro = true
-  
-  }else if((event_tiempo - 30) == tiempo && entra_sincro_3){ entra_sincro_3 = false  
-
-    console.log("entra_sincro_3");
-    sincronizacion() 
-    entra_intro = true
-
+  // Re-sincronizacion de cuotas por tramos (120 s, 60 s y duracion - 30 s), una vez por
+  // sorteo, aunque nunca se reciba exactamente ese segundo
+  if (estado_ws === 'selling' && tiempo_valido && tiempo > 0 && sorteo_ws) {
+    const sinc = sincronizados[sorteo_ws] || (sincronizados[sorteo_ws] = {})
+    if (tiempo <= 120 && !sinc.s2) { sinc.s2 = true; ver_w_p = false; ver_b = false; console.log("entra_sincro_2"); sincronizacion() }
+    else if (tiempo <= 60 && !sinc.s1) { sinc.s1 = true; console.log("entra_sincro_1"); sincronizacion() }
+    else if (tiempo <= event_tiempo - 30 && !sinc.s3) { sinc.s3 = true; console.log("entra_sincro_3"); sincronizacion() }
   }
-  
-
 
 } , 500);
  

@@ -400,6 +400,13 @@
             return true;
         }
 
+        /* Falla temporal del control: no es suspension ni revocacion. El servidor cierra
+           con 1011 y el control se reconecta con ticket nuevo; la vinculacion se conserva. */
+        if (tipo === 'device.unavailable') {
+            log('control no disponible temporalmente (' + (msg.action || 'retry') + '): se reconecta sin tocar la vinculacion');
+            return true;
+        }
+
         if (tipo === 'device.status') {
             if (!mismoDispositivo(msg)) return true;
             const s = S.snapshot || {};
@@ -574,30 +581,40 @@
     async function ticketCountdown() {
         if (S.detenido || S.modoBloqueado) return { modo: 'parar' };
         if (S.snapshot && S.snapshot.can_operate === false) return { modo: 'parar' };
-        if (!S.conControl) return { modo: 'sin_auth' };
-
+        /* Contrato final: la API exige autenticacion. Si no hay ticket (501 o falla),
+           el countdown NO se abre anonimamente: se espera y se vuelve a intentar. */
         const r = await control('dispositivo_ticket');
         if (r.tipo === 'ok') return { modo: 'auth', ticket: r.datos.ticket };
         if (r.tipo === 'revocado') { desvincular('ticket countdown 403'); return { modo: 'parar' }; }
-        if (r.tipo === 'sin_endpoint') { S.conControl = false; return { modo: 'sin_auth' }; }
         if (r.tipo === 'vieja') return { modo: 'parar' };
+        if (r.tipo === 'sin_endpoint') {
+            log('la API no tiene la ruta del ticket: el countdown no se abre sin autenticacion; se reintenta en 30 s');
+            return { modo: 'esperar', ms: conVariacion(30) };
+        }
         return { modo: 'esperar', ms: r.ms || conVariacion(5) };
     }
 
-    /* Mensaje recibido por el countdown. 'control' = era device.*, 'contexto' = countdown.context_changed,
-       'conteo' = mensaje normal del contador. */
+    /* Mensaje recibido por el countdown (separacion estricta: aqui solo llegan countdown.*).
+         'conteo'        countdown.update / countdown.empty
+         'contexto'      countdown.context_changed (se reconcilia; el servidor cierra con 4403)
+         'no_disponible' countdown.unavailable (el servidor cierra con 1011)
+         'ignorar'       cualquier device.* (solo se procesan en el canal de control) u otro tipo */
     function mensajeCountdown(msg) {
-        if (msg && msg.type === 'countdown.context_changed') {
-            reconciliar('countdown.context_changed');
-            return 'contexto';
-        }
-        return recibir(msg, 'countdown') ? 'control' : 'conteo';
+        const tipo = String((msg && msg.type) || '');
+        if (tipo === 'countdown.context_changed') { reconciliar('countdown.context_changed'); return 'contexto'; }
+        if (tipo === 'countdown.unavailable') return 'no_disponible';
+        if (tipo === 'countdown.update' || tipo === 'countdown.empty' || tipo === '') return 'conteo';
+        if (tipo.indexOf('device.') === 0) log('mensaje ' + tipo + ' en el countdown: se ignora (solo vale en control)');
+        else log('mensaje desconocido en el countdown:', tipo);
+        return 'ignorar';
     }
 
     /* Cierre del countdown: 4403 = grupo/juego/suspension; se consulta el snapshot antes de volver.
        Devuelve la espera sugerida (ms) o null si no se debe reconectar. */
-    async function cierreCountdown(codigo, intentos) {
+    async function cierreCountdown(codigo, intentos, retryAfter) {
         if (S.detenido) return null;
+        // 1011 tras countdown.unavailable: se espera retry_after y se vuelve con ticket nuevo
+        if (codigo === 1011) return conVariacion(Math.max(1, Number(retryAfter) || 3));
         if (codigo === 4403) {
             await reconciliar('countdown 4403');
             if (S.detenido || (S.snapshot && S.snapshot.can_operate === false)) return null;
@@ -674,8 +691,12 @@
                 ' | cierre de venta ' + hora(d.sales_close_at) + ' | evento ' + hora(d.scheduled_at);
         } else if (d.type === 'countdown.empty') {
             resumen = 'Sin sorteo programado';
+        } else if (d.type === 'countdown.unavailable') {
+            resumen = 'DATOS DEL SORTEO NO DISPONIBLES (la API reintenta en ' + (d.retry_after || '?') + ' s)';
+        } else if (d.type === 'countdown.context_changed') {
+            resumen = 'CAMBIO DE CONTEXTO: se consulta la configuracion antes de volver a suscribirse';
         } else if (String(d.type || '').indexOf('device.') === 0) {
-            resumen = 'aviso de control recibido por este canal (' + d.type + '), no cambia el tiempo';
+            resumen = d.type + ' no corresponde a este canal (solo control): se ignora';
         } else {
             resumen = d.type || '(sin type)';
         }
