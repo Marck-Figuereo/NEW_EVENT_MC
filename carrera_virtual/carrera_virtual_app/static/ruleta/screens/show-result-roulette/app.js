@@ -1017,7 +1017,10 @@ const VideoController = {
         this.el = el;
         this.hint = hint;
 
-        el.play().catch(() => { hint.hidden = false; });
+        el.play().catch(() => {
+            if (window.frameElement) { setTimeout(() => VideoController.ensurePlaying(), 1000); return; }
+            hint.hidden = false;
+        });
 
         hint.addEventListener('click', () => {
             hint.hidden = true;

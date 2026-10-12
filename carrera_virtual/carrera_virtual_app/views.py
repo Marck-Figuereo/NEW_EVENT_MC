@@ -31,7 +31,7 @@ from carrera_virtual_app.helpers.display_api_client import (
 
 
 # Configuraciones de entorno
-version = "v7.1.6"
+version = "v7.1.7"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)

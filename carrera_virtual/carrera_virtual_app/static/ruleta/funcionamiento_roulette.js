@@ -1146,8 +1146,9 @@ const Video = {
                 /* Solo un bloqueo real de autoplay muestra el botón; un
                    archivo que no carga lo resuelve onError con el respaldo. */
                 if (err && err.name === 'NotAllowedError') {
-                    console.warn('[flow] autoplay bloqueado:', err.message);
-                    el.hint.hidden = false;
+                    console.warn('[flow] autoplay bloqueado; se reintenta:', err.message);
+                    v.muted = true;
+                    setTimeout(() => { if (v.paused) v.play().catch(() => {}); }, 1000);
                 }
             });
         });
