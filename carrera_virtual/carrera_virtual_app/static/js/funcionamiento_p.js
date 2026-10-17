@@ -17,7 +17,9 @@ const sufijo_intro = { 4 : 'C' }
 // TODOS los videos (intro y video del evento) se buscan en la carpeta de su juego:
 // BASE_VIDEOS/CARPETA_JUEGO/nombre_video.mp4
 // BASE_VIDEOS es la direccion del equipo donde estan las carpetas de videos en produccion.
-const BASE_VIDEOS = 'http://localhost:3000'
+// Demostracion de caballos (demo_caballos.js): los videos salen de static/videos del proyecto
+// a traves de Django (/video_demo), sin depender del servidor de videos.
+const BASE_VIDEOS = window.DEMO_CABALLOS === true ? '/video_demo' : 'http://localhost:3000'
 
 // El nombre llega de la API en selected_video (con o sin .mp4).
 const carpeta_video = {
@@ -50,7 +52,8 @@ const es_carrera = () => [2, 3, 4].includes(Number(game_code))
 // (ultimos 10 s): perros de 6 y de 8.
 // Caballos (4) todavia no: muestra su PANTALLA DE RESULTADOS al terminar el video, como antes.
 // Cuando los videos de caballos esten listos, se agrega el 4 a esta lista y queda igual que los perros.
-const resultado_sobre_video = () => [2, 3].includes(Number(game_code))
+// Excepcion: la demostracion de caballos (demo_caballos.js, ?demo=1) ya usa los videos nuevos.
+const resultado_sobre_video = () => [2, 3].includes(Number(game_code)) || (Number(game_code) === 4 && window.DEMO_CABALLOS === true)
 
 const etiqueta_multiplicador = valor => {
   if (!es_carrera()) return 'X'

@@ -1,6 +1,7 @@
 from django.shortcuts import render,redirect
 import requests
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse, StreamingHttpResponse, Http404
+import re
 import json
 from django.views.decorators.csrf import csrf_exempt
 from decouple import config
@@ -41,7 +42,7 @@ WEBSOCKET_URL = config('WEBSOCKET_URL', default=_WS_POR_DEFECTO).strip().rstrip(
 # Version de los JS y CSS del visor: cambia sola cada vez que se modifica un archivo,
 # asi el navegador nunca mezcla un archivo nuevo con otro viejo guardado en cache.
 _STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
+_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/demo_caballos.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
                    'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css',
                    'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css',
                    # Pantallas de la ruleta (iframes): su HTML y sus recursos internos tambien
@@ -57,6 +58,68 @@ def _version_archivos():
         return str(int(max(os.path.getmtime(os.path.join(_STATIC, a)) for a in _ARCHIVOS_VISOR if os.path.exists(os.path.join(_STATIC, a)))))
     except ValueError:
         return version
+
+
+# Demostracion de caballos (static/js/demo_caballos.js). Se activa en un navegador abriendo
+# /HORSES_7?demo=1 (queda la cookie "demo_caballos") y se quita con /HORSES_7?demo=0.
+# Con la cookie, cualquier pantalla del visor va directo a la demo y no al juego de la API.
+# Solo cambia ese navegador: no hay nada en el .env ni en el servidor.
+def _demo_caballos(request):
+    if request.method != 'GET' or request.COOKIES.get('demo_caballos') != '1':
+        return None
+    if request.GET.get('demo') == '0':
+        return None
+    return redirect('/HORSES_7?demo=1')
+
+
+# Videos de la demostracion de caballos: salen de static/videos/HORSES_7 del proyecto (no hace
+# falta el servidor de videos del puerto 3000). Con soporte de Range para que el navegador
+# pueda adelantar el video (incorporacion tardia) y cargarlo por partes.
+_CARPETA_VIDEOS = os.path.realpath(os.path.join(_STATIC, 'videos'))
+
+def video_demo(request, carpeta, archivo):
+
+    ruta = os.path.realpath(os.path.join(_CARPETA_VIDEOS, carpeta, archivo))
+    if carpeta != 'HORSES_7' or not archivo.lower().endswith('.mp4') or \
+       not ruta.startswith(_CARPETA_VIDEOS + os.sep) or not os.path.isfile(ruta):
+        raise Http404('Video no encontrado')
+
+    tamano = os.path.getsize(ruta)
+    rango  = re.match(r'^bytes=(\d*)-(\d*)$', request.headers.get('Range', '').strip())
+
+    if not rango or (not rango.group(1) and not rango.group(2)):
+        respuesta = FileResponse(open(ruta, 'rb'), content_type='video/mp4')
+        respuesta['Accept-Ranges'] = 'bytes'
+        return respuesta
+
+    if rango.group(1):
+        inicio = int(rango.group(1))
+        fin    = min(int(rango.group(2)), tamano - 1) if rango.group(2) else tamano - 1
+    else:
+        inicio = max(0, tamano - int(rango.group(2)))
+        fin    = tamano - 1
+
+    if inicio > fin or inicio >= tamano:
+        respuesta = HttpResponse(status=416)
+        respuesta['Content-Range'] = f'bytes */{tamano}'
+        return respuesta
+
+    def leer():
+        with open(ruta, 'rb') as video:
+            video.seek(inicio)
+            quedan = fin - inicio + 1
+            while quedan > 0:
+                bloque = video.read(min(1024 * 1024, quedan))
+                if not bloque:
+                    break
+                quedan -= len(bloque)
+                yield bloque
+
+    respuesta = StreamingHttpResponse(leer(), status=206, content_type='video/mp4')
+    respuesta['Content-Range']  = f'bytes {inicio}-{fin}/{tamano}'
+    respuesta['Content-Length'] = str(fin - inicio + 1)
+    respuesta['Accept-Ranges']  = 'bytes'
+    return respuesta
 
 
 def _contexto_visor():
@@ -266,7 +329,7 @@ def configuration(request):
 
             return _consultar(get_pairing_status, device_token=device_token)
 
-    return render(request, "configuration.html")
+    return _demo_caballos(request) or render(request, "configuration.html")
 
 
 
@@ -538,14 +601,14 @@ def games(request):
 @csrf_exempt
 def DOGS_6(request):
 
-    return render(request, "pv_p.html", _contexto_visor())
+    return _demo_caballos(request) or render(request, "pv_p.html", _contexto_visor())
 
 
 
 @csrf_exempt
 def DOGS_8(request):
 
-    return render(request, "pv_p8.html", _contexto_visor())
+    return _demo_caballos(request) or render(request, "pv_p8.html", _contexto_visor())
 
 
 
@@ -553,14 +616,23 @@ def DOGS_8(request):
 @csrf_exempt
 def HORSES_7(request):
 
-    return render(request, "pv_c.html", _contexto_visor())
+    # Demo activa: la direccion siempre lleva ?demo=1 (se conservan venta, lugar, reiniciar)
+    if request.method == 'GET' and request.COOKIES.get('demo_caballos') == '1' and 'demo' not in request.GET:
+        q = request.GET.copy()
+        q['demo'] = '1'
+        return redirect('/HORSES_7?' + q.urlencode())
+
+    respuesta = render(request, "pv_c.html", _contexto_visor())
+    if request.GET.get('demo') == '0':
+        respuesta.delete_cookie('demo_caballos', path='/')
+    return respuesta
 
 
 
 # Ruleta (game_id 1). Sus pantallas y assets viven en static/ruleta/.
 # /ROULETTE se mantiene por si la API envia ese game_url.
 @csrf_exempt
-def RULETA(request): return render(request, "pv_ruleta.html", _contexto_visor())
+def RULETA(request): return _demo_caballos(request) or render(request, "pv_ruleta.html", _contexto_visor())
 
 ROULETTE = RULETA
 
@@ -569,4 +641,4 @@ ROULETTE = RULETA
 
 def ROOSTERS(request):
 
-    return render(request, "pv_g.html", _contexto_visor())
+    return _demo_caballos(request) or render(request, "pv_g.html", _contexto_visor())

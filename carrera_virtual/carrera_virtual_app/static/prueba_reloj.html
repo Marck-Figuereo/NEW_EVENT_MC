@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Prueba de congelada</title>
+<style>
+  body { margin: 0; background: #0b1020; color: #e8ecf5; font-family: Segoe UI, Arial, sans-serif; }
+  .caja { padding: 24px 32px; }
+  h1 { font-size: 22px; margin: 0 0 6px; font-weight: 600; }
+  p.nota { margin: 0 0 20px; color: #9aa6c0; font-size: 14px; max-width: 900px; line-height: 1.45; }
+  .fila { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; }
+  #reloj { font: 700 72px/1 Consolas, monospace; letter-spacing: 1px; }
+  .giro { width: 70px; height: 70px; border-radius: 12px; background: linear-gradient(135deg, #f2a900, #e0461a); animation: girar 1s linear infinite; }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  .leyenda { font-size: 13px; color: #9aa6c0; margin-top: 6px; }
+  table { margin-top: 24px; border-collapse: collapse; font-size: 15px; }
+  th, td { padding: 6px 14px; border-bottom: 1px solid #263055; text-align: left; }
+  th { color: #9aa6c0; font-weight: 600; }
+  .rojo { color: #ff6b6b; font-weight: 700; }
+  #estado { margin-top: 18px; font-size: 15px; }
+</style>
+</head>
+<body>
+<div class="caja">
+  <h1>Prueba de congelada (sin nada del visor)</h1>
+  <p class="nota">Esta pagina no tiene nada del visor: solo un reloj. Dejala abierta al lado del visor.
+    Si a las :x2:00 o :x7:00 tambien se congela, la causa esta en la computadora o el navegador, no en el visor.
+    El reloj lo mueve el codigo de la pagina; el cuadro naranja gira sin codigo (lo mueve el navegador).</p>
+
+  <div class="fila">
+    <div><div id="reloj">--:--:--.---</div><div class="leyenda">reloj (codigo de la pagina)</div></div>
+    <div><div class="giro"></div><div class="leyenda">giro (sin codigo)</div></div>
+  </div>
+
+  <div id="estado">Midiendo... cada segundo se escribe una linea en la consola (F12).</div>
+
+  <table>
+    <thead><tr><th>Hora (reloj de la PC)</th><th>Detenida</th><th>Que se detuvo</th></tr></thead>
+    <tbody id="lista"></tbody>
+  </table>
+</div>
+
+<script>
+(() => {
+  const reloj  = document.getElementById('reloj')
+  const lista  = document.getElementById('lista')
+  const estado = document.getElementById('estado')
+  const dos  = n => String(n).padStart(2, '0')
+  const hora = d => `${dos(d.getHours())}:${dos(d.getMinutes())}:${dos(d.getSeconds())}`
+
+  // Reloj con milesimas: se dibuja en cada cuadro de pantalla
+  let ultimoCuadro = performance.now()
+  let maxCuadro = 0
+  const cuadro = t => {
+    const d = new Date()
+    reloj.textContent = `${hora(d)}.${String(d.getMilliseconds()).padStart(3, '0')}`
+    maxCuadro = Math.max(maxCuadro, t - ultimoCuadro)
+    ultimoCuadro = t
+    requestAnimationFrame(cuadro)
+  }
+  requestAnimationFrame(cuadro)
+
+  // Una linea por segundo en la consola; si tardo mas de 1,5 s, se anota
+  let ultimo = performance.now()
+  let total = 0
+  let recien = false   // el segundo siguiente a una congelada completa no se cuenta dos veces
+  setInterval(() => {
+    const ahora = performance.now()
+    const salto = Math.round(ahora - ultimo)
+    ultimo = ahora
+    const d = new Date()
+    const linea = `[RELOJ DE PRUEBA] ${hora(d)} | ${salto} ms desde la linea anterior`
+    if (salto > 1500) {
+      total++
+      console.warn(linea + `  <-- SE DETUVO ${salto - 1000} ms`)
+      const fila = document.createElement('tr')
+      fila.innerHTML = `<td>${hora(new Date(Date.now() - salto))}</td><td class="rojo">${((salto - 1000) / 1000).toFixed(1)} s</td><td>la pagina completa (codigo y pantalla)</td>`
+      lista.prepend(fila)
+      estado.innerHTML = `<span class="rojo">${total} congelada(s) registradas</span>`
+    } else {
+      console.log(linea)
+    }
+    if (maxCuadro > 700 && salto <= 1500 && !recien) {
+      const fila = document.createElement('tr')
+      fila.innerHTML = `<td>${hora(d)}</td><td class="rojo">${(maxCuadro / 1000).toFixed(1)} s</td><td>solo la pantalla</td>`
+      lista.prepend(fila)
+    }
+    recien = salto > 1500
+    maxCuadro = 0
+  }, 1000)
+})()
+</script>
+</body>
+</html>

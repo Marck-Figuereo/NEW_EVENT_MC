@@ -18,6 +18,9 @@ urlpatterns=[
     path('ROULETTE',	views.ROULETTE,	        name="ROULETTE"),
     path('ROOSTERS',	views.ROOSTERS,	        name="ROOSTERS"),
     path('configuration',            views.configuration,    name="configuration"),
+
+    # Demostracion de caballos: videos de static/videos/HORSES_7 servidos por Django
+    path('video_demo/<str:carpeta>/<str:archivo>', views.video_demo, name="video_demo"),
     
 
 
