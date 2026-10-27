@@ -1,0 +1,135 @@
+/* ==========================================================================
+   AVISOS DEL VISOR (SweetAlert2) CON EL ESTILO DE CADA JUEGO
+   Los avisos los abre funcionamiento_p.js con Swal.fire (sin cambios en el JS):
+     - "Sin conexión a internet" / "Reconectando..."
+     - "Error al comenzar la carrera" (o "la pelea") / "Espere el próximo evento."
+   Cada plantilla pone en <body> la clase de su juego y este archivo viste el aviso:
+     av-caballos (azul) · av-perros6 (rojo) · av-perros8 (verde) · av-gallos (azul noche)
+   Sin logo ni foto: la pantalla de atras ya los muestra; el aviso usa el color del juego,
+   una franja de cuadros de meta y un dibujo propio de cada juego.
+   Las medidas usan --u = 1px de una pantalla de 1920x1080, asi el aviso se ve igual en
+   cualquier televisor.
+   ========================================================================== */
+
+@font-face { font-family: 'AV-Bold';    src: url('../webfonts/DINNextLTPro-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'AV-Regular'; src: url('../webfonts/DINNextLTPro-Regular.woff2') format('woff2'); }
+
+body[class*="av-"] {
+  --u: min(calc(100vw / 1920), calc(100vh / 1080));
+}
+
+/* ---- colores de cada juego ---- */
+body.av-caballos {
+  --av-panel:  linear-gradient(180deg, #0c2468 0%, #07174a 52%, #040d33 100%);
+  --av-bisel:  rgba(90, 150, 255, .38);
+  --av-acento: #4d8bff;
+  --av-suave:  #a9c4ff;
+}
+body.av-perros6 {
+  --av-panel:  linear-gradient(180deg, #7a0c14 0%, #4c0509 52%, #1e0105 100%);
+  --av-bisel:  rgba(255, 140, 140, .40);
+  --av-acento: #ff4d4d;
+  --av-suave:  #ffbcbc;
+}
+body.av-perros8 {
+  --av-panel:  linear-gradient(180deg, #236f09 0%, #154605 52%, #061a01 100%);
+  --av-bisel:  rgba(169, 255, 140, .40);
+  --av-acento: #5fe03a;
+  --av-suave:  #c6ffb3;
+}
+body.av-gallos {
+  --av-panel:  linear-gradient(180deg, #2f3472 0%, #1e2141 52%, #090a16 100%);
+  --av-bisel:  rgba(120, 150, 255, .36);
+  --av-acento: #3475ef;
+  --av-suave:  #b4c4ff;
+}
+
+/* ---- fondo detras del aviso: la pantalla queda oscurecida, sin desenfoque ---- */
+body[class*="av-"] .swal2-container.swal2-backdrop-show,
+body[class*="av-"] .swal2-container.swal2-noanimation { background: rgba(1, 4, 18, .74); }
+
+/* ---- el aviso: placa del juego con el bisel de las tablas ---- */
+body[class*="av-"] .swal2-container .swal2-popup {
+  width: calc(820 * var(--u));
+  padding: calc(82 * var(--u)) calc(64 * var(--u)) calc(66 * var(--u));
+  border-radius: calc(18 * var(--u));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .12) 0%, rgba(255, 255, 255, .03) 10%, rgba(255, 255, 255, 0) 24%),
+    var(--av-panel);
+  box-shadow:
+    inset 0 0 0 calc(2 * var(--u)) rgba(0, 0, 0, .55),
+    inset 0 0 0 calc(3 * var(--u)) var(--av-bisel),
+    inset 0 calc(-16 * var(--u)) calc(30 * var(--u)) rgba(0, 0, 0, .45);
+  color: #fff;
+  font-family: 'AV-Regular', sans-serif;
+  overflow: hidden;
+}
+
+/* franja de cuadros de meta arriba (sin logo: la pantalla ya lo muestra) */
+body[class*="av-"] .swal2-container .swal2-popup::before {
+  content: '';
+  position: absolute; left: 0; right: 0; top: 0;
+  height: calc(28 * var(--u));
+  background: repeating-conic-gradient(rgba(255, 255, 255, .22) 0 25%, rgba(0, 0, 0, .25) 0 50%) 0 0 / calc(28 * var(--u)) calc(28 * var(--u));
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
+}
+
+/* el icono del plugin no se usa como icono: su elemento se aprovecha para el dibujo del fondo */
+body[class*="av-"] .swal2-container .swal2-icon { display: none !important; }
+
+/* Caballos: lineas de la pista en diagonal, como carriles vistos de lado, que se apagan hacia abajo */
+body.av-caballos .swal2-container .swal2-icon {
+  display: block !important;
+  position: absolute; inset: 0;
+  width: auto; height: auto;
+  margin: 0; border: 0; border-radius: 0;
+  background:
+    repeating-linear-gradient(112deg, transparent 0 calc(64 * var(--u)), rgba(140, 185, 255, .13) calc(64 * var(--u)) calc(67 * var(--u))),
+    radial-gradient(ellipse 70% 80% at 50% 0%, rgba(77, 139, 255, .30) 0%, rgba(77, 139, 255, 0) 70%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .55) 60%, rgba(0, 0, 0, .15) 100%);
+          mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .55) 60%, rgba(0, 0, 0, .15) 100%);
+  animation: none !important;
+  z-index: 0;
+}
+body.av-caballos .swal2-container .swal2-icon > * { display: none !important; }
+
+body[class*="av-"] .swal2-container .swal2-title {
+  padding: 0;
+  position: relative; z-index: 1;
+  font-family: 'AV-Bold', sans-serif; font-weight: normal;
+  font-size: calc(50 * var(--u)); line-height: 1.1; letter-spacing: .01em;
+  color: #fff;
+}
+body[class*="av-"] .swal2-container .swal2-html-container {
+  margin: calc(16 * var(--u)) 0 0;
+  position: relative; z-index: 1;
+  font-family: 'AV-Regular', sans-serif;
+  font-size: calc(28 * var(--u)); line-height: 1.3;
+  color: var(--av-suave);
+}
+
+/* barra de espera abajo: una franja del color del juego que recorre la placa */
+body[class*="av-"] .swal2-container .swal2-popup::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(10 * var(--u));
+  background:
+    linear-gradient(90deg, transparent 0%, var(--av-acento) 50%, transparent 100%) 0 0 / 38% 100% no-repeat,
+    rgba(0, 0, 0, .35);
+  animation: av-espera 1.8s cubic-bezier(.45, 0, .2, 1) infinite;
+}
+@keyframes av-espera {
+  from { background-position: -40% 0, 0 0; }
+  to   { background-position: 140% 0, 0 0; }
+}
+
+/* entrada: sube y aparece (sin el rebote del plugin) */
+body[class*="av-"] .swal2-container .swal2-popup.swal2-show { animation: av-entra .45s cubic-bezier(.16, 1, .3, 1); }
+body[class*="av-"] .swal2-container .swal2-popup.swal2-hide { animation: av-sale .2s ease-in forwards; }
+@keyframes av-entra { from { opacity: 0; transform: translateY(calc(26 * var(--u))) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes av-sale  { to { opacity: 0; transform: translateY(calc(12 * var(--u))); } }
+
+/* Sin excepcion para "reducir animaciones": es una pantalla de TV y la franja es la que dice
+   que el visor esta esperando (en Windows esa opcion la tienen activada muchos equipos). */
+

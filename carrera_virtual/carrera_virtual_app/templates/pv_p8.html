@@ -11,345 +11,176 @@
     <link rel="stylesheet" href="static/css/all.min.css?v={{version1}}">
     <link rel="stylesheet" type="text/css" href="static/css/style_p8.css?v={{vjs}}">
     <link rel="stylesheet" type="text/css" href="static/css/overlay_video.css?v={{vjs}}">
+    <!-- Avisos (sin conexion, evento fallido) con el estilo de este juego -->
+    <link rel="stylesheet" type="text/css" href="static/css/avisos.css?v={{vjs}}">
     
     <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css?v={{version1}}">
 
 
 
   </head>
-  <body>
+  <body class="av-perros8">
     
     <video id="intro" playsinline></video>
     <video id="evento" playsinline></video>
 
-    <main id="cuerpo">
 
-      <div class="container-fluid themed-container container1">
-        
-        
- 
-          
-        <div class="row d-flex justify-content-between align-items-center caja-logo">
-          
+    <!-- PANTALLA DE TABLAS (diseno 1920x1080 que se escala a la pantalla; ver style_p8.css "TABLERO").
+         Los id son los mismos de siempre: cone_db_p.js y funcionamiento_p.js los llenan igual. -->
+    <main id="cuerpo" class="vh vh-verde">
+      <div class="vh-escenario">
 
-          <div class="col-md-3 themed-grid-col d-flex justify-content-end align-items-center caja-logo">
-            <img class="img-logo" src='static/img/logodogs_8.png'> 
-            <div class="banner_lgr"><label class="txt_lgr"></label></div>                        
-          </div>
+        <div class="vh-portada"></div>
 
-          <div class="col-md-3 themed-grid-col">
-
-
-
-             <div class="caja_race">  
-
-                  <span class="span_cj">
-                      <label class="nombre_jac_rc">CARRERA</label>
-                      <label id="id_sorteos_c_id" class="label-jk-rc" style="margin-top: 5px !important;"></label>
-                  </span>
-
-                  <span class="span_er">
-                      <label id="tiempo_regresivo"></label>
-                  </span>
-
-              </div>
-
-
-              <!-- JACKPOT GLOBAL -->
-              <div class="caja_jack caja_jack_global">
-                <label class="nombre_jac_rc">GLOBAL</label>
-                <label id="jp_global" class="label-jk-rc"></label>
-              </div>
-
-
-              <!-- JACKPOT LOCAL -->
-              <div class="caja_jack caja_jack_local">
-                <label class="nombre_jac_rc">LOCAL</label>
-                <label id="jp_local" class="label-jk-rc"></label>
-              </div>
-
-            
-          </div>
-
+        <!-- Logo y lugar -->
+        <div class="vh-marca">
+          <img class="vh-logo" src='static/img/logodogs_8.png' alt="">
+          <div class="vh-lugar"><i class="fa-solid fa-location-dot vh-icono"></i><label class="txt_lgr"></label></div>
         </div>
 
+        <!-- Carrera, tiempo y jackpots -->
+        <div class="vh-estado">
+          <div class="vh-caja vh-carrera"><span class="vh-etq">CARRERA</span><label id="id_sorteos_c_id"></label></div>
+          <div class="vh-caja vh-tiempo"><label id="tiempo_regresivo"></label><span class="vh-etq">TIEMPO RESTANTE</span></div>
+          <div class="vh-jack vh-jack-global"><span class="vh-jack-etq">JACKPOT <b>GLOBAL</b></span><label id="jp_global"></label></div>
+          <div class="vh-jack vh-jack-local"><span class="vh-jack-etq">JACKPOT <b>LOCAL</b></span><label id="jp_local"></label></div>
+        </div>
+
+        <!-- Historial de carreras -->
+        <section class="vh-panel vh-historial">
+          <div class="vh-panel-titulo">HISTORIAL DE CARRERAS</div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race0"></label><img id="bns0" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er0" alt=""><i></i><label id="lugarprc_1er0"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er0" alt=""><img id="lugarimg_pls_2do0" alt=""><label id="lugarprc_pls0"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race1"></label><img id="bns1" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er1" alt=""><i></i><label id="lugarprc_1er1"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er1" alt=""><img id="lugarimg_pls_2do1" alt=""><label id="lugarprc_pls1"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race2"></label><img id="bns2" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er2" alt=""><i></i><label id="lugarprc_1er2"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er2" alt=""><img id="lugarimg_pls_2do2" alt=""><label id="lugarprc_pls2"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race3"></label><img id="bns3" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er3" alt=""><i></i><label id="lugarprc_1er3"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er3" alt=""><img id="lugarimg_pls_2do3" alt=""><label id="lugarprc_pls3"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race4"></label><img id="bns4" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er4" alt=""><i></i><label id="lugarprc_1er4"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er4" alt=""><img id="lugarimg_pls_2do4" alt=""><label id="lugarprc_pls4"></label></div>
+          </div>
+        </section>
+
+        <!-- Cuotas: fila = primero, columna = segundo; la diagonal es el ganador (WIN) -->
+        <section class="vh-panel vh-tabla">
+          <div class="vh-esquina"><span>2º <i class="fa-solid fa-arrow-right"></i></span><span>1º <i class="fa-solid fa-arrow-down"></i></span></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n1.png" alt="1"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n2.png" alt="2"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n3.png" alt="3"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n4.png" alt="4"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n5.png" alt="5"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n6.png" alt="6"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n7.png" alt="7"></div>
+          <div class="vh-col"><img src="static/img/tablero_p8/n8.png" alt="8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n1.png" alt="1"></div>
+          <div class="precios_tbl vh-cel" id="1-1"></div>
+          <div class="precios_tbl vh-cel" id="1-2"></div>
+          <div class="precios_tbl vh-cel" id="1-3"></div>
+          <div class="precios_tbl vh-cel" id="1-4"></div>
+          <div class="precios_tbl vh-cel" id="1-5"></div>
+          <div class="precios_tbl vh-cel" id="1-6"></div>
+          <div class="precios_tbl vh-cel" id="1-7"></div>
+          <div class="precios_tbl vh-cel" id="1-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n2.png" alt="2"></div>
+          <div class="precios_tbl vh-cel" id="2-1"></div>
+          <div class="precios_tbl vh-cel" id="2-2"></div>
+          <div class="precios_tbl vh-cel" id="2-3"></div>
+          <div class="precios_tbl vh-cel" id="2-4"></div>
+          <div class="precios_tbl vh-cel" id="2-5"></div>
+          <div class="precios_tbl vh-cel" id="2-6"></div>
+          <div class="precios_tbl vh-cel" id="2-7"></div>
+          <div class="precios_tbl vh-cel" id="2-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n3.png" alt="3"></div>
+          <div class="precios_tbl vh-cel" id="3-1"></div>
+          <div class="precios_tbl vh-cel" id="3-2"></div>
+          <div class="precios_tbl vh-cel" id="3-3"></div>
+          <div class="precios_tbl vh-cel" id="3-4"></div>
+          <div class="precios_tbl vh-cel" id="3-5"></div>
+          <div class="precios_tbl vh-cel" id="3-6"></div>
+          <div class="precios_tbl vh-cel" id="3-7"></div>
+          <div class="precios_tbl vh-cel" id="3-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n4.png" alt="4"></div>
+          <div class="precios_tbl vh-cel" id="4-1"></div>
+          <div class="precios_tbl vh-cel" id="4-2"></div>
+          <div class="precios_tbl vh-cel" id="4-3"></div>
+          <div class="precios_tbl vh-cel" id="4-4"></div>
+          <div class="precios_tbl vh-cel" id="4-5"></div>
+          <div class="precios_tbl vh-cel" id="4-6"></div>
+          <div class="precios_tbl vh-cel" id="4-7"></div>
+          <div class="precios_tbl vh-cel" id="4-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n5.png" alt="5"></div>
+          <div class="precios_tbl vh-cel" id="5-1"></div>
+          <div class="precios_tbl vh-cel" id="5-2"></div>
+          <div class="precios_tbl vh-cel" id="5-3"></div>
+          <div class="precios_tbl vh-cel" id="5-4"></div>
+          <div class="precios_tbl vh-cel" id="5-5"></div>
+          <div class="precios_tbl vh-cel" id="5-6"></div>
+          <div class="precios_tbl vh-cel" id="5-7"></div>
+          <div class="precios_tbl vh-cel" id="5-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n6.png" alt="6"></div>
+          <div class="precios_tbl vh-cel" id="6-1"></div>
+          <div class="precios_tbl vh-cel" id="6-2"></div>
+          <div class="precios_tbl vh-cel" id="6-3"></div>
+          <div class="precios_tbl vh-cel" id="6-4"></div>
+          <div class="precios_tbl vh-cel" id="6-5"></div>
+          <div class="precios_tbl vh-cel" id="6-6"></div>
+          <div class="precios_tbl vh-cel" id="6-7"></div>
+          <div class="precios_tbl vh-cel" id="6-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n7.png" alt="7"></div>
+          <div class="precios_tbl vh-cel" id="7-1"></div>
+          <div class="precios_tbl vh-cel" id="7-2"></div>
+          <div class="precios_tbl vh-cel" id="7-3"></div>
+          <div class="precios_tbl vh-cel" id="7-4"></div>
+          <div class="precios_tbl vh-cel" id="7-5"></div>
+          <div class="precios_tbl vh-cel" id="7-6"></div>
+          <div class="precios_tbl vh-cel" id="7-7"></div>
+          <div class="precios_tbl vh-cel" id="7-8"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p8/n8.png" alt="8"></div>
+          <div class="precios_tbl vh-cel" id="8-1"></div>
+          <div class="precios_tbl vh-cel" id="8-2"></div>
+          <div class="precios_tbl vh-cel" id="8-3"></div>
+          <div class="precios_tbl vh-cel" id="8-4"></div>
+          <div class="precios_tbl vh-cel" id="8-5"></div>
+          <div class="precios_tbl vh-cel" id="8-6"></div>
+          <div class="precios_tbl vh-cel" id="8-7"></div>
+          <div class="precios_tbl vh-cel" id="8-8"></div>
+        </section>
+
+        <!-- Ultimo jackpot -->
+        <footer class="vh-panel vh-pie">
+          <div class="vh-dato vh-dato-titulo"><i class="fa-solid fa-trophy vh-icono"></i><div><span class="vh-etq">ÚLTIMO JACKPOT</span><label id="monto_info"></label></div></div>
+          <div class="vh-dato"><i class="fa-solid fa-ticket vh-icono"></i><div><span class="vh-etq">TICKET</span><label id="id_tk_info"></label></div></div>
+          <div class="vh-dato"><i class="fa-solid fa-store vh-icono"></i><div><span class="vh-etq">GANADO EN</span><label id="lugar_info"></label></div></div>
+          <div class="vh-dato"><i class="fa-solid fa-calendar-days vh-icono"></i><div><span class="vh-etq">FECHA</span><label id="date_info"></label></div></div>
+        </footer>
+
+        <div class="vh-version">{{version1}}</div>
       </div>
 
-
-
-
-      
-
-
-
-
-      <div class="container-fluid themed-container container2">
-          
-        <div class="row">
-
-          <div class="col-md-4" id="container-ulti-result">
-
-            <div class="body-result">
-                <div class="row row-title"><p>HISTORIAL DE CARRERAS</p></div>
-                
-                <!--Carrera 1-->
-                <div class="row row-body">
-
-                  <div class="row">
-                    <div class="id_utl br-g"><label id="numero_race0"></label></div>
-                    <div><img id="lugarimg_1er0" width="40px"></div>
-                    <div><label id="lugarprc_1er0"></label></div>                
-                  </div>
-
-                  <div class="row">
-                    <div class="id_utl br-g" style="text-align: center;"><img id="bns0" width="40px"></div>
-                    <div><img id="lugarimg_pls_1er0" width="40px"></div>
-                    <div><img id="lugarimg_pls_2do0" width="40px"></div>
-                    <div ><label id="lugarprc_pls0"></label></div>
-                  </div>
-
-                </div>
-
-
-                <!--Carrera 2-->
-                <div class="row row-body">
-
-                  <div class="row">
-                    <div class="id_utl br-g"><label id="numero_race1"></label></div>
-                    <div><img id="lugarimg_1er1" width="40px"></div>
-                    <div><label id="lugarprc_1er1"></label></div>                
-                  </div>
-
-                  <div class="row row-border">
-                    <div class="id_utl br-g" style="text-align: center;"><img id="bns1" width="40px"></div>
-                    <div><img id="lugarimg_pls_1er1" width="40px"></div>
-                    <div><img id="lugarimg_pls_2do1" width="40px"></div>
-                    <div><label id="lugarprc_pls1"></label></div>
-                  </div>
-
-                </div>
-
-
-                <!--Carrera 3-->
-                <div class="row row-body">
-
-                  <div class="row">
-                    <div class="id_utl br-g"><label id="numero_race2"></label></div>
-                    <div><img id="lugarimg_1er2" width="40px"></div>
-                    <div><label id="lugarprc_1er2"></label></div>                
-                  </div> 
-
-                  <div class="row row-border">
-                    <div class="id_utl br-g" style="text-align: center;"><img id="bns2" width="40px"></div>
-                    <div><img id="lugarimg_pls_1er2" width="40px"></div>
-                    <div><img id="lugarimg_pls_2do2" width="40px"></div>
-                    <div ><label id="lugarprc_pls2"></label></div>
-                  </div>
-
-                </div>
-
-                <!--Carrera 4-->
-                <div class="row row-body">
-
-                  <div class="row">
-                    <div class="id_utl br-g"><label id="numero_race3"></label></div>
-                    <div><img id="lugarimg_1er3" width="40px"></div>
-                    <div><label id="lugarprc_1er3"></label></div>                
-                  </div>
-                  
-                  <div class="row row-border">
-                    <div class="id_utl br-g" style="text-align: center;"><img id="bns3" width="40px"></div>
-                    <div><img id="lugarimg_pls_1er3" width="40px"></div>
-                    <div><img id="lugarimg_pls_2do3" width="40px"></div>
-                    <div ><label id="lugarprc_pls3"></label></div>
-                  </div>
-                
-                </div>
-
-
-                <!--Carrera 5-->
-                <div class="row row-body">
-
-                  <div class="row">
-                    <div class="id_utl br-g"><label id="numero_race4"></label></div>
-                    <div><img id="lugarimg_1er4" width="40px"></div>
-                    <div><label id="lugarprc_1er4"></label></div>                
-                  </div>
-
-                  <div class="row row-border">
-                    <div class="id_utl br-g" style="text-align: center;"><img id="bns4" width="40px"></div>
-                    <div><img id="lugarimg_pls_1er4" width="40px"></div>
-                    <div><img id="lugarimg_pls_2do4" width="40px"></div>
-                    <div ><label id="lugarprc_pls4"></label></div>
-                  </div>
-                
-                </div>
-              
-              
-              </div> 
-
-              
-          </div>
-
-          <div class="col-md-8 themed-grid-col d-flex justify-content-start" id="container-directas-pales">
-            
-            
-             <div class="box-table">
-                <div class="row row-1er" style="border-radius:20px 20px 0px 0px; border-bottom: 1px solid #59db60;">
-                  <div class="th-1er-1er"></div>
-                  <div class="th-1er"><span>1</span><img src="static/img/linea/p8/np1.png"></div>
-                  <div class="th-1er"><span>2</span><img src="static/img/linea/p8/np2.png"></div>
-                  <div class="th-1er"><span>3</span><img src="static/img/linea/p8/np3.png"></div>
-                  <div class="th-1er"><span>4</span><img src="static/img/linea/p8/np4.png"></div>
-                  <div class="th-1er"><span>5</span><img src="static/img/linea/p8/np5.png"></div>
-                  <div class="th-1er"><span>6</span><img src="static/img/linea/p8/np6.png"></div>
-                  <div class="th-1er"><span>7</span><img src="static/img/linea/p8/np7.png"></div>
-                  <div class="th-1er" style="border-radius:0px 20px 0px 0px;"><span>8</span><img src="static/img/linea/p8/np8.png"></div>
-                </div>
-               
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>1</span><img src="static/img/linea/p8/np1.png"></div>
-                  <div class="precios_tbl td-1er" id="1-1"></div>
-                  <div class="precios_tbl td_pls" id="1-2"></div>
-                  <div class="precios_tbl td_pls" id="1-3"></div>
-                  <div class="precios_tbl td_pls" id="1-4"></div>
-                  <div class="precios_tbl td_pls" id="1-5"></div>
-                  <div class="precios_tbl td_pls" id="1-6"></div>
-                  <div class="precios_tbl td_pls" id="1-7"></div>
-                  <div class="precios_tbl td_pls" id="1-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>2</span><img src="static/img/linea/p8/np2.png"></div>
-                  <div class="precios_tbl td_pls" id="2-1"></div>
-                  <div class="precios_tbl td-1er" id="2-2"></div>
-                  <div class="precios_tbl td_pls" id="2-3"></div>
-                  <div class="precios_tbl td_pls" id="2-4"></div>
-                  <div class="precios_tbl td_pls" id="2-5"></div>
-                  <div class="precios_tbl td_pls" id="2-6"></div>
-                  <div class="precios_tbl td_pls" id="2-7"></div>
-                  <div class="precios_tbl td_pls" id="2-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>3</span><img src="static/img/linea/p8/np3.png"></div>
-                  <div class="precios_tbl td_pls" id="3-1"></div>
-                  <div class="precios_tbl td_pls" id="3-2"></div>
-                  <div class="precios_tbl td-1er" id="3-3"></div>
-                  <div class="precios_tbl td_pls" id="3-4"></div>
-                  <div class="precios_tbl td_pls" id="3-5"></div>
-                  <div class="precios_tbl td_pls" id="3-6"></div>
-                  <div class="precios_tbl td_pls" id="3-7"></div>
-                  <div class="precios_tbl td_pls" id="3-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>4</span><img src="static/img/linea/p8/np4.png"></div>
-                  <div class="precios_tbl td_pls" id="4-1"></div>
-                  <div class="precios_tbl td_pls" id="4-2"></div>
-                  <div class="precios_tbl td_pls" id="4-3"></div>
-                  <div class="precios_tbl td-1er" id="4-4"></div>
-                  <div class="precios_tbl td_pls" id="4-5"></div>
-                  <div class="precios_tbl td_pls" id="4-6"></div>
-                  <div class="precios_tbl td_pls" id="4-7"></div>
-                  <div class="precios_tbl td_pls" id="4-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>5</span><img src="static/img/linea/p8/np5.png"></div>
-                  <div class="precios_tbl td_pls" id="5-1"></div>
-                  <div class="precios_tbl td_pls" id="5-2"></div>
-                  <div class="precios_tbl td_pls" id="5-3"></div>
-                  <div class="precios_tbl td_pls" id="5-4"></div>
-                  <div class="precios_tbl td-1er" id="5-5"></div>
-                  <div class="precios_tbl td_pls" id="5-6"></div>
-                  <div class="precios_tbl td_pls" id="5-7"></div>
-                  <div class="precios_tbl td_pls" id="5-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>6</span><img src="static/img/linea/p8/np6.png"></div>
-                  <div class="precios_tbl td_pls" id="6-1"></div>
-                  <div class="precios_tbl td_pls" id="6-2"></div>
-                  <div class="precios_tbl td_pls" id="6-3"></div>
-                  <div class="precios_tbl td_pls" id="6-4"></div>
-                  <div class="precios_tbl td_pls" id="6-5"></div>
-                  <div class="precios_tbl td-1er" id="6-6"></div>
-                  <div class="precios_tbl td_pls" id="6-7"></div>
-                  <div class="precios_tbl td_pls" id="6-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>7</span><img src="static/img/linea/p8/np7.png"></div>
-                  <div class="precios_tbl td_pls" id="7-1"></div>
-                  <div class="precios_tbl td_pls" id="7-2"></div>
-                  <div class="precios_tbl td_pls" id="7-3"></div>
-                  <div class="precios_tbl td_pls" id="7-4"></div>
-                  <div class="precios_tbl td_pls" id="7-5"></div>
-                  <div class="precios_tbl td_pls" id="7-6"></div>
-                  <div class="precios_tbl td-1er" id="7-7"></div>
-                  <div class="precios_tbl td_pls" id="7-8"></div>
-                </div>
-                <div class="row row-body">
-                  <div class="th-2do br-g"><span>8</span><img src="static/img/linea/p8/np8.png"></div>
-                  <div class="precios_tbl td_pls" id="8-1"></div>
-                  <div class="precios_tbl td_pls" id="8-2"></div>
-                  <div class="precios_tbl td_pls" id="8-3"></div>
-                  <div class="precios_tbl td_pls" id="8-4"></div>
-                  <div class="precios_tbl td_pls" id="8-5"></div>
-                  <div class="precios_tbl td_pls" id="8-6"></div>
-                  <div class="precios_tbl td_pls" id="8-7"></div>
-                  <div class="precios_tbl td-1er" id="8-8"></div>
-                </div>
-                
-                </div>
-          </div>
-          
-
-
-        </div>
-
-
-
-    </div>
-
-    
-
-    <div class="container-fluid themed-container container_j">
-
-      <div class="row d-flex  justify-content-center align-items-center" id="fila_1">
-
-        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #54a858;">
-          <label id="tipo_info">ULTIMO JACKPOT</label>
-        </div>
-
-        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #54a858;">
-          <label id="id_tk_info"></label>
-        </div>
-        
-        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #54a858;">
-          <label id="monto_info"></label>
-        </div>
-        
-        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #54a858;">
-          <label id="lugar_info"></label>     
-        </div>
-        
-        <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center">
-          <label id="date_info"></label>
-        </div>
-      
-      </div>
-
-    </div>
-
-
-
-
-
- 
-         
-
-
-
-
-
-    {{version1}}  
-  
+      <!-- El diseno mide 1920x1080: se escala para llenar la pantalla sin deformarse -->
+      <script>
+        (function () {
+          var escenario = document.querySelector('#cuerpo .vh-escenario')
+          var ajustar = function () { escenario.style.setProperty('--k', Math.min(window.innerWidth / 1920, window.innerHeight / 1080)) }
+          ajustar()
+          window.addEventListener('resize', ajustar)
+        })()
+      </script>
     </main>
     
 
@@ -554,6 +385,9 @@
   <script src="static/js/cone_db_p.js?v={{vjs}}"></script>
 
   <script src="static/js/funcionamiento_p.js?v={{vjs}}"></script>
+
+  <!-- Estados del tablero (jackpot sin dato, conteo urgente, historial vacio, textos largos) -->
+  <script src="static/js/tablero_c.js?v={{vjs}}"></script>
   
 
 

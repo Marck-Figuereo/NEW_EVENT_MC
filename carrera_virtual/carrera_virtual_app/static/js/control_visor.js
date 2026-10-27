@@ -71,7 +71,8 @@
         HORSES_7: ['HORSES_7'],
         ROOSTERS: ['ROOSTERS'],
         RULETA:   ['RULETA', 'ROULETTE'],
-        ROULETTE: ['RULETA', 'ROULETTE']
+        ROULETTE: ['RULETA', 'ROULETTE'],
+        BINGO:    ['BINGO']
     };
 
     const paginaActual = () => String(location.pathname || '').replace(/^\/+|\/+$/g, '').toUpperCase();

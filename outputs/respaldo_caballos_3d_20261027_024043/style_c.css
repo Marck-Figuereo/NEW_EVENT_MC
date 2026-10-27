@@ -1,0 +1,997 @@
+
+@font-face {
+
+	font-family: ethnocentric_rg;
+	src: url('../webfonts/ethnocentric_rg.ttf');
+  	
+}
+
+@font-face {
+
+	
+	font-family: OpenSans-Regular;
+	src: url('../webfonts/OpenSans-Regular.ttf');
+  	
+}
+
+
+@font-face {
+	
+	font-family: dinnextltpro-light;
+	src: url('../webfonts/dinnextltpro-light.woff.ttf');
+  	
+}
+
+.themed-grid-col {
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+  /* border: 1px solid rgb(255,0,0); */
+}
+
+.themed-container {
+  padding-top: .75rem;
+  margin-bottom: 1.5rem;
+  
+  /* background-color: rgba(0,0,255,0.1);
+  border: 1px solid rgb(255,0,0); */
+  
+ }
+ 
+
+body {
+
+  color: #fff;
+  background-color: #000;
+  overflow: auto;
+  font-family: OpenSans-Regular;
+  overflow-y: hidden;
+  background-image: url("../img/h7.png");
+
+}
+
+video {
+
+  
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+
+}
+
+.img-logo { width: 170px; }
+
+
+
+
+
+.span_cj { border-radius: 10px 0px 0px 0px;} 
+.span_er { border-radius: 0px 10px 0px 0px;} 
+
+.span_cj, .span_er {
+
+  font-family: dinnextltpro-light;
+  background: linear-gradient(to bottom, #000842, #00052e);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+
+  
+
+
+}
+
+.span_cj {  font-size: 25px;  padding:13px 4px;}
+.span_er { margin-left: 7px;  font-size: 30px;  padding: 8px 25px;}
+
+.banner_lgr {
+  
+  position: absolute; 
+  margin-top: 180px; 
+  margin-right: -20px; 
+  background: linear-gradient(to bottom, #000842, #00052e);
+  box-shadow: inset 3px 3px 8px rgba(109, 133, 255, 0.437), inset 0 1px 1px rgba(230, 231, 255, 0.674); 
+
+  padding:7px; 
+  width: 210px;
+  border-radius:8px;
+  
+  
+
+} .txt_lgr { margin-left:10px ; }
+
+.caja_jack {
+  
+
+
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  box-sizing: border-box;
+  width: 325px;
+  font-size: 25px;
+  height: 55px;
+  background: linear-gradient( to bottom, #d99a28 0%, #b97912 45%, #7d4d08 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 222, 145, 0.75);  
+  border-radius: 0px 0px 10px 10px;
+  font-family: dinnextltpro-light;
+  margin-top: 11px;
+  
+}
+.nombre_jac_rc { margin-left: 15px; margin-right: 20px;}
+
+
+
+.label-jk-rc {
+
+  margin-left: auto;
+  font-weight: 900;
+  font-size: 35px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+
+.caja_jack_global {
+
+    margin-top: 11px;
+    border-radius: 0;
+}
+
+
+/* LOCAL */
+
+.caja_jack_local {
+
+    margin-top: 3px;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient( to bottom, #7b7f84 0%, #5c6065 45%, #373a3e 100%);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(235, 235, 235, 0.55);
+}
+
+
+
+
+
+
+
+/* Cabecera derecha: la fila CARRERA / tiempo y las cajas de los jackpots tienen SIEMPRE el
+   mismo ancho, el de la mas ancha (antes los jackpots median 325 px fijos y no coincidian con
+   la fila de arriba, que cambia segun la fuente de la pantalla y el numero de carrera).
+   Si los jackpots necesitan mas espacio, la caja CARRERA se estira; si no, los jackpots se
+   estiran hasta el ancho de la fila. Alturas y posiciones iguales a las de antes. */
+.themed-grid-col:has(> .caja_race) {
+  display: grid;
+  grid-template-columns: max-content;
+  align-content: start;
+}
+.caja_race { display: flex; align-items: flex-start; height: 58px; white-space: nowrap; }
+.caja_race .span_cj { display: flex; align-items: center; flex: 1 1 auto; height: 51px; margin-top: 7px; padding: 0 4px; }
+.caja_race .span_cj .label-jk-rc { position: relative; top: -4px; }   /* compensa su margin-top en linea */
+.caja_race .span_er { display: flex; align-items: center; justify-content: center; height: 47px; margin-top: 8px; padding: 0 25px; }
+.caja_jack { width: auto; min-width: 325px; }
+
+main { position: relative; }
+
+
+#container-resultado-carrera, #container-resultado-bonos, #container-grandes-premios, #container-jackpots {
+  position: absolute;
+  top: 0;
+  opacity:0 ;
+
+}
+
+ 
+.container1 { width: 100%; }
+
+
+.container_j {
+
+  background: linear-gradient(to bottom, #000842, #00052e);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+
+  width: 84%;
+  padding:15px 10px;
+  border-radius: 0px 0px 20px 20px;
+  margin-top: 60px;
+  
+
+}
+
+.container_j div div{
+
+  font-size: 20px;
+  font-weight: 800;
+}
+
+#monto_info { color: #f83e3e; }
+
+
+
+
+.container4 {
+
+  width: 60%;
+  margin-left: 360px;
+}
+ 
+
+
+table {
+  width: 85%;
+  border-collapse: collapse;
+  overflow: hidden;
+ 
+}
+
+
+
+
+/*///////////////////////////////////////*/
+/*/////// container tablas coutas //////*/
+/*/////////////////////////////////////*/
+
+
+
+
+
+.box-table {
+
+  margin-top: 32px;
+  margin-left: 50px;
+
+}
+
+.box-table .row-1er {
+
+  background: linear-gradient(to bottom, #000842, #00052e);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+  display: flex;
+   padding: 8px 0px;
+
+}
+
+.box-table .row-body {
+  
+  display: flex ;
+  background: linear-gradient(to bottom, #151f68, #1117439d);
+
+  
+}
+
+.td-1er { background: linear-gradient(to bottom, #000842, #00052e); }
+
+
+.box-table .row  div {
+ 
+  width: 140px;
+  font-size: 30px;
+  text-align: center;
+  border-top:1px solid #3e83f8;
+
+}
+
+
+.box-table .row .precios_tbl {
+
+  padding: 15px 0px;
+  font-weight: 800;
+
+
+}
+
+ 
+.th-1er img, .th-1er-1er img{
+
+  width: 100px;
+  height: 6px; 
+  display: block;
+  margin-left: 10px;
+  margin-bottom: -9px;
+
+}
+
+.th-2do, .th-1er-1er { width: 80px !important; display: flex; border-top: transparent !important;}
+.th-1er, .th-1er-1er { border-top: transparent !important; background: transparent !important;} 
+
+.th-2do {
+
+  background-color: #000633;
+  box-shadow: inset 12px 0 6px -8px rgba(137,157,255,0.45), inset 7px 0 6px -10px rgba(255, 230, 230, 0.674);
+
+}
+
+.th-2do span {
+
+  margin-top: 15px;
+  margin-left: 22px;
+}
+.th-2do img{
+
+  
+  width: 55px;
+  height: 6px;
+  transform: rotate(90deg);
+  margin-top: 35px;
+
+   
+}
+ 
+  
+ 
+
+
+
+/*///////////////////////////////////////*/
+/*//// container ultimos resultados ////*/
+/*/////////////////////////////////////*/
+
+ 
+.body-result  {
+
+  width: 69% !important;
+  margin-left: 140px;
+  margin-top: 40px;
+  font-size: 25px; 
+  font-weight: 800;
+
+}
+
+.body-result .row-title {
+
+  text-align: center; 
+  background: linear-gradient(to bottom, #000842, #00052e);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+  border-radius: 20px 20px 0px 0px;
+  padding: 8px 0px;
+  border-bottom: 1px solid #3e83f8;
+}
+
+.body-result .row-body { background: linear-gradient(to bottom, #151f68, #1117439d); }
+
+
+
+.body-result .row-body .row div{
+
+  width: 105px;
+  display: flex;
+  justify-content: center;
+  padding: 7px 0px;
+  
+}
+ 
+.id_utl {
+ 
+  background-color: #000633;
+  box-shadow: inset 12px 0 6px -8px rgba(137,157,255,0.45), inset 7px 0 6px -10px rgba(255, 230, 230, 0.674);
+
+}
+
+
+
+.bt-g {border-top:1px solid #3e83f8;}
+.br-g {border-right:1px solid #3e83f8;}
+
+
+
+
+
+
+/*////////////////////////////////// 
+INFO DIRECTAS FINAL DE LA CARRERA 
+/////////////////////////////////*/
+
+
+#container-resultado-carrera{ margin-top: 100px; }
+
+#container-resultado-carrera div div .fila_2 { margin-top: 100px; }
+
+
+#container-resultado-carrera div div .table-info-result {
+
+  width: 80% !important;
+  padding: 50px 10px !important;
+
+}
+
+#container-resultado-carrera div div .table-info-result tbody td {
+
+  position: relative;
+  background: linear-gradient(to bottom, #151f68, #1117439d);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+  border: 3px solid transparent;
+  font-size: 100px;
+  padding: 10px 30px;
+  font-weight: 700;
+  text-align: center;
+
+}
+
+
+#container-resultado-carrera div div .numero-carrera tbody td p { font-size: 80px; }
+
+#container-resultado-carrera div div .numero-carrera tbody td p span {
+
+  font-family: ethnocentric_rg;
+  font-size: 70px !important;
+
+}
+#container-resultado-carrera div div .numero-carrera tbody td { 
+  
+    background: linear-gradient(to bottom, #000842, #00052e);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+ 
+
+}
+
+
+#container-resultado-bonos {
+
+  width: 13%;
+  top:0;
+  position: absolute;
+  opacity:0 ;
+  margin-left: 4%;     /* esquina superior IZQUIERDA (antes 83%: tapaba el numero de carrera del video) */
+ 
+}
+
+#container-resultado-bonos img{ border-radius: 20px; }
+
+ 
+
+
+
+
+
+
+
+.banner-jp{
+
+  position: relative;
+
+  height: 200px;
+  width: 100%;
+  display: block;
+  text-align: center;
+  border-radius: 10px;
+  text-decoration: none;
+  margin-top: 5%;
+  background-image: linear-gradient(115deg,#3664a5,#1e56a4,#4681d3,#1e56a4,#4885dc);
+
+  animation: rotate 0.4s linear infinite;
+
+}
+@keyframes rotate {
+100%{
+  filter: hue-rotate(-360deg)
+}
+}
+.banner-jp a{
+
+  height: 83%;
+  width: 97%;
+  
+  background: linear-gradient(to bottom, #393939, #161616);
+  box-shadow: inset 3px 3px 8px rgba(90, 90, 90, 0.564), inset 0 1px 1px rgba(88, 88, 88, 0.674);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 10px;
+  text-decoration: none;
+  transform: translate(-50%, -50%);
+}
+
+.banner-jp a p{
+
+  font-size: 70px;
+  color: #fff;
+  margin-top: 30px;
+}
+
+
+.input_info_jp {
+
+  background: linear-gradient(to bottom, #121c64, #0b0f34); 
+  box-shadow: inset 8px 8px 25px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(239, 239, 239, 0.746); 
+  border: transparent;
+  border-radius: 15px;
+  color: #fff;
+  text-align: center;
+  font-family:  OpenSans-Regular;
+  height: 120px;
+  font-size: 50px;
+  padding: 40px;
+  width: 100%;
+
+}
+
+
+
+ 
+.precio_jp {
+
+  font-size: 150px !important;
+  padding: 50px;
+  height: 100% !important;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.ganador-bono {
+
+  position: absolute;
+  top: 0;
+  margin:200px 460px;
+  opacity: 0;
+  width: 50%;
+
+  
+  
+}
+
+.bns-white {
+
+  background: linear-gradient(to bottom, #ffffff, #8989899d);
+  box-shadow: inset 3px 3px 8px rgba(90, 90, 90, 0.564), inset 0 1px 1px rgba(88, 88, 88, 0.674); 
+  color: #151f68;
+}
+
+.bns-blue {
+  background: linear-gradient(to bottom, #151f68, #1117439d);
+  box-shadow: inset 3px 3px 8px rgba(137, 157, 255, 0.437), inset 0 1px 1px rgba(255, 230, 230, 0.674); 
+  color: #ffffffb6;
+}
+
+#titulow {
+
+  font-size: 70px;
+  text-align: center;
+  border-radius: 20px;
+  padding: 40px;
+  font-weight: 900;
+
+}
+
+
+#id_bns{
+
+  padding: 20px !important;
+  width: 100%;
+  margin-top: 40px;
+  font-size: 100px;
+  border:3px solid rgba(30, 86, 164, 0.5);
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  color: #fff;
+
+}
+
+#mnt_bns {
+  
+  padding: 20px !important;
+  width: 100%;
+  margin-top: 40px;
+  font-size: 100px;
+  border:5px solid rgba(30, 86, 164, 0.5);
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  color: #fff;
+
+
+
+}
+
+
+/* Multiplicador del historial: sin imagen no se dibuja el cuadro vacio */
+img[id^="bns"]:not([src]) { visibility: hidden; }
+
+
+/* ==========================================================================
+   TABLERO (pantalla de tablas de caballos)
+   Diseno fijo de 1920x1080 que se escala a la pantalla (--k lo calcula pv_c.html).
+   Estilo 3D: marcos con doble borde, brillo arriba y sombra abajo. El resplandor
+   se reserva para los jackpots; los paneles de datos no brillan.
+   Margen de 32px en los cuatro lados y 32px entre paneles.
+   Los id de siempre (conteo, carrera, jackpots, historial, cuotas, ultimo jackpot) no cambian.
+   Los estados (jackpot sin dato, conteo urgente, historial vacio, textos largos)
+   los pone static/js/tablero_c.js con clases; no toca cone_db_p.js ni funcionamiento_p.js.
+   ========================================================================== */
+
+@font-face { font-family: 'VH-Bold';    src: url('../webfonts/DINNextLTPro-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'VH-Regular'; src: url('../webfonts/DINNextLTPro-Regular.woff2') format('woff2'); }
+
+#cuerpo.vh {
+  --vh-linea:  rgba(80, 135, 245, .30);
+  --vh-texto:  #ffffff;
+  --vh-suave:  #9fc0ff;
+  --vh-icono:  #7fb0ff;
+  --vh-rojo:   #ff7070;   /* la cuota que MAS paga (el JS la marca en rojo); mas claro que el rojo puro para que no quede mas apagada que las blancas */
+
+  /* marco 3D azul: borde doble, brillo arriba, sombra abajo (sin halo) */
+  --vh-fondo-panel:
+    linear-gradient(180deg, rgba(150, 195, 255, .16) 0%, rgba(150, 195, 255, .04) 9%, rgba(150, 195, 255, 0) 22%),
+    linear-gradient(180deg, #0c2468 0%, #07174a 48%, #040d33 100%);
+  --vh-marco:
+    0 0 0 1px rgba(0, 0, 0, .75),
+    0 10px 26px rgba(0, 0, 0, .60),
+    inset 0 0 0 2px rgba(6, 20, 70, .95),
+    inset 0 0 0 3px rgba(90, 150, 255, .38),
+    inset 0 -14px 26px rgba(0, 0, 0, .45),
+    inset 0 10px 22px rgba(70, 130, 255, .14);
+
+  /* relieve de los numeros: un canto oscuro de 2px y su sombra */
+  --vh-relieve-dato: 0 2px 0 rgba(3, 10, 40, .85), 0 4px 6px rgba(0, 0, 0, .55);
+  --vh-relieve:      0 2px 0 rgba(20, 35, 90, .85), 0 5px 8px rgba(0, 0, 0, .60);
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse 80% 60% at 55% 0%, #0a1f55 0%, #040f30 50%, #010519 100%);
+  color: var(--vh-texto);
+  font-family: 'VH-Regular', OpenSans-Regular, sans-serif;
+}
+
+#cuerpo.vh * { box-sizing: border-box; }
+#cuerpo.vh label { margin: 0; display: inline; }
+
+#cuerpo.vh .vh-escenario {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--k, 1));
+  transform-origin: center center;
+}
+
+/* Foto real de los caballos (h7.png) arriba, fundida con el fondo */
+#cuerpo.vh .vh-portada {
+  position: absolute; left: 330px; top: 0; width: 1108px; height: 300px;
+  background: url('../img/h7.png') 50% 0 / 1500px auto no-repeat;
+  filter: brightness(1.85) saturate(1.25) contrast(1.08);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 87%, transparent 100%), linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+  -webkit-mask-composite: source-in;
+          mask-image: linear-gradient(90deg, transparent 0%, #000 13%, #000 87%, transparent 100%), linear-gradient(180deg, #000 0%, #000 72%, transparent 100%);
+          mask-composite: intersect;
+}
+
+/* Paneles y cajas con marco 3D */
+#cuerpo.vh .vh-panel,
+#cuerpo.vh .vh-caja {
+  position: absolute;
+  background: var(--vh-fondo-panel);
+  border: 2px solid #2f6dff;
+  border-radius: 16px;
+  box-shadow: var(--vh-marco);
+}
+
+#cuerpo.vh .vh-etq {
+  font-family: 'VH-Regular', sans-serif;
+  color: var(--vh-suave);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+/* Iconos planos, de un solo color */
+#cuerpo.vh .vh-icono {
+  color: var(--vh-icono);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .55);
+}
+
+/* ---------- Logo y lugar ---------- */
+#cuerpo.vh .vh-marca { position: absolute; left: 32px; top: 16px; width: 320px; }
+#cuerpo.vh .vh-logo  { display: block; width: 280px; height: auto; margin-left: 20px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
+#cuerpo.vh .vh-lugar {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 4px; height: 50px; padding: 0 22px 0 20px;
+  border-radius: 25px;
+  border: 2px solid #2f6dff;
+  background: var(--vh-fondo-panel);
+  box-shadow: var(--vh-marco);
+  font-family: 'VH-Regular', sans-serif; font-size: 23px; letter-spacing: .02em; text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+  white-space: nowrap; overflow: hidden;
+}
+#cuerpo.vh .vh-lugar i { flex: 0 0 auto; font-size: 22px; }
+#cuerpo.vh .vh-lugar label { display: block; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Carrera, tiempo y jackpots ----------
+   Tres filas: (1) CARRERA y TIEMPO RESTANTE lado a lado, (2) JACKPOT GLOBAL, (3) JACKPOT LOCAL.
+   Las cajas de la fila 1 son placas de marcador: franja de titulo arriba y numero grande abajo.
+   8px entre filas y 20px libres antes de la tabla. */
+#cuerpo.vh .vh-estado { position: absolute; left: 1438px; top: 32px; width: 450px; height: 252px; }
+
+#cuerpo.vh .vh-caja {
+  top: 0; height: 88px;
+  display: flex; flex-direction: column; align-items: stretch;
+  border-radius: 14px;
+  overflow: hidden;
+  white-space: nowrap; line-height: 1;
+}
+#cuerpo.vh .vh-carrera { left: 0; width: 190px; }
+#cuerpo.vh .vh-tiempo  { left: 206px; width: 244px; }
+
+/* franja de titulo */
+#cuerpo.vh .vh-caja .vh-etq {
+  order: -1;
+  flex: 0 0 30px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0;
+  font-family: 'VH-Bold', sans-serif; font-size: 20px; letter-spacing: .06em;
+  color: #d6e4ff;
+  background: linear-gradient(180deg, #1d4fc4 0%, #123488 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, .65);
+  box-shadow: inset 0 1px 0 rgba(170, 205, 255, .45), 0 1px 0 rgba(120, 170, 255, .22);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
+}
+/* numero */
+#cuerpo.vh .vh-carrera label,
+#cuerpo.vh .vh-tiempo label {
+  flex: 1 1 auto;
+  display: flex; align-items: center; justify-content: center;
+  padding-top: 2px;
+  font-family: 'VH-Bold', sans-serif; font-size: 48px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve);
+}
+
+/* Ultimos 30 segundos: la placa del tiempo pasa a rojo y late despacio */
+#cuerpo.vh .vh-tiempo { transition: border-color .4s ease-out; }
+#cuerpo.vh .vh-tiempo.vh-urgente { border-color: #ff3a4b; animation: vh-latido 1s ease-in-out infinite alternate; }
+#cuerpo.vh .vh-tiempo.vh-urgente .vh-etq { background: linear-gradient(180deg, #c81e2e 0%, #7d0d17 100%); color: #ffe1e1; box-shadow: inset 0 1px 0 rgba(255, 180, 180, .45); }
+#cuerpo.vh .vh-tiempo.vh-urgente label { color: #ffd9d9; }
+@keyframes vh-latido {
+  from { box-shadow: var(--vh-marco), 0 0 0 0 rgba(255, 50, 70, 0); }
+  to   { box-shadow: var(--vh-marco), 0 0 26px 2px rgba(255, 50, 70, .70); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuerpo.vh .vh-tiempo.vh-urgente { animation: none; box-shadow: var(--vh-marco), 0 0 22px rgba(255, 50, 70, .6); }
+}
+
+#cuerpo.vh .vh-jack {
+  position: absolute; left: 0; width: 450px; height: 74px;
+  display: flex; align-items: center; padding: 0 24px;
+  border-radius: 14px;
+  white-space: nowrap; line-height: 1;
+}
+/* etiqueta en dos lineas (JACKPOT / GLOBAL) para dejarle todo el ancho al monto */
+#cuerpo.vh .vh-jack-etq { display: flex; flex-direction: column; gap: 3px; font-size: 18px; letter-spacing: .08em; color: rgba(255, 255, 255, .9); text-shadow: 0 2px 3px rgba(0, 0, 0, .6); }
+#cuerpo.vh .vh-jack-etq b { font-family: 'VH-Bold', sans-serif; font-weight: normal; font-size: 24px; letter-spacing: .05em; color: #fff; }
+#cuerpo.vh .vh-jack label {
+  margin-left: auto; flex: none;
+  font-family: 'VH-Bold', sans-serif; font-size: 46px;
+  font-variant-numeric: tabular-nums;
+}
+#cuerpo.vh .vh-jack-global {
+  top: 96px;
+  border: 2px solid #ff3a4b;
+  background:
+    linear-gradient(180deg, rgba(255, 170, 170, .20) 0%, rgba(255, 170, 170, 0) 30%),
+    linear-gradient(180deg, #7a0c16 0%, #4a050d 55%, #2a0207 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, .75),
+    0 0 24px rgba(255, 40, 60, .65),
+    0 10px 24px rgba(0, 0, 0, .6),
+    inset 0 0 0 2px rgba(70, 0, 8, .9),
+    inset 0 0 0 3px rgba(255, 110, 120, .40),
+    inset 0 0 22px rgba(255, 50, 70, .35);
+}
+#cuerpo.vh .vh-jack-global label {
+  text-shadow: 0 2px 0 rgba(255, 190, 190, .5), 0 3px 0 rgba(120, 20, 30, .7), 0 5px 8px rgba(0, 0, 0, .6), 0 0 18px rgba(255, 70, 80, .75);
+}
+#cuerpo.vh .vh-jack-local {
+  top: 178px;
+  border: 2px solid #c9d0da;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg, #646a72 0%, #454a51 55%, #2a2d32 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, .75),
+    0 0 16px rgba(200, 210, 225, .35),
+    0 10px 24px rgba(0, 0, 0, .6),
+    inset 0 0 0 2px rgba(30, 32, 36, .9),
+    inset 0 0 0 3px rgba(255, 255, 255, .30),
+    inset 0 -10px 18px rgba(0, 0, 0, .35);
+}
+#cuerpo.vh .vh-jack-local label {
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .35), 0 3px 0 rgba(40, 40, 46, .7), 0 5px 8px rgba(0, 0, 0, .6);
+}
+/* Jackpot sin dato (el JS escribe ERROR o JK SIN ASIGNAR): se oculta ese texto y se muestra
+   un aviso con el mismo peso que la caja */
+#cuerpo.vh .vh-jack.vh-sin-dato label { font-size: 0 !important; text-shadow: none; }
+#cuerpo.vh .vh-jack-global.vh-sin-dato { box-shadow: 0 0 0 1px rgba(0, 0, 0, .75), 0 10px 24px rgba(0, 0, 0, .6), inset 0 0 0 2px rgba(70, 0, 8, .9), inset 0 0 0 3px rgba(255, 110, 120, .40); }
+#cuerpo.vh .vh-jack.vh-sin-dato label::after {
+  content: 'NO DISPONIBLE';
+  font-family: 'VH-Bold', sans-serif; font-size: 26px; letter-spacing: .08em;
+  color: rgba(255, 255, 255, .78);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .6);
+}
+
+/* ---------- Historial ---------- */
+#cuerpo.vh .vh-historial {
+  left: 32px; top: 304px; width: 454px; height: 566px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#cuerpo.vh .vh-panel-titulo {
+  flex: 0 0 76px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VH-Bold', sans-serif; font-size: 25px; letter-spacing: .04em;
+  text-shadow: 0 2px 0 rgba(20, 35, 90, .8), 0 4px 6px rgba(0, 0, 0, .6);
+  border-bottom: 1px solid var(--vh-linea);
+  background: linear-gradient(180deg, rgba(90, 150, 255, .10), rgba(90, 150, 255, 0));
+}
+
+#cuerpo.vh .vh-hist-item {
+  flex: 1 1 0; min-height: 0;
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  border-bottom: 1px solid rgba(0, 0, 0, .55);
+  background: linear-gradient(180deg, rgba(140, 185, 255, .10) 0%, rgba(140, 185, 255, 0) 45%, rgba(0, 0, 0, .16) 100%);
+  box-shadow: inset 0 1px 0 rgba(160, 200, 255, .22), inset 0 -2px 0 rgba(0, 0, 0, .35);
+}
+#cuerpo.vh .vh-hist-item:last-child { border-bottom: 0; }
+#cuerpo.vh .vh-hist-item:nth-child(odd) { background-color: rgba(30, 60, 150, .16); }
+
+/* numero de carrera siempre en la fila del ganador; el X2/X3 debajo, en la fila de la exacta */
+#cuerpo.vh .vh-hist-num {
+  grid-row: 1 / 3;
+  display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); justify-items: center; align-items: center;
+  min-height: 0; line-height: 1;
+  border-right: 1px solid var(--vh-linea);
+  font-family: 'VH-Bold', sans-serif; font-size: 32px; font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve-dato);
+}
+#cuerpo.vh .vh-hist-num label { grid-row: 1; }
+#cuerpo.vh .vh-hist-num img { grid-row: 2; width: 48px; height: auto; border-radius: 4px; }
+#cuerpo.vh .vh-hist-num img:not([src]), #cuerpo.vh .vh-hist-num img[src=""] { visibility: hidden; }
+
+#cuerpo.vh .vh-hist-fila {
+  display: grid; min-height: 0; line-height: 1;
+  grid-template-columns: 50px 50px 1fr;
+  column-gap: 12px;
+  align-items: center;
+  padding: 0 26px 0 22px;
+}
+#cuerpo.vh .vh-hist-fila img { width: 50px; height: auto; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .55)); }
+#cuerpo.vh .vh-hist-fila img:not([src]) { visibility: hidden; }
+/* cuotas alineadas a la derecha: el punto decimal cae en la misma columna */
+#cuerpo.vh .vh-hist-fila label {
+  justify-self: end; text-align: right;
+  font-family: 'VH-Bold', sans-serif; font-size: 34px; font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve-dato);
+}
+
+/* Sin carreras anteriores: un aviso en lugar de cinco filas vacias */
+#cuerpo.vh .vh-historial.vh-vacio .vh-hist-item { visibility: hidden; }
+#cuerpo.vh .vh-historial.vh-vacio::after {
+  content: 'SIN CARRERAS ANTERIORES';
+  position: absolute; left: 0; right: 0; top: 76px; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VH-Bold', sans-serif; font-size: 24px; letter-spacing: .06em;
+  color: var(--vh-suave);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+/* ---------- Tabla de cuotas ---------- */
+#cuerpo.vh .vh-tabla {
+  left: 518px; top: 304px; width: 1370px; height: 566px;
+  display: grid;
+  grid-template-columns: 112px repeat(7, 1fr);
+  grid-template-rows: 60px repeat(7, minmax(0, 1fr));
+  padding: 16px 24px 24px 0;
+}
+
+#cuerpo.vh .vh-col,
+#cuerpo.vh .vh-fil { display: flex; align-items: center; justify-content: center; }
+#cuerpo.vh .vh-col img,
+#cuerpo.vh .vh-fil img { height: 52px; width: auto; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .6)); }
+
+/* Esquina: como se lee la tabla (columna = 2do lugar, arriba; fila = 1er lugar, abajo) */
+#cuerpo.vh .vh-esquina {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font-family: 'VH-Bold', sans-serif; font-size: 28px; letter-spacing: .02em;
+  color: #e6eeff;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .6);
+  line-height: 1;
+}
+#cuerpo.vh .vh-esquina span { display: flex; align-items: center; gap: 8px; }
+#cuerpo.vh .vh-esquina i { font-size: 22px; color: var(--vh-icono); }
+
+#cuerpo.vh .vh-cel {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 0; line-height: 1;
+  font-family: 'VH-Bold', sans-serif; font-size: 38px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve-dato);
+  border-right: 1px solid rgba(0, 0, 0, .55);
+  border-bottom: 1px solid rgba(0, 0, 0, .55);
+  background:
+    linear-gradient(180deg, rgba(140, 185, 255, .16) 0%, rgba(140, 185, 255, .05) 22%, rgba(140, 185, 255, 0) 50%, rgba(0, 0, 0, .18) 100%),
+    #0a1c5c;
+  box-shadow:
+    inset 0 1px 0 rgba(160, 200, 255, .30),
+    inset 1px 0 0 rgba(160, 200, 255, .14),
+    inset 0 -2px 0 rgba(0, 0, 0, .45),
+    inset -1px 0 0 rgba(0, 0, 0, .30);
+}
+/* La que MAS paga va en rojo (el color lo pone cone_db_p.js en el estilo del elemento);
+   aqui solo se aclara ese rojo para que se lea igual de bien que las blancas */
+#cuerpo.vh .vh-cel[style*="rgb(255, 0, 0)"] { color: var(--vh-rojo) !important; }
+
+/* zona de cuotas hundida, con su marco */
+#cuerpo.vh [id="1-1"], #cuerpo.vh [id="2-1"], #cuerpo.vh [id="3-1"], #cuerpo.vh [id="4-1"], #cuerpo.vh [id="5-1"], #cuerpo.vh [id="6-1"], #cuerpo.vh [id="7-1"] { border-left: 1px solid var(--vh-linea); }
+#cuerpo.vh [id="1-1"], #cuerpo.vh [id="1-2"], #cuerpo.vh [id="1-3"], #cuerpo.vh [id="1-4"], #cuerpo.vh [id="1-5"], #cuerpo.vh [id="1-6"], #cuerpo.vh [id="1-7"] { border-top: 1px solid var(--vh-linea); }
+#cuerpo.vh [id="1-1"] { border-top-left-radius: 10px; }
+#cuerpo.vh [id="1-7"] { border-top-right-radius: 10px; }
+#cuerpo.vh [id="7-1"] { border-bottom-left-radius: 10px; }
+#cuerpo.vh [id="7-7"] { border-bottom-right-radius: 10px; }
+
+/* ---------- Ultimo jackpot ---------- */
+#cuerpo.vh .vh-pie {
+  left: 32px; top: 902px; width: 1856px; height: 146px;
+  display: grid; grid-template-columns: 1.05fr .9fr 1.3fr 1.25fr;
+  align-items: center;
+}
+#cuerpo.vh .vh-dato {
+  display: flex; align-items: center; gap: 22px;
+  height: 88px; padding: 0 36px;
+  border-left: 2px solid rgba(110, 150, 240, .30);
+  box-shadow: -1px 0 0 rgba(0, 0, 0, .5);
+  min-width: 0;
+}
+#cuerpo.vh .vh-dato:first-child { border-left: 0; box-shadow: none; }
+#cuerpo.vh .vh-dato i { flex: 0 0 auto; width: 46px; text-align: center; font-size: 40px; }
+#cuerpo.vh .vh-dato > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1 1 auto; }
+#cuerpo.vh .vh-dato .vh-etq { font-size: 22px; }
+#cuerpo.vh .vh-dato label {
+  display: block;
+  font-family: 'VH-Bold', sans-serif; font-size: 34px; line-height: 1.05;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: var(--vh-relieve);
+}
+#cuerpo.vh .vh-dato-titulo label { color: #ffd34d; text-shadow: 0 2px 0 rgba(140, 90, 0, .8), 0 5px 8px rgba(0, 0, 0, .6); }
+/* sin ultimo jackpot ("- - -"): se ve como vacio, no como un monto */
+#cuerpo.vh .vh-dato.vh-sin-dato label { color: var(--vh-suave); text-shadow: 0 2px 3px rgba(0, 0, 0, .6); }
+
+/* texto largo en dos lineas (lo activa tablero_c.js cuando ya no cabe en una) */
+#cuerpo.vh label.vh-2l {
+  white-space: normal; line-height: 1.08; text-overflow: clip;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+#cuerpo.vh .vh-lugar:has(label.vh-2l) { height: 50px; align-items: center; }
+
+#cuerpo.vh .vh-version { position: absolute; left: 6px; bottom: 2px; font-size: 12px; color: rgba(255, 255, 255, .25); }
+
+/* ---------- Directas (diagonal): tono mas oscuro con un anillo claro (se destaca, no se apaga) ---------- */
+#cuerpo.vh [id="1-1"], #cuerpo.vh [id="2-2"], #cuerpo.vh [id="3-3"], #cuerpo.vh [id="4-4"], #cuerpo.vh [id="5-5"], #cuerpo.vh [id="6-6"], #cuerpo.vh [id="7-7"] {
+  background:
+    linear-gradient(180deg, rgba(140, 185, 255, .10) 0%, rgba(140, 185, 255, .03) 22%, rgba(140, 185, 255, 0) 50%, rgba(0, 0, 0, .25) 100%),
+    #040e36;
+  box-shadow:
+    inset 0 0 0 2px rgba(150, 190, 255, .42),
+    inset 0 3px 6px rgba(0, 0, 0, .55),
+    inset 0 1px 0 rgba(160, 200, 255, .18),
+    inset 0 -2px 0 rgba(0, 0, 0, .50),
+    inset -1px 0 0 rgba(0, 0, 0, .35);
+}

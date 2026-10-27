@@ -43,6 +43,18 @@
 /* Caja pequena superior derecha: visible durante todo el video */
 #ov_carrera { left: 83.5%; top: 4.4%;  width: 14.7%; height: 4.8%;  font-size: 2.6cqh; }
 
+/* Caballos (pv_c.html): el cuadro del numero de carrera esta en otra posicion y dividido en
+   dos mitades: "CARRERA" centrado en la izquierda y el numero del sorteo en la derecha. */
+#overlay-video.ov_caballos #ov_carrera { left: 75.31%; top: 6.67%; width: 19.17%; height: 5.74%; font-size: 3.1cqh;
+  display: grid; grid-template-columns: 1fr 1fr; justify-items: center; align-items: center; }
+#overlay-video.ov_caballos #ov_carrera > span { display: block; }
+
+/* Caballos: REPLAY sobre el cuadro azul grande vacio de la repeticion
+   (x 1450-1810, y 144-388 de 1920x1080). Lo prende funcionamiento_p.js con la clase con-replay. */
+#ov_replay  { left: 75.52%; top: 13.33%; width: 18.75%; height: 22.59%; font-size: 6.2cqh;
+  letter-spacing: .06em; opacity: 0; transition: opacity .2s ease-out; }
+#overlay-video.con-replay #ov_replay { opacity: 1; }
+
 /* Pantalla de resultados del video (aparece a duracion - 10 s) */
 #ov_titulo  { left: 33.6%; top: 6.3%;  width: 32.7%; height: 14.4%; font-size: 7cqh;  }
 #ov_win     { left: 50.7%; top: 33.3%; width: 20.2%; height: 23.9%; font-size: 11cqh; }

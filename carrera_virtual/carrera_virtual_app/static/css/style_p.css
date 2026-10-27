@@ -601,3 +601,699 @@ INFO DIRECTAS FINAL DE LA CARRERA
 
 /* Multiplicador del historial: sin imagen no se dibuja el cuadro vacio */
 img[id^="bns"]:not([src]) { visibility: hidden; }
+
+
+/* ==========================================================================
+   TABLERO (pantalla de tablas de perros de 6, en rojo)
+   Diseno fijo de 1920x1080 que se escala a la pantalla (--k lo calcula pv_c.html).
+   Estilo 3D: marcos con doble borde, brillo arriba y sombra abajo. El resplandor
+   se reserva para los jackpots; los paneles de datos no brillan.
+   Margen de 32px en los cuatro lados y 32px entre paneles.
+   Los id de siempre (conteo, carrera, jackpots, historial, cuotas, ultimo jackpot) no cambian.
+   Los estados (jackpot sin dato, conteo urgente, historial vacio, textos largos)
+   los pone static/js/tablero_c.js con clases; no toca cone_db_p.js ni funcionamiento_p.js.
+   ========================================================================== */
+
+@font-face { font-family: 'VH-Bold';    src: url('../webfonts/DINNextLTPro-Bold.woff2') format('woff2'); }
+@font-face { font-family: 'VH-Regular'; src: url('../webfonts/DINNextLTPro-Regular.woff2') format('woff2'); }
+
+#cuerpo.vh {
+  --vh-linea:  rgba(245, 80, 91, .30);
+  --vh-texto:  #ffffff;
+  --vh-suave:  #ff9fa5;
+  --vh-icono:  #ff7f88;
+  --vh-rojo:   #ff7070;   /* la cuota que MAS paga (el JS la marca en rojo); mas claro que el rojo puro para que no quede mas apagada que las blancas */
+
+  /* marco 3D rojo: bisel por dentro (brillo arriba, sombra abajo), sin borde ni sombra por fuera */
+  --vh-fondo-panel:
+    linear-gradient(180deg, rgba(255, 150, 157, .16) 0%, rgba(255, 150, 157, .04) 9%, rgba(255, 150, 157, 0) 22%),
+    linear-gradient(180deg, #51090e 0%, #3a0509 48%, #280306 100%);
+  --vh-marco:
+    inset 0 0 0 2px rgba(55, 5, 8, .95),
+    inset 0 0 0 3px rgba(255, 90, 101, .38),
+    inset 0 -14px 26px rgba(0, 0, 0, .45),
+    inset 0 10px 22px rgba(255, 70, 82, .14);
+
+  /* relieve de los numeros: un canto oscuro de 2px y su sombra */
+  --vh-relieve-dato: 0 2px 0 rgba(31, 2, 4, .85), 0 4px 6px rgba(0, 0, 0, .55);
+  --vh-relieve:      0 2px 0 rgba(70, 16, 19, .85), 0 5px 8px rgba(0, 0, 0, .60);
+
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #140102;   /* fondo oscuro parejo: sin la mancha de color donde la foto se funde con los paneles */
+  color: var(--vh-texto);
+  font-family: 'VH-Regular', OpenSans-Regular, sans-serif;
+}
+
+#cuerpo.vh * { box-sizing: border-box; }
+#cuerpo.vh label { margin: 0; display: inline; }
+
+#cuerpo.vh .vh-escenario {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--k, 1));
+  transform-origin: center center;
+}
+
+/* Foto real de los perros (p6.png) a todo el ancho de arriba, igual en toda la franja (sin oscurecer los lados) */
+#cuerpo.vh .vh-portada {
+  position: absolute; left: 0; top: 0; width: 1920px; height: 304px;
+  background: url('../img/p6.png') 50% 0 / 1920px auto no-repeat;
+  filter: brightness(2.15) saturate(1.25) contrast(1.06);
+  -webkit-mask-image: linear-gradient(180deg, #000000 0%, #000000 80%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000000 0%, #000000 80%, transparent 100%);
+}
+
+/* Paneles y cajas con marco 3D */
+#cuerpo.vh .vh-panel,
+#cuerpo.vh .vh-caja {
+  position: absolute;
+  background: var(--vh-fondo-panel);
+  border: 0;
+  border-radius: 16px;
+  box-shadow: var(--vh-marco);
+}
+
+#cuerpo.vh .vh-etq {
+  font-family: 'VH-Regular', sans-serif;
+  color: var(--vh-suave);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+/* Iconos planos, de un solo color */
+#cuerpo.vh .vh-icono {
+  color: var(--vh-icono);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .55);
+}
+
+/* ---------- Logo y lugar ---------- */
+#cuerpo.vh .vh-marca { position: absolute; left: 32px; top: 16px; width: 320px; }
+#cuerpo.vh .vh-logo  { display: block; width: 280px; height: auto; margin-left: 20px; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .55)); }
+#cuerpo.vh .vh-lugar {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 4px; height: 50px; padding: 0 22px 0 20px;
+  border-radius: 25px;
+  border: 0;
+  background: var(--vh-fondo-panel);
+  box-shadow: var(--vh-marco);
+  font-family: 'VH-Regular', sans-serif; font-size: 23px; letter-spacing: .02em; text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+  white-space: nowrap; overflow: hidden;
+}
+#cuerpo.vh .vh-lugar i { flex: 0 0 auto; font-size: 22px; }
+#cuerpo.vh .vh-lugar label { display: block; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Carrera, tiempo y jackpots ----------
+   Tres filas: (1) CARRERA y TIEMPO RESTANTE lado a lado, (2) JACKPOT GLOBAL, (3) JACKPOT LOCAL.
+   Las cajas de la fila 1 son placas de marcador: franja de titulo arriba y numero grande abajo.
+   8px entre filas y 20px libres antes de la tabla. */
+#cuerpo.vh .vh-estado { position: absolute; left: 1438px; top: 32px; width: 450px; height: 252px; }
+
+#cuerpo.vh .vh-caja {
+  top: 0; height: 88px;
+  display: flex; flex-direction: column; align-items: stretch;
+  border-radius: 14px;
+  overflow: hidden;
+  white-space: nowrap; line-height: 1;
+}
+#cuerpo.vh .vh-carrera { left: 0; width: 190px; }
+#cuerpo.vh .vh-tiempo  { left: 206px; width: 244px; }
+
+/* franja de titulo */
+#cuerpo.vh .vh-caja .vh-etq {
+  order: -1;
+  flex: 0 0 30px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0;
+  font-family: 'VH-Bold', sans-serif; font-size: 20px; letter-spacing: .06em;
+  color: #ffd6d9;
+  background: linear-gradient(180deg, #99171f 0%, #6a0e14 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, .65);
+  box-shadow: inset 0 1px 0 rgba(255, 170, 176, .45), 0 1px 0 rgba(255, 120, 129, .22);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .7);
+}
+/* numero */
+#cuerpo.vh .vh-carrera label,
+#cuerpo.vh .vh-tiempo label {
+  flex: 1 1 auto;
+  display: flex; align-items: center; justify-content: center;
+  padding-top: 2px;
+  font-family: 'VH-Bold', sans-serif; font-size: 48px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve);
+}
+
+/* Ultimos 30 segundos: la placa del tiempo pasa a rojo y late despacio */
+#cuerpo.vh .vh-tiempo { transition: border-color .4s ease-out; }
+#cuerpo.vh .vh-tiempo.vh-urgente { border-color: #ff3a4b; animation: vh-latido 1s ease-in-out infinite alternate; }
+#cuerpo.vh .vh-tiempo.vh-urgente .vh-etq { background: linear-gradient(180deg, #c81e2e 0%, #7d0d17 100%); color: #ffe1e1; box-shadow: inset 0 1px 0 rgba(255, 180, 180, .45); }
+#cuerpo.vh .vh-tiempo.vh-urgente label { color: #ffd9d9; }
+@keyframes vh-latido {
+  from { box-shadow: var(--vh-marco), 0 0 0 0 rgba(255, 50, 70, 0); }
+  to   { box-shadow: var(--vh-marco), 0 0 26px 2px rgba(255, 50, 70, .70); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #cuerpo.vh .vh-tiempo.vh-urgente { animation: none; box-shadow: var(--vh-marco), 0 0 22px rgba(255, 50, 70, .6); }
+}
+
+#cuerpo.vh .vh-jack {
+  position: absolute; left: 0; width: 450px; height: 74px;
+  display: flex; align-items: center; padding: 0 24px;
+  border-radius: 14px;
+  white-space: nowrap; line-height: 1;
+}
+/* etiqueta en dos lineas (JACKPOT / GLOBAL) para dejarle todo el ancho al monto */
+#cuerpo.vh .vh-jack-etq { display: flex; flex-direction: column; gap: 3px; font-size: 18px; letter-spacing: .08em; color: rgba(255, 255, 255, .9); text-shadow: 0 2px 3px rgba(0, 0, 0, .6); }
+#cuerpo.vh .vh-jack-etq b { font-family: 'VH-Bold', sans-serif; font-weight: normal; font-size: 24px; letter-spacing: .05em; color: #ffffff; }
+#cuerpo.vh .vh-jack label {
+  margin-left: auto; flex: none;
+  font-family: 'VH-Bold', sans-serif; font-size: 46px;
+  font-variant-numeric: tabular-nums;
+}
+#cuerpo.vh .vh-jack-global {
+  top: 96px;
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 170, 170, .20) 0%, rgba(255, 170, 170, 0) 30%),
+    linear-gradient(180deg, #7a0c16 0%, #4a050d 55%, #2a0207 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(70, 0, 8, .9),
+    inset 0 0 0 3px rgba(255, 110, 120, .40),
+    inset 0 0 22px rgba(255, 50, 70, .35);
+}
+#cuerpo.vh .vh-jack-global label {
+  text-shadow: 0 2px 0 rgba(255, 190, 190, .5), 0 3px 0 rgba(120, 20, 30, .7), 0 5px 8px rgba(0, 0, 0, .6), 0 0 18px rgba(255, 70, 80, .75);
+}
+#cuerpo.vh .vh-jack-local {
+  top: 178px;
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .28) 0%, rgba(255, 255, 255, 0) 32%),
+    linear-gradient(180deg, #646a72 0%, #454a51 55%, #2a2d32 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(30, 32, 36, .9),
+    inset 0 0 0 3px rgba(255, 255, 255, .30),
+    inset 0 -10px 18px rgba(0, 0, 0, .35);
+}
+#cuerpo.vh .vh-jack-local label {
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .35), 0 3px 0 rgba(40, 40, 46, .7), 0 5px 8px rgba(0, 0, 0, .6);
+}
+/* Jackpot sin dato (el JS escribe ERROR o JK SIN ASIGNAR): se oculta ese texto y se muestra
+   un aviso con el mismo peso que la caja */
+#cuerpo.vh .vh-jack.vh-sin-dato label { font-size: 0 !important; text-shadow: none; }
+#cuerpo.vh .vh-jack-global.vh-sin-dato { box-shadow: inset 0 0 0 2px rgba(70, 0, 8, .9), inset 0 0 0 3px rgba(255, 110, 120, .40); }
+#cuerpo.vh .vh-jack.vh-sin-dato label::after {
+  content: 'NO DISPONIBLE';
+  font-family: 'VH-Bold', sans-serif; font-size: 26px; letter-spacing: .08em;
+  color: rgba(255, 255, 255, .78);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .6);
+}
+
+/* ---------- Historial ---------- */
+#cuerpo.vh .vh-historial {
+  left: 32px; top: 304px; width: 454px; height: 566px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+#cuerpo.vh .vh-panel-titulo {
+  flex: 0 0 76px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VH-Bold', sans-serif; font-size: 25px; letter-spacing: .04em;
+  text-shadow: 0 2px 0 rgba(70, 16, 19, .8), 0 4px 6px rgba(0, 0, 0, .6);
+  border-bottom: 1px solid var(--vh-linea);
+  background: linear-gradient(180deg, rgba(255, 90, 101, .10), rgba(255, 90, 101, 0));
+}
+
+#cuerpo.vh .vh-hist-item {
+  flex: 1 1 0; min-height: 0;
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  border-bottom: 1px solid rgba(0, 0, 0, .55);
+  background: linear-gradient(180deg, rgba(255, 140, 148, .10) 0%, rgba(255, 140, 148, 0) 45%, rgba(0, 0, 0, .16) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 160, 166, .22), inset 0 -2px 0 rgba(0, 0, 0, .35);
+}
+#cuerpo.vh .vh-hist-item:last-child { border-bottom: 0; }
+#cuerpo.vh .vh-hist-item:nth-child(odd) { background-color: rgba(117, 23, 30, .16); }
+
+/* numero de carrera siempre en la fila del ganador; el X2/X3 debajo, en la fila de la exacta */
+#cuerpo.vh .vh-hist-num {
+  grid-row: 1 / 3;
+  display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); justify-items: center; align-items: center;
+  min-height: 0; line-height: 1;
+  border-right: 1px solid var(--vh-linea);
+  font-family: 'VH-Bold', sans-serif; font-size: 32px; font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve-dato);
+}
+#cuerpo.vh .vh-hist-num label { grid-row: 1; }
+#cuerpo.vh .vh-hist-num img { grid-row: 2; width: 48px; height: auto; border-radius: 4px; }
+#cuerpo.vh .vh-hist-num img:not([src]), #cuerpo.vh .vh-hist-num img[src=""] { visibility: hidden; }
+
+#cuerpo.vh .vh-hist-fila {
+  display: grid; min-height: 0; line-height: 1;
+  grid-template-columns: 44px 44px 1fr;
+  column-gap: 12px;
+  align-items: center;
+  padding: 0 26px 0 22px;
+}
+#cuerpo.vh .vh-hist-fila img { width: 44px; height: auto; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .55)); }
+#cuerpo.vh .vh-hist-fila img:not([src]) { visibility: hidden; }
+/* el segundo lugar de la exacta, un poco mas separado del primero */
+#cuerpo.vh .vh-hist-fila > :nth-child(2) { margin-left: 34px; }
+/* cuotas alineadas a la derecha: el punto decimal cae en la misma columna */
+#cuerpo.vh .vh-hist-fila label {
+  justify-self: end; text-align: right;
+  font-family: 'VH-Bold', sans-serif; font-size: 34px; font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve-dato);
+}
+
+/* Sin carreras anteriores: un aviso en lugar de cinco filas vacias */
+#cuerpo.vh .vh-historial.vh-vacio .vh-hist-item { visibility: hidden; }
+#cuerpo.vh .vh-historial.vh-vacio::after {
+  content: 'SIN CARRERAS ANTERIORES';
+  position: absolute; left: 0; right: 0; top: 76px; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VH-Bold', sans-serif; font-size: 24px; letter-spacing: .06em;
+  color: var(--vh-suave);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, .6);
+}
+
+/* ---------- Tabla de cuotas ---------- */
+#cuerpo.vh .vh-tabla {
+  left: 518px; top: 304px; width: 1370px; height: 566px;
+  display: grid;
+  grid-template-columns: 112px repeat(6, 1fr);
+  grid-template-rows: 60px repeat(6, minmax(0, 1fr));
+  padding: 16px 24px 24px 0;
+}
+
+#cuerpo.vh .vh-col,
+#cuerpo.vh .vh-fil { display: flex; align-items: center; justify-content: center; }
+#cuerpo.vh .vh-col img,
+#cuerpo.vh .vh-fil img { height: 52px; width: auto; filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .6)); }
+/* fichas del 1er lugar (filas) un poco mas pequenas que las del 2do (columnas) */
+#cuerpo.vh .vh-fil img { height: 44px; }
+
+/* Esquina: como se lee la tabla (columna = 2do lugar, arriba; fila = 1er lugar, abajo) */
+#cuerpo.vh .vh-esquina {
+  position: relative;
+  font-family: 'VH-Bold', sans-serif; font-size: 28px; letter-spacing: .02em;
+  color: #ffe6e8;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, .6);
+  line-height: 1;
+}
+/* "2º →" a la altura de las fichas de arriba, junto a la primera; "1º" encima de las fichas
+   de la izquierda, con su flecha hacia abajo */
+#cuerpo.vh .vh-esquina span { position: absolute; display: flex; align-items: center; gap: 8px; }
+#cuerpo.vh .vh-esquina span:first-child { right: -62px; top: 50%; transform: translateY(-50%); }
+#cuerpo.vh .vh-esquina span:last-child { left: 0; right: 0; top: 16px; flex-direction: column; gap: 6px; }
+#cuerpo.vh .vh-esquina i { font-size: 22px; color: var(--vh-icono); }
+
+#cuerpo.vh .vh-cel {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 0; line-height: 1;
+  font-family: 'VH-Bold', sans-serif; font-size: 38px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--vh-relieve-dato);
+  border-bottom: 1px solid rgba(0, 0, 0, .55);   /* solo division horizontal entre filas */
+  background:
+    linear-gradient(180deg, rgba(255, 140, 148, .16) 0%, rgba(255, 140, 148, .05) 22%, rgba(255, 140, 148, 0) 50%, rgba(0, 0, 0, .18) 100%),
+    #48080c;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 160, 166, .30),
+    inset 0 -2px 0 rgba(0, 0, 0, .45);
+}
+/* La que MAS paga va en rojo (el color lo pone cone_db_p.js en el estilo del elemento);
+   aqui solo se aclara ese rojo para que se lea igual de bien que las blancas */
+#cuerpo.vh .vh-cel[style*="rgb(255, 0, 0)"] { color: var(--vh-rojo) !important; }
+
+/* zona de cuotas hundida, con su marco */
+#cuerpo.vh [id="1-1"], #cuerpo.vh [id="2-1"], #cuerpo.vh [id="3-1"], #cuerpo.vh [id="4-1"], #cuerpo.vh [id="5-1"], #cuerpo.vh [id="6-1"] { border-left: 1px solid var(--vh-linea); }
+#cuerpo.vh [id="1-1"], #cuerpo.vh [id="1-2"], #cuerpo.vh [id="1-3"], #cuerpo.vh [id="1-4"], #cuerpo.vh [id="1-5"], #cuerpo.vh [id="1-6"] { border-top: 1px solid var(--vh-linea); }
+#cuerpo.vh [id="1-1"] { border-top-left-radius: 10px; }
+#cuerpo.vh [id="1-6"] { border-top-right-radius: 10px; }
+#cuerpo.vh [id="6-1"] { border-bottom-left-radius: 10px; }
+#cuerpo.vh [id="6-6"] { border-bottom-right-radius: 10px; }
+
+/* ---------- Ultimo jackpot ---------- */
+#cuerpo.vh .vh-pie {
+  left: 32px; top: 902px; width: 1856px; height: 146px;
+  display: grid; grid-template-columns: 1.05fr .9fr 1.3fr 1.25fr;
+  align-items: center;
+}
+#cuerpo.vh .vh-dato {
+  display: flex; align-items: center; gap: 22px;
+  height: 88px; padding: 0 36px;
+  border-left: 2px solid rgba(240, 110, 119, .30);
+  box-shadow: -1px 0 0 rgba(0, 0, 0, .5);
+  min-width: 0;
+}
+#cuerpo.vh .vh-dato:first-child { border-left: 0; box-shadow: none; }
+#cuerpo.vh .vh-dato i { flex: 0 0 auto; width: 46px; text-align: center; font-size: 40px; }
+#cuerpo.vh .vh-dato > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1 1 auto; }
+#cuerpo.vh .vh-dato .vh-etq { font-size: 22px; }
+#cuerpo.vh .vh-dato label {
+  display: block;
+  font-family: 'VH-Bold', sans-serif; font-size: 34px; line-height: 1.05;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: var(--vh-relieve);
+}
+#cuerpo.vh .vh-dato-titulo label { color: #ffd34d; text-shadow: 0 2px 0 rgba(140, 90, 0, .8), 0 5px 8px rgba(0, 0, 0, .6); }
+/* sin ultimo jackpot ("- - -"): se ve como vacio, no como un monto */
+#cuerpo.vh .vh-dato.vh-sin-dato label { color: var(--vh-suave); text-shadow: 0 2px 3px rgba(0, 0, 0, .6); }
+
+/* texto largo en dos lineas (lo activa tablero_c.js cuando ya no cabe en una) */
+#cuerpo.vh label.vh-2l {
+  white-space: normal; line-height: 1.08; text-overflow: clip;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+#cuerpo.vh .vh-lugar:has(label.vh-2l) { height: 50px; align-items: center; }
+
+#cuerpo.vh .vh-version { position: absolute; left: 6px; bottom: 2px; font-size: 12px; color: rgba(255, 255, 255, .25); }
+
+/* ---------- Directas (diagonal): tono mas oscuro con un anillo claro (se destaca, no se apaga) ---------- */
+#cuerpo.vh [id="1-1"], #cuerpo.vh [id="2-2"], #cuerpo.vh [id="3-3"], #cuerpo.vh [id="4-4"], #cuerpo.vh [id="5-5"], #cuerpo.vh [id="6-6"] {
+  background:
+    linear-gradient(180deg, rgba(255, 140, 148, .10) 0%, rgba(255, 140, 148, .03) 22%, rgba(255, 140, 148, 0) 50%, rgba(0, 0, 0, .25) 100%),
+    #2a0306;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 150, 157, .42),
+    inset 0 3px 6px rgba(0, 0, 0, .55),
+    inset 0 1px 0 rgba(255, 160, 166, .18),
+    inset 0 -2px 0 rgba(0, 0, 0, .50),
+    inset -1px 0 0 rgba(0, 0, 0, .35);
+}
+
+/* ==========================================================================
+   PANTALLAS DE GANADOR (perros de 6, en rojo): GANADOR JACKPOT y GANADOR DEL BONO
+   Las muestra funcionamiento_p.js cambiando su opacidad (mostrando_win_jackpot y
+   mostrando_bonos); cone_db_p.js llena los datos. Aqui solo se visten: no cambia el JS.
+   Fondo: video de monedas de 15 s (static/videos/premios/<--g-video>.mp4), lo pone tablero_c.js.
+   Encima, una placa de vidrio rojo oscuro con filo de oro fino:
+     GANADOR / nombre del jackpot (o BONO) / monto en oro / GANADO EN | TICKET (o el ID).
+   Tiempos atados al video: la placa entra a 0,25 s, el monto gira de 0,8 a 3,4 s y llega
+   con el golpe de monedas (clase g-final). Medidas en --u = 1px de una pantalla 1920x1080.
+   ========================================================================== */
+
+#container-jackpots,
+#ganador-bono {
+  --u: min(calc(100vw / 1920), calc(100vh / 1080));
+  --g-video:  'premio_perros6';   /* lo lee tablero_c.js */
+  --g-fondo:  #0b0103;
+  --g-suave:  #ff9fa5;
+  --g-oro:    #ffd34d;
+  --g-oro2:   #e8c467;
+  --g-linea:  rgba(232, 196, 103, .22);
+  --g-metal:  linear-gradient(180deg, #fff6d6 8%, #ffd34d 38%, #e0a51c 62%, #fff0b5 92%);
+
+  position: fixed !important;
+  inset: 0;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: var(--g-fondo);
+  font-family: 'VH-Regular', sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* video de fondo y placa (los crea tablero_c.js) */
+.g-video {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  pointer-events: none;
+}
+/* placa: vidrio rojo oscuro (el de las tablas) con filo de oro fino y un brillo que la recorre */
+.g-placa-fondo {
+  position: absolute; z-index: 1;
+  border-radius: calc(24 * var(--u));
+  background: linear-gradient(180deg, rgba(86, 10, 18, .93) 0%, rgba(38, 3, 8, .95) 100%);
+  box-shadow: 0 calc(40 * var(--u)) calc(90 * var(--u)) rgba(0, 0, 0, .6), inset 0 calc(1 * var(--u)) 0 rgba(255, 255, 255, .12);
+  pointer-events: none;
+}
+.g-placa-fondo::before {
+  content: ''; position: absolute;
+  inset: calc(-2 * var(--u)); padding: calc(2 * var(--u));
+  border-radius: calc(26 * var(--u));
+  background: linear-gradient(135deg, #fff3c4, #c99a2e 30%, #7a5512 50%, #e8c467 70%, #fff3c4);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+}
+.g-placa-fondo::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(105deg, transparent 0 40%, rgba(255, 240, 200, .10) 50%, transparent 60% 100%) 0 0 / 300% 100% no-repeat;
+  background-position: 120% 0;
+}
+.g-final > .g-placa-fondo::after { animation: g-placa-brillo 4.5s ease-in-out infinite; }
+@keyframes g-placa-brillo { from { background-position: 120% 0; } 45%, to { background-position: -20% 0; } }
+
+/* los datos van por encima de la placa */
+#container-jackpots > .row, #ganador-bono > #titulow, #ganador-bono > input { position: relative; z-index: 2; }
+
+/* entrada de la placa a los 0,25 s */
+@keyframes g-entra { from { opacity: 0; transform: translateY(calc(34 * var(--u))); } to { opacity: 1; transform: none; } }
+.g-activo > .row, .g-activo > #titulow, .g-activo > input,
+.g-activo > .g-placa-fondo, .g-activo > .g-monto {
+  animation: g-entra .8s cubic-bezier(.16, 1, .3, 1) .25s both;
+}
+
+/* ---------- GANADOR JACKPOT ---------- */
+#container-jackpots .row { margin: 0; width: calc(1240 * var(--u)); flex-wrap: nowrap; }
+#container-jackpots .themed-grid-col { padding: 0; }
+#container-jackpots .row.mt-5, #container-jackpots .row.mt-3, #container-jackpots .mt-3 { margin-top: 0 !important; }
+#container-jackpots .form-group { margin: 0; }
+
+/* "GANADOR JACKPOT" de la pagina se muestra como la palabra GANADOR, pequena y en oro;
+   el nombre del jackpot (fila siguiente) es el titulo grande */
+#container-jackpots .banner-jp {
+  width: 100%; height: auto; margin: 0; padding: 0;
+  background: none; border-radius: 0; box-shadow: none;
+  animation: none;
+}
+#container-jackpots .banner-jp a {
+  position: static; left: auto; top: auto; transform: none;
+  display: block; width: 100%; height: auto;
+  padding: calc(34 * var(--u)) 0 0;
+  background: none; border: 0; box-shadow: none;
+  text-decoration: none;
+}
+#container-jackpots .banner-jp a p { margin: 0; font-size: 0; line-height: 1; text-align: center; }
+#container-jackpots .banner-jp a p::before {
+  content: 'GANADOR';
+  font-family: 'VH-Bold', sans-serif;
+  font-size: calc(30 * var(--u)); letter-spacing: .5em; margin-right: -.5em;
+  color: var(--g-oro2);
+}
+
+#container-jackpots .row_jp { background: transparent; }
+#container-jackpots .input_info_jp {
+  display: block; width: 100%; height: auto;
+  padding: 0; border: 0; border-radius: 0;
+  background: transparent; box-shadow: none;
+  font-family: 'VH-Bold', sans-serif;
+  color: #fff; text-align: center;
+  outline: none; pointer-events: none;
+}
+/* nombre del jackpot: titulo grande, de blanco a oro */
+#container-jackpots .row_jp:has(.input_info_jp:not(.jk_lugar):not(.jk_ticket):not(.precio_jp)) .input_info_jp {
+  padding: calc(6 * var(--u)) 0 0;
+  font-size: calc(92 * var(--u)); line-height: 1.1; letter-spacing: .03em;
+  background: linear-gradient(180deg, #ffffff 0%, #fff1c9 45%, #e8c467 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+/* monto (mientras se muestra, lo tapa el de rodillos de tablero_c.js) */
+#container-jackpots .precio_jp {
+  padding: calc(14 * var(--u)) 0 calc(20 * var(--u)) !important;
+  height: auto !important;
+  font-size: calc(176 * var(--u)) !important; line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--g-oro);
+}
+/* lugar y ticket, con su etiqueta */
+#container-jackpots .row_jp:has(.jk_lugar) { border-top: calc(1 * var(--u)) solid var(--g-linea); }
+#container-jackpots .row_jp:has(.jk_lugar) .themed-grid-col { flex: 1 1 0; max-width: none; }
+#container-jackpots .row_jp:has(.jk_lugar) .form-group { padding: calc(24 * var(--u)) calc(20 * var(--u)) calc(30 * var(--u)); }
+#container-jackpots .row_jp:has(.jk_lugar) .themed-grid-col + .themed-grid-col .form-group { border-left: calc(1 * var(--u)) solid var(--g-linea); }
+#container-jackpots .row_jp:has(.jk_lugar) .form-group::before {
+  display: block; margin-bottom: calc(8 * var(--u));
+  font-size: calc(22 * var(--u)); letter-spacing: .16em; text-align: center;
+  color: var(--g-suave);
+}
+#container-jackpots .form-group:has(.jk_lugar)::before  { content: 'GANADO EN'; }
+#container-jackpots .form-group:has(.jk_ticket)::before { content: 'TICKET'; }
+#container-jackpots .jk_lugar, #container-jackpots .jk_ticket { font-size: calc(44 * var(--u)); height: calc(56 * var(--u)) !important; line-height: calc(56 * var(--u)); }
+/* dos jackpots ganados a la vez: todo un poco mas pequeno para que quepan */
+#container-jackpots:has(.row_jp ~ .row_jp ~ .row_jp ~ .row_jp) .precio_jp { font-size: calc(112 * var(--u)) !important; padding: calc(6 * var(--u)) 0 calc(10 * var(--u)) !important; }
+#container-jackpots:has(.row_jp ~ .row_jp ~ .row_jp ~ .row_jp) .row_jp:has(.input_info_jp:not(.jk_lugar):not(.jk_ticket):not(.precio_jp)) .input_info_jp { font-size: calc(60 * var(--u)); padding-top: calc(18 * var(--u)); }
+#container-jackpots:has(.row_jp ~ .row_jp ~ .row_jp ~ .row_jp) .row_jp:has(.jk_lugar) .form-group { padding: calc(14 * var(--u)) calc(20 * var(--u)) calc(18 * var(--u)); }
+#container-jackpots:has(.row_jp ~ .row_jp ~ .row_jp ~ .row_jp) .row_jp:has(.jk_lugar):not(:last-child) { border-bottom: calc(2 * var(--u)) solid rgba(232, 196, 103, .4); }
+
+/* ---------- GANADOR DEL BONO ---------- */
+/* el JS alterna bns-red / bns-white y el borde de las cajas cada 400 ms: aqui queda fijo.
+   Orden en pantalla: GANADOR / BONO, monto, ID */
+#ganador-bono #titulow,
+#ganador-bono #titulow.bns-red,
+#ganador-bono #titulow.bns-white {
+  width: calc(1240 * var(--u));
+  padding: calc(34 * var(--u)) 0 0;
+  border: 0; border-radius: 0;
+  background: none !important; box-shadow: none !important;
+  text-align: center; line-height: 1;
+}
+#ganador-bono #tiu_label { display: block; margin: 0; font-size: 0; line-height: 1; }
+#ganador-bono #tiu_label::before {
+  content: 'GANADOR'; display: block;
+  font-family: 'VH-Bold', sans-serif;
+  font-size: calc(30 * var(--u)); letter-spacing: .5em; margin-right: -.5em;
+  color: var(--g-oro2);
+}
+#ganador-bono #tiu_label::after {
+  content: 'BONO'; display: block;
+  padding-top: calc(6 * var(--u));
+  font-family: 'VH-Bold', sans-serif;
+  font-size: calc(92 * var(--u)); line-height: 1.1; letter-spacing: .03em;
+  background: linear-gradient(180deg, #ffffff 0%, #fff1c9 45%, #e8c467 100%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+
+#ganador-bono #id_bns,
+#ganador-bono #mnt_bns {
+  display: block;
+  width: calc(1240 * var(--u));
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: 'VH-Bold', sans-serif;
+  text-align: center; color: #fff;
+  outline: none; pointer-events: none;
+}
+#ganador-bono #mnt_bns {
+  order: 1;
+  height: auto;
+  padding: calc(14 * var(--u)) 0 calc(20 * var(--u)) !important;
+  font-size: calc(176 * var(--u)); line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--g-oro);
+}
+#ganador-bono #id_bns {
+  order: 2;
+  height: auto;
+  padding: calc(30 * var(--u)) 0 calc(36 * var(--u)) !important;
+  border-top: calc(1 * var(--u)) solid var(--g-linea) !important;
+  font-size: calc(44 * var(--u)); letter-spacing: .06em;
+  color: #fff;
+}
+
+/* ---------- Monto en rodillos de oro (lo arma tablero_c.js encima del campo) ---------- */
+.g-oculto { color: transparent !important; }
+.g-monto {
+  position: absolute; z-index: 3;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'VH-Bold', sans-serif;
+  font-variant-numeric: tabular-nums; font-kerning: none;
+  line-height: 1.1;
+  pointer-events: none;
+}
+.g-cifras {
+  position: relative; display: flex;
+  filter: drop-shadow(0 0 calc(18 * var(--u)) rgba(255, 196, 60, .4));
+}
+.g-cifras > span {
+  display: block; height: 1.1em; overflow: hidden;
+  /* los digitos que pasan se desvanecen arriba y abajo, como en un rodillo */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+}
+.g-cifras > span, .g-rueda {
+  background: var(--g-metal) 0 0 / 100% 1.1em repeat-y;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.g-rueda { display: flex; flex-direction: column; will-change: transform; }
+.g-rueda i { display: block; height: 1.1em; font-style: normal; }
+
+/* reflejo que cruza el monto ya llegado: misma cifra encima, solo deja ver la franja de luz */
+.g-reflejo {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  white-space: pre; opacity: 0;
+  background: linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, .95) 50%, transparent 62%) 0 0 / 300% 100% no-repeat;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
+.g-final .g-reflejo { opacity: 1; animation: g-reflejo 2.6s ease-in-out .35s infinite; }
+@keyframes g-reflejo { from { background-position: 100% 0; } 60%, to { background-position: -50% 0; } }
+
+/* aura que respira detras del monto */
+.g-aura {
+  position: absolute; left: 50%; top: 50%; z-index: -1;
+  width: 120%; height: 160%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(255, 190, 60, .30) 0%, rgba(255, 160, 30, .10) 45%, transparent 70%);
+  opacity: 0;
+}
+.g-final .g-aura { animation: g-aura 1.8s ease-in-out infinite alternate; }
+@keyframes g-aura { from { opacity: .45; } to { opacity: 1; } }
+
+/* llegada: salta con el golpe de monedas */
+.g-final .g-cifras { animation: g-llega .65s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes g-llega { 0% { transform: scale(1); } 30% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+/* destellos de estrella sobre las cifras */
+.g-chispa {
+  position: absolute; z-index: 2;
+  width: calc(64 * var(--u)); height: calc(64 * var(--u));
+  margin: calc(-32 * var(--u)) 0 0 calc(-32 * var(--u));
+  background:
+    radial-gradient(circle, #fff 0 6%, rgba(255, 236, 170, .85) 12%, rgba(255, 200, 80, 0) 34%),
+    linear-gradient(90deg, transparent 0 48.5%, rgba(255, 255, 255, .95) 50%, transparent 51.5%) 50% 50% / 100% 100% no-repeat,
+    linear-gradient(0deg, transparent 0 48.5%, rgba(255, 255, 255, .95) 50%, transparent 51.5%) 50% 50% / 100% 100% no-repeat;
+  -webkit-mask-image: radial-gradient(circle, #000 0 18%, transparent 50%);
+          mask-image: radial-gradient(circle, #000 0 18%, transparent 50%);
+  opacity: 0; transform: scale(0);
+}
+.g-final .g-chispa { animation: g-chispa 1.9s ease-in-out infinite; }
+@keyframes g-chispa {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  18%      { opacity: 1; transform: scale(1) rotate(25deg); }
+  40%      { opacity: 0; transform: scale(.2) rotate(50deg); }
+}
+
+/* ---------- Despues del video (15 s) ----------
+   El video termina en un fondo limpio y se queda quieto en su ultimo cuadro; desde ahi
+   hasta que se oculta la pantalla, el polvo de oro sigue flotando por codigo (clase g-calma) */
+.g-polvo {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+.g-calma .g-polvo { opacity: 1; }
+/* cada grano sube despacio y se enciende y apaga (tablero_c.js les da sitio, tamano y ritmo) */
+.g-polvo i {
+  position: absolute;
+  width: var(--t); height: var(--t); margin: calc(var(--t) / -2) 0 0 calc(var(--t) / -2);
+  border-radius: 50%;
+  background: #ffc24a;
+  box-shadow: 0 0 calc(var(--t) * 2) rgba(255, 190, 70, .6);
+  opacity: 0;
+  animation: g-grano var(--d) linear var(--r) infinite paused;
+}
+.g-calma .g-polvo i { animation-play-state: running; }
+@keyframes g-grano {
+  0%   { opacity: 0;   transform: translate(0, 0); }
+  20%  { opacity: var(--a); }
+  50%  { opacity: calc(var(--a) * .4); transform: translate(calc(12 * var(--u)), calc(-110 * var(--u))); }
+  80%  { opacity: var(--a); }
+  100% { opacity: 0;   transform: translate(0, calc(-220 * var(--u))); }
+}

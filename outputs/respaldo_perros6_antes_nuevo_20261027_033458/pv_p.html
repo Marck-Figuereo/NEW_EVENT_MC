@@ -1,0 +1,332 @@
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <title>Racing Virtual Dogs</title>
+
+    <link href="static/bootstrap.min.css?v={{version1}}" rel="stylesheet">
+
+    <link rel="stylesheet" href="static/css/all.min.css?v={{version1}}">
+    <link rel="stylesheet" type="text/css" href="static/css/style_p.css?v={{vjs}}">
+    <link rel="stylesheet" type="text/css" href="static/css/overlay_video.css?v={{vjs}}">
+    
+    <link rel="stylesheet" type="text/css" href="../static/css/jquery.loadingModal.css?v={{version1}}">
+
+
+
+  </head>
+  <body>    
+    
+    <video id="intro" playsinline></video>
+    <video id="evento" playsinline></video>
+
+    <!-- PANTALLA DE TABLAS (diseno 1920x1080 que se escala a la pantalla; ver style_p.css "TABLERO").
+         Los id son los mismos de siempre: cone_db_p.js y funcionamiento_p.js los llenan igual. -->
+    <main id="cuerpo" class="vh vh-rojo">
+      <div class="vh-escenario">
+
+        <div class="vh-portada"></div>
+
+        <!-- Logo y lugar -->
+        <div class="vh-marca">
+          <img class="vh-logo" src='static/img/logodogs.png' alt="">
+          <div class="vh-lugar"><i class="fa-solid fa-location-dot vh-icono"></i><label class="txt_lgr"></label></div>
+        </div>
+
+        <!-- Carrera, tiempo y jackpots -->
+        <div class="vh-estado">
+          <div class="vh-caja vh-carrera"><span class="vh-etq">CARRERA</span><label id="id_sorteos_c_id"></label></div>
+          <div class="vh-caja vh-tiempo"><label id="tiempo_regresivo"></label><span class="vh-etq">TIEMPO RESTANTE</span></div>
+          <div class="vh-jack vh-jack-global"><span class="vh-jack-etq">JACKPOT <b>GLOBAL</b></span><label id="jp_global"></label></div>
+          <div class="vh-jack vh-jack-local"><span class="vh-jack-etq">JACKPOT <b>LOCAL</b></span><label id="jp_local"></label></div>
+        </div>
+
+        <!-- Historial de carreras -->
+        <section class="vh-panel vh-historial">
+          <div class="vh-panel-titulo"><i class="fa-solid fa-clock-rotate-left vh-icono"></i>HISTORIAL DE CARRERAS</div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race0"></label><img id="bns0" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er0" alt=""><i></i><label id="lugarprc_1er0"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er0" alt=""><img id="lugarimg_pls_2do0" alt=""><label id="lugarprc_pls0"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race1"></label><img id="bns1" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er1" alt=""><i></i><label id="lugarprc_1er1"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er1" alt=""><img id="lugarimg_pls_2do1" alt=""><label id="lugarprc_pls1"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race2"></label><img id="bns2" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er2" alt=""><i></i><label id="lugarprc_1er2"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er2" alt=""><img id="lugarimg_pls_2do2" alt=""><label id="lugarprc_pls2"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race3"></label><img id="bns3" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er3" alt=""><i></i><label id="lugarprc_1er3"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er3" alt=""><img id="lugarimg_pls_2do3" alt=""><label id="lugarprc_pls3"></label></div>
+          </div>
+          <div class="vh-hist-item">
+            <div class="vh-hist-num"><label id="numero_race4"></label><img id="bns4" alt=""></div>
+            <div class="vh-hist-fila"><img id="lugarimg_1er4" alt=""><i></i><label id="lugarprc_1er4"></label></div>
+            <div class="vh-hist-fila"><img id="lugarimg_pls_1er4" alt=""><img id="lugarimg_pls_2do4" alt=""><label id="lugarprc_pls4"></label></div>
+          </div>
+        </section>
+
+        <!-- Cuotas: fila = primero, columna = segundo; la diagonal es el ganador (WIN) -->
+        <section class="vh-panel vh-tabla">
+          <div class="vh-esquina"></div>
+          <div class="vh-col"><img src="static/img/tablero_p6/n1.png" alt="1"></div>
+          <div class="vh-col"><img src="static/img/tablero_p6/n2.png" alt="2"></div>
+          <div class="vh-col"><img src="static/img/tablero_p6/n3.png" alt="3"></div>
+          <div class="vh-col"><img src="static/img/tablero_p6/n4.png" alt="4"></div>
+          <div class="vh-col"><img src="static/img/tablero_p6/n5.png" alt="5"></div>
+          <div class="vh-col"><img src="static/img/tablero_p6/n6.png" alt="6"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p6/n1.png" alt="1"></div>
+          <div class="precios_tbl vh-cel" id="1-1"></div>
+          <div class="precios_tbl vh-cel" id="1-2"></div>
+          <div class="precios_tbl vh-cel" id="1-3"></div>
+          <div class="precios_tbl vh-cel" id="1-4"></div>
+          <div class="precios_tbl vh-cel" id="1-5"></div>
+          <div class="precios_tbl vh-cel" id="1-6"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p6/n2.png" alt="2"></div>
+          <div class="precios_tbl vh-cel" id="2-1"></div>
+          <div class="precios_tbl vh-cel" id="2-2"></div>
+          <div class="precios_tbl vh-cel" id="2-3"></div>
+          <div class="precios_tbl vh-cel" id="2-4"></div>
+          <div class="precios_tbl vh-cel" id="2-5"></div>
+          <div class="precios_tbl vh-cel" id="2-6"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p6/n3.png" alt="3"></div>
+          <div class="precios_tbl vh-cel" id="3-1"></div>
+          <div class="precios_tbl vh-cel" id="3-2"></div>
+          <div class="precios_tbl vh-cel" id="3-3"></div>
+          <div class="precios_tbl vh-cel" id="3-4"></div>
+          <div class="precios_tbl vh-cel" id="3-5"></div>
+          <div class="precios_tbl vh-cel" id="3-6"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p6/n4.png" alt="4"></div>
+          <div class="precios_tbl vh-cel" id="4-1"></div>
+          <div class="precios_tbl vh-cel" id="4-2"></div>
+          <div class="precios_tbl vh-cel" id="4-3"></div>
+          <div class="precios_tbl vh-cel" id="4-4"></div>
+          <div class="precios_tbl vh-cel" id="4-5"></div>
+          <div class="precios_tbl vh-cel" id="4-6"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p6/n5.png" alt="5"></div>
+          <div class="precios_tbl vh-cel" id="5-1"></div>
+          <div class="precios_tbl vh-cel" id="5-2"></div>
+          <div class="precios_tbl vh-cel" id="5-3"></div>
+          <div class="precios_tbl vh-cel" id="5-4"></div>
+          <div class="precios_tbl vh-cel" id="5-5"></div>
+          <div class="precios_tbl vh-cel" id="5-6"></div>
+          <div class="vh-fil"><img src="static/img/tablero_p6/n6.png" alt="6"></div>
+          <div class="precios_tbl vh-cel" id="6-1"></div>
+          <div class="precios_tbl vh-cel" id="6-2"></div>
+          <div class="precios_tbl vh-cel" id="6-3"></div>
+          <div class="precios_tbl vh-cel" id="6-4"></div>
+          <div class="precios_tbl vh-cel" id="6-5"></div>
+          <div class="precios_tbl vh-cel" id="6-6"></div>
+        </section>
+
+        <!-- Ultimo jackpot -->
+        <footer class="vh-panel vh-pie">
+          <div class="vh-dato vh-dato-titulo"><i class="fa-solid fa-trophy vh-icono"></i><div><span class="vh-etq">ULTIMO JACKPOT</span><label id="monto_info"></label></div></div>
+          <div class="vh-dato"><i class="fa-solid fa-ticket vh-icono"></i><div><span class="vh-etq">TICKET</span><label id="id_tk_info"></label></div></div>
+          <div class="vh-dato"><i class="fa-solid fa-store vh-icono"></i><div><span class="vh-etq">LUGAR</span><label id="lugar_info"></label></div></div>
+          <div class="vh-dato"><i class="fa-solid fa-calendar-days vh-icono"></i><div><span class="vh-etq">FECHA</span><label id="date_info"></label></div></div>
+        </footer>
+
+        <div class="vh-version">{{version1}}</div>
+      </div>
+
+      <!-- El diseno mide 1920x1080: se escala para llenar la pantalla sin deformarse -->
+      <script>
+        (function () {
+          var escenario = document.querySelector('#cuerpo .vh-escenario')
+          var ajustar = function () { escenario.style.setProperty('--k', Math.min(window.innerWidth / 1920, window.innerHeight / 1080)) }
+          ajustar()
+          window.addEventListener('resize', ajustar)
+        })()
+      </script>
+    </main>
+    
+
+
+
+
+    
+
+    <div id="ganador-bono" class="ganador-bono">
+
+      <div id="titulow" ><label id="tiu_label">GANADOR DEL BONO</label></div>
+
+      <input type="text" id="id_bns" readonly>
+      <input type="text" id="mnt_bns" readonly>
+      
+      
+            
+    </div>
+  
+
+
+
+     <div class="container-fluid themed-container container4" id="container-jackpots">
+
+      <div class="row">
+        <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+          <div class="banner-jp">
+            <a href="#"><p>GANADOR JACKPOT</p></a>
+          </div>
+        </div>
+
+      </div>
+      
+      
+
+    </div>
+
+
+    
+
+
+
+
+
+   
+
+    <div class="container-fluid themed-container container2" id="container-resultado-carrera">
+          
+      <div class="row">
+
+      
+
+
+        <div class="col-md-12 themed-grid-col" >
+          
+          
+          <div class="row">
+
+           
+            <div class="col-md-5 themed-grid-col d-flex justify-content-end">
+              <table class="table-info-result numero-carrera">
+                <tbody>
+                  <tr>
+                    <td style="border-radius: 20px;">
+                      <p><span>CARRERA NO.</span> <i id="n_race"> </i></p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-md-7 themed-grid-col d-flex justify-content-between">
+              <table class="table-info-result">
+                <tbody>
+                  <tr>
+                    <td  style="border-radius: 20px !important;" width="70%" style="padding:35px;">
+                      <img id="img_win" width="55%">
+                    </td>
+                    <td style="border-radius: 20px !important;" width="50%" style="font-size:100px;" id="p_win"></td>
+                    
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+          
+          <div class="row fila_2">
+            
+
+            
+            <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+
+
+
+              <table class="table-info-result">
+                
+                <tbody>
+                  <tr>
+                    <td style="padding:80px 30px; border-radius: 15px;" class="d-flex justify-content-evenly">
+                        <img width="35%" id="img1_ext">
+                        <img width="35%" id="img2_ext">
+                    </td>
+                    <td style="border-radius: 20px !important;" id="p_ext"></td>
+                  </tr>
+                </tbody>
+              </table>
+                
+            
+            
+            </div>
+              
+
+            
+        
+          </div>
+          
+        </div>
+
+        
+      </div>
+
+
+
+
+
+    </div>
+
+
+
+
+
+    
+
+  <div class="container themed-container" id="container-resultado-bonos">
+
+    <div class="row">
+      <div class="col-md-12 themed-grid-col d-flex justify-content-center">
+        <img id="pos_bono" style="width: 150px;">
+      </div>
+    </div>
+
+  </div>
+
+
+
+  <div class="container_race" id="container-resultado-race"><p id="nm_race">CARRERA</p><p id="race_n"></p></div> 
+  <div class="container_race_rest" id="container-resultado-odds"><p id="n_directa"></p><p id="n_pale"></p></div> 
+
+    
+    <!-- Datos sobre el video del evento: la pantalla de resultados viene incrustada en el video -->
+    <div id="overlay-video">
+      <div id="ov_carrera">CARRERA&nbsp;<span id="ov_numero"></span></div>
+      <div id="ov_titulo" class="ov_resultado">RESULTADOS</div>
+      <div id="ov_win"    class="ov_resultado"></div>
+      <div id="ov_exacta" class="ov_resultado"></div>
+      <!-- Barra roja inferior izquierda del video: solo mientras esa barra esta en pantalla -->
+      <div id="ov_suerte">BUENA SUERTE</div>
+    </div>
+
+  </body>
+
+  <script src="static/js/moment.min.js"></script>
+
+  <script src="static/js/sweetalert2@11.js"></script>
+  
+  <script src="static/js/jquery.3.6.0.min.js?v={{version1}}"></script>
+  <script src="../static/js/jquery.loadingModal.js?v={{version1}}"></script>
+
+  <script src="static/js/bootstrap.bundle.min.js?v={{version1}}"></script>
+    
+  <!-- Unico dato de conexion que recibe el navegador: el WebSocket de conteo (guia sin Redis) -->
+  <script>window.VISOR_CONFIG = { wsUrl: "{{ ws_url|escapejs }}" };</script>
+
+  <!-- Control del visor en tiempo real (estado, suspension, revocacion) -->
+  <script src="/static/js/control_visor.js?v={{vjs}}"></script>
+
+  <script src="static/js/cone_db_p.js?v={{vjs}}"></script>
+
+  <script src="static/js/funcionamiento_p.js?v={{vjs}}"></script>
+  
+
+
+</html>

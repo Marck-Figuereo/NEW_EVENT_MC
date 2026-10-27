@@ -166,3 +166,32 @@ def get_display_bonus_event(*, device_token, game_id, sorteo_id):
         "game_id": game_id,
         "sorteo_id": sorteo_id,
     })
+
+
+
+# ==========================================
+# BINGO
+# PROPUESTA: la API todavia no tiene estos endpoints. Las rutas y los parametros se
+# confirman con el backend; la forma de las respuestas es la de
+# static/bingo/data/sorteos_prueba_bingo.json (ver herramientas/BINGO_LEEME.md).
+# Mientras no existan, la API responde 404 y views.py lo traduce a 501
+# "endpoint_no_disponible": el visor sigue en pie y reintenta.
+# ==========================================
+
+def get_bingo_schedule(*, device_token, game_id):
+    """Pantalla SORTEOS: jackpot, ultimo jackpot, historial, proximos y especiales."""
+    return api_get("api/core/display/bingo/schedule/", params={
+        "device_token": device_token,
+        "game_id": game_id,
+    })
+
+
+def get_bingo_draw(*, device_token, game_id, sorteo_id=None, event_number=None):
+    """Datos de UN sorteo (bolas hasta el BINGO, ganadores, seguimiento, jackpot).
+    Disponibles dentro de los 10 s antes de que empiece el sorteo."""
+    params = {"device_token": device_token, "game_id": game_id}
+    if sorteo_id:
+        params["sorteo_id"] = sorteo_id
+    if event_number is not None:
+        params["event_number"] = event_number
+    return api_get("api/core/display/bingo/draw/", params=params)

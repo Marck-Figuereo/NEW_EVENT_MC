@@ -17,9 +17,7 @@ const sufijo_intro = { 4 : 'C' }
 // TODOS los videos (intro y video del evento) se buscan en la carpeta de su juego:
 // BASE_VIDEOS/CARPETA_JUEGO/nombre_video.mp4
 // BASE_VIDEOS es la direccion del equipo donde estan las carpetas de videos en produccion.
-// Demostracion de caballos (demo_caballos.js): los videos salen de static/videos del proyecto
-// a traves de Django (/video_demo), sin depender del servidor de videos.
-const BASE_VIDEOS = window.DEMO_CABALLOS === true ? '/video_demo' : 'http://localhost:3000'
+const BASE_VIDEOS = 'http://localhost:3000'
 
 // El nombre llega de la API en selected_video (con o sin .mp4).
 const carpeta_video = {
@@ -49,11 +47,9 @@ var mult_evento      = 'X'    // multiplicador usado para el intro y el elemento
 const es_carrera = () => [2, 3, 4].includes(Number(game_code))
 
 // Carreras cuyo video ya trae el espacio para poner los resultados ENCIMA del video
-// (ultimos 10 s): perros de 6 y de 8.
-// Caballos (4) todavia no: muestra su PANTALLA DE RESULTADOS al terminar el video, como antes.
-// Cuando los videos de caballos esten listos, se agrega el 4 a esta lista y queda igual que los perros.
-// Excepcion: la demostracion de caballos (demo_caballos.js, ?demo=1) ya usa los videos nuevos.
-const resultado_sobre_video = () => [2, 3].includes(Number(game_code)) || (Number(game_code) === 4 && window.DEMO_CABALLOS === true)
+// (ultimos 10 s): perros de 6, perros de 8 y caballos (los videos de caballos ya traen
+// el cuadro de RESULTADOS, igual que los de perros).
+const resultado_sobre_video = () => [2, 3, 4].includes(Number(game_code))
 
 const etiqueta_multiplicador = valor => {
   if (!es_carrera()) return 'X'
@@ -1000,6 +996,14 @@ video_event.addEventListener('ended', async () => {
 
 var overlay_listo = false   // textos preparados, a la espera del primer cuadro del video
 const ov_suerte   = document.getElementById('ov_suerte')   // solo existe en perros de 6
+const ov_replay   = document.getElementById('ov_replay')   // solo existe en caballos
+
+// REPLAY (caballos): durante la repeticion el video muestra un cuadro azul grande vacio debajo
+// de CARRERA y ahi se escribe REPLAY. Medido cuadro a cuadro en los videos de caballos: el cuadro
+// se quita SIEMPRE 15 s antes del final y aparece entre 21,2 y 23,2 s antes. Se toma 21,2 para
+// que el texto nunca salga sin el cuadro debajo.
+const REPLAY_DESDE_FIN = 21.2
+const REPLAY_HASTA_FIN = 15
 
 const preparar_overlay_video = () => {
 
@@ -1014,7 +1018,7 @@ const preparar_overlay_video = () => {
   // Los textos quedan listos, pero NO se muestran todavia: el numero de carrera aparece
   // con el primer cuadro del video (ver programar_resultado_video). Antes salia sobre el
   // final del intro mientras el video terminaba de cargar.
-  overlay_video.classList.remove('visible', 'con-resultado', 'con-suerte')
+  overlay_video.classList.remove('visible', 'con-resultado', 'con-suerte', 'con-replay')
   overlay_listo = true
 }
 
@@ -1041,9 +1045,13 @@ const programar_resultado_video = () => {
     // tienen #ov_suerte: perros de 6). La barra esta en el video hasta duracion - 15 s.
     if (ov_suerte) overlay_video.classList.toggle('con-suerte', overlay_listo && tiempo_video < duracion - 15)
 
+    // REPLAY sobre el cuadro azul de la repeticion (solo plantillas con #ov_replay: caballos)
+    if (ov_replay) overlay_video.classList.toggle('con-replay', overlay_listo &&
+      tiempo_video >= duracion - REPLAY_DESDE_FIN && tiempo_video < duracion - REPLAY_HASTA_FIN)
+
     if (tiempo_video >= duracion - 10) {
       vigilando_resultado = false
-      overlay_video.classList.remove('con-suerte')
+      overlay_video.classList.remove('con-suerte', 'con-replay')
       overlay_video.classList.add('con-resultado')
       console.log(`Resultados sobre el video: segundo ${tiempo_video.toFixed(2)} (esperado ${(duracion - 10).toFixed(2)} de ${duracion.toFixed(2)})`)
       return
@@ -1072,7 +1080,7 @@ const ocultar_overlay_video = () => {
 
   vigilando_resultado = false
   overlay_listo = false
-  overlay_video.classList.remove('visible', 'con-resultado', 'con-suerte')
+  overlay_video.classList.remove('visible', 'con-resultado', 'con-suerte', 'con-replay')
 }
 
 
