@@ -671,6 +671,7 @@ const Puente = {
 
     setJackpots(niveles) {
         if (!niveles || !niveles.length) return;
+        this.niveles = niveles.slice();      // se guarda aparte: el color del ganador de jackpot sale de aqui
         this.feed.jackpots = niveles;
         this.volcarFeed();
     },
@@ -798,16 +799,111 @@ function ajustarTexto(nodo, tamBase) {
     }
 }
 
+/* ---------------------------------------------------------------------
+   GANADOR DEL JACKPOT
+   Cada nivel tiene su color, el MISMO de su barra en la pantalla principal
+   (ui.js: el color va por la posicion del nivel en la lista de la API; el
+   nombre puede cambiar, el color de cada posicion no):
+       1 oro · 2 naranja · 3 azul · 4 rojo · 5 gris · 6 verde
+   La pantalla se tine de ese color (tormenta, marco de la tabla, brillo y
+   chispas) y la fila TIPO muestra la misma barra del nivel con su nombre.
+   Tiempos: la placa entra con un relampago; el monto gira de 0,8 a 3,4 s y
+   llega con un segundo relampago. Todos los datos vienen de la API.
+   --------------------------------------------------------------------- */
+const JK_COLORES = ['gold', 'orange', 'blue', 'red', 'gray', 'green'];
+
+function colorDelNivel(jk) {
+    const niveles = Puente.niveles || [];
+    let i = niveles.findIndex(n => jk.key !== undefined && jk.key !== null && String(n.key) === String(jk.key));
+    if (i < 0) i = niveles.findIndex(n => String(n.name || '').toUpperCase() === String(jk.tipo || '').toUpperCase());
+    return JK_COLORES[Math.max(0, i) % JK_COLORES.length];
+}
+
+/* Los iconos dorados de la tabla (trofeo, lugar, ticket, $) no se tinen: una copia de
+   la misma imagen, sin filtro, que solo deja ver los cuatro iconos. */
+(() => {
+    const p = document.getElementById('jk-panel');
+    if (!p) return;
+    const c = p.cloneNode(false);
+    c.id = 'jk-iconos';
+    c.setAttribute('alt', '');
+    p.parentNode.insertBefore(c, p.nextSibling);
+})();
+
+/* Tinte de la tormenta (capa entre el video de fondo y la pantalla). */
+const jkTinte = (() => {
+    const d = document.createElement('div');
+    d.id = 'jk-tinte';
+    el.panelVeil.parentNode.insertBefore(d, el.panelVeil.nextSibling);
+    return d;
+})();
+
+/* Monto en rodillos: cada digito gira hasta su numero, de izquierda a derecha. */
+function rodillosJackpot(caja, texto) {
+    caja.textContent = '';
+    const cifras = document.createElement('span');
+    cifras.className = 'jk-cifras';
+    const ruedas = [];
+    for (const ch of texto) {
+        const s = document.createElement('span');
+        if (/[0-9]/.test(ch)) {
+            const r = document.createElement('span');
+            r.className = 'jk-rueda';
+            for (let v = 0; v < 4; v++) for (let d = 0; d <= 9; d++) {
+                const n = document.createElement('i');
+                n.textContent = d;
+                r.appendChild(n);
+            }
+            s.appendChild(r);
+            ruedas.push({ r, fin: Number(ch) });
+        } else {
+            s.textContent = ch;
+        }
+        cifras.appendChild(s);
+    }
+    caja.appendChild(cifras);
+    const k = ruedas.length;
+    ruedas.forEach((w, j) => {
+        const pasos = 10 * (1 + Math.floor(j * 2 / Math.max(1, k))) + w.fin;
+        w.r.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-' + (pasos * 1.1) + 'em)' }],
+            { duration: 1700 + (k > 1 ? j * (900 / (k - 1)) : 900), delay: 800, easing: 'cubic-bezier(.3, .1, .2, 1)', fill: 'forwards' });
+    });
+}
+
+let jkTiempo = null;
+
 function pintarJackpot(jk) {
-    el.jkType.textContent   = String(jk.tipo || 'JACKPOT').toUpperCase();
+    const color = colorDelNivel(jk);
+    const nombre = String(jk.tipo || 'JACKPOT').toUpperCase();
+    const monto = RouletteDB.moneda(jk.monto);
+
+    el.jackpot.setAttribute('data-nivel', color);
+    jkTinte.setAttribute('data-nivel', color);
+
+    /* TIPO: la barra del nivel, igual que en la pantalla principal */
+    el.jkType.textContent = '';
+    const barra = document.createElement('span');
+    barra.className = 'jk-barra';
+    barra.textContent = nombre;
+    el.jkType.appendChild(barra);
+
     el.jkPlace.textContent  = String(jk.lugar || '—').toUpperCase();
     el.jkTicket.textContent = RouletteDB.ticketCorto(jk.ticket);
-    el.jkAmount.textContent = RouletteDB.moneda(jk.monto);
 
-    ajustarTexto(el.jkType,   62);
     ajustarTexto(el.jkPlace,  54);
     ajustarTexto(el.jkTicket, 56);
+
+    /* el monto: se mide con su texto final y luego se arma en rodillos */
+    el.jkAmount.textContent = monto;
     ajustarTexto(el.jkAmount, 66);
+    rodillosJackpot(el.jkAmount, monto);
+
+    /* animacion: se reinicia en cada jackpot (varios seguidos) */
+    clearTimeout(jkTiempo);
+    el.jackpot.classList.remove('jk-entra', 'jk-llega');
+    void el.jackpot.offsetWidth;
+    el.jackpot.classList.add('jk-entra');
+    jkTiempo = setTimeout(() => el.jackpot.classList.add('jk-llega'), 3400);
 }
 
 function pintarBono(bn) {
@@ -1360,14 +1456,15 @@ const Ciclo = {
             return;
         }
 
-        let jk = Ciclo.consultaJackpot
-            ? await Ciclo.consultaJackpot
-            : null;
+        /* Ganadores de jackpot de esta ronda (puede ser mas de uno). */
+        const comoLista = r => Array.isArray(r) ? r : (r ? [r] : []);
+
+        let jackpots = comoLista(Ciclo.consultaJackpot ? await Ciclo.consultaJackpot : null);
 
         /* El ganador puede acreditarse segundos despues del resultado:
            segunda consulta al terminar el video (guia, secciones 13 y 14). */
-        if (!jk && !TEST_MODE) {
-            jk = await RouletteDB.consultarGanadorJackpot(Ciclo.ronda, Ciclo.sorteo);
+        if (!jackpots.length && !TEST_MODE) {
+            jackpots = comoLista(await RouletteDB.consultarGanadorJackpot(Ciclo.ronda, Ciclo.sorteo));
         }
 
         const bonosRespuesta = Ciclo.consultaBono
@@ -1380,8 +1477,9 @@ const Ciclo = {
                 ? [bonosRespuesta]
                 : [];
 
-        if (jk && jk.ticket !== undefined && jk.ticket !== null) {
-            await Ciclo.mostrarJackpot(jk);
+        /* Cada jackpot ganado tiene su pantalla (CONFIG.ciclo.jackpotMs cada uno). */
+        for (const jk of jackpots) {
+            if (jk && jk.ticket !== undefined && jk.ticket !== null) await Ciclo.mostrarJackpot(jk);
         }
 
         if (bonos.length > 0) {

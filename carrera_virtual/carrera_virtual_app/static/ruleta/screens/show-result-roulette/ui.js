@@ -148,7 +148,16 @@ const UI = {
                 x0: 0.0378, x1: 0.9618, y0: 0.2263, y1: 0.8394,
                 div: [0.2008, 0.4986, 0.7157]
             },
-            hotcold: { c0: 0.2345, pitch: 0.1352, cy: 0.5095, rx: 0.0552, ry: 0.2714 },
+            /* Tiras HOT / COLD: el arte trae 6 aros dibujados. Para que los
+               numeros se vean mas grandes se usan 5 y la tira se arma en tres
+               trozos del arte (pixeles de hot_numbers.png, 1023x210):
+                 izquierda  0..175     icono y su pico
+                 relleno    6 px de la franja entre los dos aros del centro
+                            (solo marco y fondo; cada arte tiene la suya)
+                 derecha    ultimos 27 px: remate del marco
+               El hueco del centro se llena estirando el relleno, sin aros, y
+               encima van 5 bolas con el color de su numero. */
+            hotcold: { izq: 175, relleno: { hot: 583, cold: 588 }, rellenoW: 6, der: 27, numeros: 5, alto: 84, bola: 0.64 },
             /* These two panels change height with the level count, so their
                interior is measured in pixels: a fraction that clears the
                border at 418px tall sits on top of it at 170px. */
@@ -156,7 +165,9 @@ const UI = {
             payout:   { titleY: 54, top: 78, bottom: 26, insetX: 34 },
             /* Caja interior de panel_recent_numbers.png: y 0.0447..0.9475.
                La fila estaba alta y dejaba una franja vacía debajo. */
-            recent: { cy: 0.470, inset: 0.018, badge: 0.790, badgeH: 0.150 }
+            /* Bolas un poco mas arriba y con aire entre ellas; debajo queda
+               sitio para la placa del multiplicativo sin rozar la bola. */
+            recent: { cy: 0.430, inset: 0.026, badge: 0.775, badgeH: 0.170, bola: 0.40 }
         }
     },
 
@@ -176,7 +187,7 @@ const UI = {
 
         topFrameY: 30,
         statsY:    180,
-        hotcoldY:  690,
+        hotcoldY:  680,
 
         jackpots: { y: 30, bottom: 782, headH: 0.085, gap: 10, minRow: 34, maxRow: 92 },
         payoutGap: 18,
@@ -203,7 +214,7 @@ const UI = {
 
     data: {
         currency: '$',
-        historyShown: 16,
+        historyShown: 14,
         statsWindow: 120,
         multiplierChance: 0.22,
         /* Only values with an approved badge asset are used by the demo.
@@ -322,6 +333,12 @@ const GAME = {
         { title: 'DIRECTO NORMAL',         value: '35 a 1', note: 'NO PARTICIPA EN MULTIPLICATIVOS', destacado: false },
         { title: 'DIRECTO MULTIPLICATIVO', value: '26 a 1', note: 'PARTICIPA EN MULTIPLICATIVOS',    destacado: true }
     ],
+
+    /* Valores que puede pagar el directo multiplicativo (fila de la tabla de
+       pagos). null = los del juego (UI.data.multiplierValues, los mismos que
+       tienen placa aprobada); si el backend los manda, se ponen con
+       StormUI.api.setMultiplicativos([...]). */
+    payoutMultiplicativos: null,
 
     /* Payout table (resto de apuestas). Split across two columns automatically. */
     payoutTable: [
@@ -493,6 +510,20 @@ function drawAsset(ctx, key, x, y, w, h, alpha) {
     }
 
     if (alpha !== undefined) ctx.restore();
+    return true;
+}
+
+/* Tira HOT / COLD sin sus aros: icono a la izquierda, relleno estirado en el
+   centro y remate a la derecha (ver UI.assets.slots.hotcold). */
+function tiraHotCold(ctx, key, box) {
+    const img = UIA.img[key];
+    if (!img) return false;
+    const s = UI.assets.slots.hotcold;
+    const ih = img.height, iw = img.width, k = box.h / ih;
+    const izq = s.izq * k, der = s.der * k;
+    ctx.drawImage(img, 0, 0, s.izq, ih, box.x, box.y, izq, box.h);
+    ctx.drawImage(img, s.relleno[key], 0, s.rellenoW, ih, box.x + izq, box.y, box.w - izq - der, box.h);
+    ctx.drawImage(img, iw - s.der, 0, s.der, ih, box.x + box.w - der, box.y, der, box.h);
     return true;
 }
 
@@ -844,6 +875,13 @@ function multAsset(m) {
     return UIA.has(key) ? key : null;
 }
 
+/* Multiplicativos de la fila de la tabla de pagos. El espacio se reserva con
+   la lista; al dibujar solo salen los que tienen placa aprobada. */
+function multiplicativosTabla() {
+    const lista = Array.isArray(GAME.payoutMultiplicativos) ? GAME.payoutMultiplicativos : UI.data.multiplierValues;
+    return lista.map(Number).filter(v => Number.isFinite(v) && v > 0);
+}
+
 function clockIcon(ctx, x, y, s) {
     ctx.lineWidth = Math.max(1.6, s * 0.13);
     ctx.beginPath();
@@ -917,7 +955,7 @@ function layout() {
 
     /* ---- HOT / COLD ----------------------------------------------------- */
     const halfW = (l.colC.w - 14) / 2;
-    const hcH = halfW / R.hotcold;
+    const hcH = UI.assets.slots.hotcold.alto;
     L.hotBox  = { x: l.colC.x, y: l.hotcoldY, w: halfW, h: hcH };
     L.coldBox = { x: l.colC.x + halfW + 14, y: l.hotcoldY, w: halfW, h: hcH };
     L.hotSlots  = hcSlots(L.hotBox);
@@ -929,7 +967,8 @@ function layout() {
     const n = Math.max(1, GAME.levels.length);
     const J = UI.assets.slots.jackpots;
 
-    const maxPanelH = 418;
+    /* Los jackpots dejan sitio a la fila de multiplicativos de la tabla de pagos. */
+    const maxPanelH = multiplicativosTabla().length ? 352 : 418;
     const chrome = J.top + J.bottom;
     let rh = (maxPanelH - chrome - (n - 1) * j.gap) / n;
     rh = Math.max(j.minRow, Math.min(j.maxRow, rh));
@@ -965,7 +1004,12 @@ function layout() {
     const dirW = dirN ? (inW - 16 * (dirN - 1)) / dirN : 0;
     L.payDirecto = (GAME.payoutDirecto || []).map((e, i) => ({ x: inX + i * (dirW + 16), y: dirY, w: dirW, h: dirH }));
 
-    const pTop = dirN ? dirY + dirH + 10 : L.payout.y + P.top;
+    /* Fila de multiplicativos: los valores que puede pagar el directo multiplicativo. */
+    const multN = multiplicativosTabla().length;
+    const multY = dirN ? dirY + dirH + 10 : L.payout.y + P.top;
+    L.payMult = multN ? { x: inX, y: multY, w: inW, h: 60 } : null;
+
+    const pTop = L.payMult ? multY + 60 + 8 : (dirN ? dirY + dirH + 10 : L.payout.y + P.top);
     const pBot = L.payout.y + L.payout.h - P.bottom;
     const maxRows = Math.max(leftN, total - leftN, 1);
     const rowH = Math.min(52, (pBot - pTop) / maxRows);
@@ -978,12 +1022,13 @@ function layout() {
 
     /* ---- bottom row ------------------------------------------------------ */
     L.recent = { x: l.recent.x, y: l.bottomY, w: l.recent.w, h: l.recent.w / R.recent };
-    const ljH = l.lastJp.w / R.lastJp;
+    /* ÚLTIMO JACKPOT con el mismo alto que ÚLTIMOS NÚMEROS: el marco se
+       estira por franjas (ver LASTJP), el borde y las esquinas no cambian. */
     L.lastJp = {
         x: l.lastJp.x,
-        y: l.bottomY + (L.recent.h - ljH) / 2,
+        y: l.bottomY,
         w: l.lastJp.w,
-        h: ljH
+        h: L.recent.h
     };
     // Aliases kept so the rest of the module and the API read the same names.
     L.history = L.recent;
@@ -998,7 +1043,7 @@ function layout() {
         pitch: pitch,
         innerX: innerX,
         innerW: innerW,
-        r: Math.min(L.recent.h * 0.30, pitch * 0.46),
+        r: Math.min(L.recent.h * 0.30, pitch * RC.bola),
         x0: innerX + pitch / 2,
         cy: L.recent.y + L.recent.h * RC.cy,
         badgeY: L.recent.y + L.recent.h * RC.badge
@@ -1017,26 +1062,83 @@ function layout() {
 
 function hcSlots(box) {
     const s = UI.assets.slots.hotcold;
+    const k = box.h / 210;                              // escala del arte a la tira
+    const x0 = box.x + s.izq * k;
+    const x1 = box.x + box.w - s.der * k;
+    const pitch = (x1 - x0) / s.numeros;
+    const d = Math.min(box.h * s.bola, pitch * 0.94);
     const out = [];
-    for (let i = 0; i < 6; i++) {
-        out.push({
-            cx: box.x + box.w * (s.c0 + i * s.pitch),
-            cy: box.y + box.h * s.cy,
-            rx: box.w * s.rx,
-            ry: box.h * s.ry
-        });
+    for (let i = 0; i < s.numeros; i++) {
+        out.push({ cx: x0 + pitch * (i + 0.5), cy: box.y + box.h * 0.5, d: d });
     }
     return out;
 }
 
 /* Field columns of the ÚLTIMO JACKPOT panel, from the artwork's dividers. */
+/* El marco del ÚLTIMO JACKPOT se estira hasta el alto de ÚLTIMOS NÚMEROS sin
+   deformar el borde ni las lineas de la caja interior. Se corta el arte
+   (panel_last_jackpot.png, 2462x548) en columnas y franjas:
+     columnas: 112 px a cada lado fijos, el centro se estira a lo ancho
+     franjas : 0-60 borde de arriba (fijo) · 60-110 fondo (crece lo justo para
+               que el titulo quede a la altura del de ÚLTIMOS NÚMEROS) ·
+               110-150 linea de arriba de la caja (fija) · 150-428 fondo con las
+               divisorias (crece el resto) · 428-548 linea de abajo y borde (fijo) */
+const LASTJP = { ancho: 2462, alto: 548, lado: 112,
+                 franjas: [[0, 60, 0], [60, 110, 'titulo'], [110, 150, 0], [150, 428, 'resto'], [428, 548, 0]] };
+
+/* Franjas ya medidas en pantalla: [y0 arte, y1 arte, y0 pantalla, alto pantalla]. */
+function lastJpFranjas() {
+    const p = L.lastJp, f = p.w / LASTJP.ancho;
+    const tituloRecent = L.recent.h * 0.155;            // linea base del titulo vecino
+    const tituloArte = 0.155 * LASTJP.alto * f;          // donde quedaria sin estirar
+    const extraTitulo = Math.max(0, tituloRecent - tituloArte);
+    const fijo = LASTJP.franjas.reduce((s, r) => s + (r[1] - r[0]) * f, 0);
+    const extraResto = Math.max(0, p.h - fijo - extraTitulo);
+    let y = p.y;
+    return LASTJP.franjas.map(r => {
+        const h = (r[1] - r[0]) * f + (r[2] === 'titulo' ? extraTitulo : r[2] === 'resto' ? extraResto : 0);
+        const out = [r[0], r[1], y, h];
+        y += h;
+        return out;
+    });
+}
+/* Posicion en pantalla de una altura del arte (en pixeles del arte). */
+function lastJpY(srcY) {
+    for (const b of lastJpFranjas()) {
+        if (srcY <= b[1]) return b[2] + (srcY - b[0]) / (b[1] - b[0]) * b[3];
+    }
+    return L.lastJp.y + L.lastJp.h;
+}
+function dibujarMarcoLastJp(ctx) {
+    const img = UIA.img['panel_last_jackpot'];
+    if (!img) return false;
+    const p = L.lastJp, k = img.width / LASTJP.ancho, f = p.w / LASTJP.ancho;
+    const sl = LASTJP.lado * k, dl = LASTJP.lado * f;
+    for (const b of lastJpFranjas()) {
+        const sy = b[0] * k, sh = (b[1] - b[0]) * k;
+        ctx.drawImage(img, 0, sy, sl, sh, p.x, b[2], dl, b[3]);
+        ctx.drawImage(img, sl, sy, img.width - 2 * sl, sh, p.x + dl, b[2], p.w - 2 * dl, b[3]);
+        ctx.drawImage(img, img.width - sl, sy, sl, sh, p.x + p.w - dl, b[2], dl, b[3]);
+    }
+    return true;
+}
+
+/* Caja interior (donde van Tipo, Ticket, Monto y Fecha), ya estirada. */
+function lastJpCaja() {
+    const s = UI.assets.slots.lastJp;
+    const top = lastJpY(s.y0 * LASTJP.alto), bot = lastJpY(s.y1 * LASTJP.alto);
+    return { y: top, h: bot - top };
+}
+
 function lastJpColumns() {
     const s = UI.assets.slots.lastJp;
     const edges = [s.x0].concat(s.div, [s.x1]);
     const labels = ['Tipo:', 'Ticket:', 'Monto:', 'Fecha:'];
     const out = [];
     for (let i = 0; i < labels.length; i++) {
-        const c = slot(L.lastJp, edges[i], s.y0, edges[i + 1], s.y1);
+        const c = slot(L.lastJp, edges[i], 0, edges[i + 1], 1);
+        const caja = lastJpCaja();
+        c.y = caja.y; c.h = caja.h;
         c.label = labels[i];
         out.push(c);
     }
@@ -1167,8 +1269,8 @@ const Chrome = {
 
     /* ---- HOT / COLD strips ------------------------------------------------ */
     drawHotCold(ctx) {
-        drawAsset(ctx, 'hot',  L.hotBox.x,  L.hotBox.y,  L.hotBox.w,  L.hotBox.h);
-        drawAsset(ctx, 'cold', L.coldBox.x, L.coldBox.y, L.coldBox.w, L.coldBox.h);
+        tiraHotCold(ctx, 'hot',  L.hotBox);
+        tiraHotCold(ctx, 'cold', L.coldBox);
     },
 
     /* ---- JACKPOTS: frame, bars and the heading --------------------------- */
@@ -1220,6 +1322,30 @@ const Chrome = {
             ctx.fillText(e.note, cx, r.y + 91);
         });
 
+        /* Lo que puede pagar el directo multiplicativo: las placas aprobadas, en fila. */
+        const m = L.payMult;
+        if (m) {
+            ctx.textAlign = 'center';
+            ctx.fillStyle = UI.color.gold;
+            fitFont(ctx, 'EL DIRECTO MULTIPLICATIVO PUEDE PAGAR', m.w, 14, '700', UI.font.body);
+            ctx.fillText('EL DIRECTO MULTIPLICATIVO PUEDE PAGAR', m.x + m.w / 2, m.y + 13);
+
+            const vals = multiplicativosTabla().filter(v => multAsset(v));
+            const bh = 34, gap = 8;
+            const ws = vals.map(v => {
+                const k = multAsset(v), cb = UI.assets.content[k];
+                return bh * ((cb[2] - cb[0]) * UIA.img[k].width) / ((cb[3] - cb[1]) * UIA.img[k].height);
+            });
+            let escala = 1;
+            const total = ws.reduce((a, b) => a + b, 0) + gap * (vals.length - 1);
+            if (total > m.w) escala = m.w / total;
+            let x = m.x + (m.w - total * escala) / 2;
+            vals.forEach((v, i) => {
+                drawAsset(ctx, multAsset(v), x, m.y + 22, ws[i] * escala, bh * escala);
+                x += (ws[i] + gap) * escala;
+            });
+        }
+
         /* Text only: the artwork has no cells, and drawing boxes here would
            turn a broadcast panel back into an HTML table. */
         for (const col of L.payCols) {
@@ -1245,14 +1371,14 @@ const Chrome = {
     /* ---- ÚLTIMO JACKPOT: shell plus the field labels --------------------- */
     drawLastJackpot(ctx) {
         const p = L.lastJp;
-        drawAsset(ctx, 'panel_last_jackpot', p.x, p.y, p.w, p.h);
-        this.title(ctx, 'ÚLTIMO JACKPOT', p.x + p.w * 0.045, p.y + p.h * 0.155, 'left');
+        dibujarMarcoLastJp(ctx);
+        this.title(ctx, 'ÚLTIMO JACKPOT', p.x + p.w * 0.045, p.y + L.recent.h * 0.155, 'left');
 
         const cols = lastJpColumns();
-        ctx.font = '500 16px ' + UI.font.body;
+        ctx.font = '500 17px ' + UI.font.body;
         for (const c of cols) {
             ctx.fillStyle = UI.color.textDim;
-            ctx.fillText(c.label, c.x + c.w * 0.10, c.y + c.h * 0.34);
+            ctx.fillText(c.label, c.x + c.w * 0.10, c.y + c.h * 0.36);
         }
     },
 
@@ -1777,12 +1903,20 @@ const Live = {
             const v = values[i];
             if (v === undefined || v === null) continue;
             const s = slots[i];
-            const size = fitFont(ctx, String(v), s.rx * 1.5, s.ry * 0.95, '700', UI.font.display);
+            /* La bola lleva el color del numero, como en ULTIMOS NUMEROS. */
+            const color = GAME.colorOf(v);
+            const key = color === 'rojo' ? 'ball_red' : color === 'verde' ? 'ball_green' : 'ball_black';
+            drawAsset(ctx, key, s.cx - s.d / 2, s.cy - s.d / 2, s.d, s.d);
+            const size = fitFont(ctx, String(v), s.d * 0.70, s.d * 0.50, '700', UI.font.display);
             ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetY = 1;
             ctx.fillText(String(v), s.cx, s.cy + size * 0.35);
         }
         ctx.restore();
     },
+
 
     /* ---- ÚLTIMO JACKPOT values ------------------------------------------- */
     drawLastJackpot(ctx) {
@@ -1819,9 +1953,9 @@ const Live = {
         for (let i = 0; i < cols.length; i++) {
             const c = cols[i];
             const v = values[i];
-            fitFont(ctx, v.text, c.w * 0.80, 22, '700', UI.font.display);
+            fitFont(ctx, v.text, c.w * 0.80, 26, '700', UI.font.display);
             ctx.fillStyle = v.color;
-            ctx.fillText(v.text, c.x + c.w * 0.10, c.y + c.h * 0.80);
+            ctx.fillText(v.text, c.x + c.w * 0.10, c.y + c.h * 0.74);
         }
 
         /* Lugar rides on the heading line: the artwork gives this panel four
@@ -1831,7 +1965,7 @@ const Live = {
         ctx.textAlign = 'right';
         ctx.font = '500 16px ' + UI.font.body;
         ctx.fillStyle = UI.color.textDim;
-        const ly = p.y + p.h * 0.185;
+        const ly = p.y + L.recent.h * 0.155 + 4;
         const rx = last.x + last.w;
         ctx.font = '600 18px ' + UI.font.display;
         ctx.fillStyle = UI.color.text;
@@ -2809,6 +2943,13 @@ window.StormUI = {
 
         setPayoutTable(list) {
             GAME.payoutTable = list.slice();
+            rebuild();
+        },
+
+        /* Valores que puede pagar el directo multiplicativo, p. ej. [50, 100, 500].
+           [] quita la fila; null vuelve a los del juego. */
+        setMultiplicativos(list) {
+            GAME.payoutMultiplicativos = Array.isArray(list) ? list.slice() : null;
             rebuild();
         },
 

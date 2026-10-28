@@ -22,55 +22,23 @@
     <video id="evento" playsinline></video>
     
 
-    <main id="cuerpo">
+    <main id="cuerpo" class="vh">
 
-      <div class="container-fluid themed-container container1">
-        
-        
+      <!-- CABECERA con el estilo de las carreras: logo y lugar a la izquierda; a la derecha
+           TORNEO y TIEMPO RESTANTE, JACKPOT GLOBAL y JACKPOT LOCAL (ver style_g.css, al final).
+           Los id son los mismos de siempre (los llenan cone_db_p.js y funcionamiento_p.js). -->
+      <div class="container-fluid themed-container container1 vh-cab">
 
-        <div class="row d-flex justify-content-between align-items-start caja-logo">
-          
+        <div class="vh-marca">
+          <img class="vh-logo" src='static/img/logococks.png' alt="">
+          <div class="vh-lugar"><i class="fa-solid fa-location-dot vh-icono"></i><label class="txt_lgr"></label></div>
+        </div>
 
-          <div class="col-md-3 themed-grid-col d-flex justify-content-end align-items-center caja-logo">
-            <img class="img-logo" src='static/img/logococks.png'>      
-            <div class="banner_lgr"><label class="txt_lgr"></label></div>                   
-          </div>
-
-          <div class="col-md-3 themed-grid-col">
-
-          
-             <div class="caja_race">  
-
-                  <span class="span_cj">
-                      <label class="nombre_jac_rc">TORNEO</label>
-                      <label id="id_sorteos_c_id" class="label-jk-rc"></label>
-                  </span>
-
-                  <span class="span_er">
-                      <label id="tiempo_regresivo"></label>
-                  </span>
-
-              </div>
-
-
-              <!-- JACKPOT GLOBAL -->
-              <div class="caja_jack caja_jack_global">
-                <label class="nombre_jac_rc">GLOBAL</label>
-                <label id="jp_global" class="label-jk-rc"></label>
-              </div>
-
-
-              <!-- JACKPOT LOCAL -->
-              <div class="caja_jack caja_jack_local">
-                <label class="nombre_jac_rc">LOCAL</label>
-                <label id="jp_local" class="label-jk-rc"></label>
-              </div>
-
-
-
-            
-          </div>
-
+        <div class="vh-estado">
+          <div class="vh-caja vh-carrera"><span class="vh-etq">TORNEO</span><label id="id_sorteos_c_id"></label></div>
+          <div class="vh-caja vh-tiempo"><label id="tiempo_regresivo"></label><span class="vh-etq">TIEMPO RESTANTE</span></div>
+          <div class="vh-jack vh-jack-global"><span class="vh-jack-etq">JACKPOT <b>GLOBAL</b></span><label id="jp_global"></label></div>
+          <div class="vh-jack vh-jack-local"><span class="vh-jack-etq">JACKPOT <b>LOCAL</b></span><label id="jp_local"></label></div>
         </div>
 
       </div>
@@ -87,7 +55,7 @@
 
             <div class="col-md-12 themed-grid-col  d-flex justify-content-center" style="display: flex;">
     
-                <div class="sidebar_ult">
+                <div class="sidebar_ult vh-historial">
  
 
                 </div>
@@ -281,33 +249,13 @@
 
       
 
-      <div class="container-fluid themed-container container_j">
-
-        <div class="row d-flex  justify-content-center align-items-center" id="fila_1">
-
-          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
-            <label class="tipo_info">ULTIMO JACKPOT</label>
-          </div>
-
-          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
-            <label id="id_tk_info"></label>
-          </div>
-          
-          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
-            <label id="monto_info"></label>
-          </div>
-          
-          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center" style="border-right:3px solid #ffffff86;">
-            <label id="lugar_info"></label>     
-          </div>
-          
-          <div class="col-md-2 themed-grid-col d-flex justify-content-center align-items-center">
-            <label id="date_info"></label>
-          </div>
-        
-        </div>
-
-      </div>
+      <!-- ULTIMO JACKPOT con el estilo de las carreras -->
+      <footer class="vh-panel vh-pie">
+        <div class="vh-dato vh-dato-titulo"><i class="fa-solid fa-trophy vh-icono"></i><div><span class="vh-etq">ÚLTIMO JACKPOT</span><label id="monto_info"></label></div></div>
+        <div class="vh-dato"><i class="fa-solid fa-ticket vh-icono"></i><div><span class="vh-etq">TICKET</span><label id="id_tk_info"></label></div></div>
+        <div class="vh-dato"><i class="fa-solid fa-store vh-icono"></i><div><span class="vh-etq">GANADO EN</span><label id="lugar_info"></label></div></div>
+        <div class="vh-dato"><i class="fa-solid fa-calendar-days vh-icono"></i><div><span class="vh-etq">FECHA</span><label id="date_info"></label></div></div>
+      </footer>
 
     
     </main>
@@ -490,6 +438,9 @@
   <script src="../static/js/cone_db_p.js?v={{vjs}}"></script>
   
   <script src="../static/js/funcionamiento_p.js?v={{vjs}}"></script>
+
+  <!-- Estados de la cabecera y del ultimo jackpot (igual que las carreras); no cambia datos -->
+  <script src="../static/js/tablero_c.js?v={{vjs}}"></script>
   
 
   

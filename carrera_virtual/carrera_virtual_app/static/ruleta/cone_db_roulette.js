@@ -999,7 +999,7 @@ const RouletteDB = {
         if (this.testMode) {
             const jk = TEST.draw(eventNumber).jackpot;
             /* null / sin ticket = no hubo jackpot en este sorteo */
-            return jk && jk.ticket != null ? { ...jk } : null;
+            return jk && jk.ticket != null ? [{ ...jk }] : [];
         }
 
         try {
@@ -1009,7 +1009,7 @@ const RouletteDB = {
                 game_id: juegoId()
             });
 
-            if (!data || !Array.isArray(data.events)) return null;
+            if (!data || !Array.isArray(data.events)) return [];
 
             const primeraVez = ls(CLAVE_JK_VISTOS) === null;
             let vistos = [];
@@ -1024,23 +1024,28 @@ const RouletteDB = {
             localStorage.setItem(CLAVE_JK_VISTOS, JSON.stringify(vistos.slice(-50)));
 
             /* Primer arranque del visor: se registran sin anunciarlos. */
-            if (primeraVez || !nuevos.length) return null;
+            if (primeraVez || !nuevos.length) return [];
 
-            /* Guia 13: el evento cuyo sorteo_id corresponde al ciclo; si no hay, el mas reciente. */
-            const item = nuevos.find(x => sorteoId && (x.event || {}).sorteo_id === sorteoId) || nuevos[0];
-            const ev = item.event || {};
+            /* Pueden caer varios jackpots en la misma ronda: se anuncian TODOS, uno
+               detras de otro. Primero los del sorteo del ciclo (guia 13), luego el resto. */
+            const delSorteo = x => !!sorteoId && (x.event || {}).sorteo_id === sorteoId;
+            const orden = nuevos.filter(delSorteo).concat(nuevos.filter(x => !delSorteo(x)));
 
-            return {
-                tipo:   String(item.level_name || item.name || 'JACKPOT').toUpperCase(),
-                lugar:  ev.winner_lugar,
-                ticket: ev.ticket_code,
-                monto:  Number(ev.winner_amount) || 0,
-                fecha:  ev.selected_at
-            };
+            return orden.map(item => {
+                const ev = item.event || {};
+                return {
+                    key:    item.jackpot_id,      // para darle el color de su nivel en la tabla
+                    tipo:   String(item.level_name || item.name || 'JACKPOT').toUpperCase(),
+                    lugar:  ev.winner_lugar,
+                    ticket: ev.ticket_code,
+                    monto:  Number(ev.winner_amount) || 0,
+                    fecha:  ev.selected_at
+                };
+            });
 
         } catch (e) {
             console.warn('[DB] consultarGanadorJackpot:', e.message);
-            return null;
+            return [];
         }
     },
 
