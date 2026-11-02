@@ -46,6 +46,9 @@
     }
 
     const ESPERAS = [1, 2, 4, 8, 16, 30];                       // segundos
+    /* Respaldo: aunque la API no suba config_version al cambiar algo en el panel,
+       con el device.status (~30 s) se vuelve a pedir el snapshot si paso este tiempo. */
+    const REVISION_MS = 60000;
     const conVariacion = s => Math.round(s * 1000 * (0.8 + Math.random() * 0.4));
 
     /* Texto de cada causa de bloqueo (guia, seccion 8.2). */
@@ -72,7 +75,8 @@
         ROOSTERS: ['ROOSTERS'],
         RULETA:   ['RULETA', 'ROULETTE'],
         ROULETTE: ['RULETA', 'ROULETTE'],
-        BINGO:    ['BINGO']
+        BINGO:    ['BINGO'],
+        LOTERIA:  ['LOTERIA']
     };
 
     const paginaActual = () => String(location.pathname || '').replace(/^\/+|\/+$/g, '').toUpperCase();
@@ -245,6 +249,56 @@
         return { conocido: true, juego: juego || null };
     }
 
+    /* Pantalla (URL) de un juego del snapshot: su game_url si la trae, o la que corresponde a su codigo. */
+    function paginaDeJuego(juego) {
+        if (!juego) return '';
+        const url = String(juego.game_url || juego.url || '').replace(/^\/+|\/+$/g, '');
+        if (url) return url;
+        const code = String(juego.code || '').toUpperCase();
+        if (!code) return '';
+        if (CODIGOS_PAGINA[code]) return code;
+        const pagina = Object.keys(CODIGOS_PAGINA).find(p => CODIGOS_PAGINA[p].indexOf(code) !== -1);
+        return pagina || '';
+    }
+
+    /* Primer juego autorizado del visor que tenga pantalla y no sea esta: a donde ir si este juego ya no esta. */
+    function otroJuegoAutorizado(snap) {
+        const juegos = Array.isArray(snap.games) ? snap.games : [];
+        for (let i = 0; i < juegos.length; i++) {
+            const pagina = paginaDeJuego(juegos[i]);
+            if (pagina && pagina.toUpperCase() !== paginaActual()) return pagina;
+        }
+        return '';
+    }
+
+    /* Claves del localStorage que son de UN juego: al cambiar de juego se borran para que
+       el juego nuevo no herede jackpots ni ganadores ya vistos del anterior. */
+    const CLAVES_DEL_JUEGO = ['jk', 'jk_ganadores_vistos', 'datos_jack_gl', 'datos_jack_lc'];
+    const CLAVES_ID_JUEGO  = ['game_id', 'game_id_ruleta', 'game_id_bingo'];
+
+    /* Deja el localStorage con el juego vigente: game_id (comun), la clave de esta pagina y url.
+       Las claves de id de las otras paginas se borran. */
+    function fijarJuego(id, clave) {
+        const anterior = localStorage.getItem('game_id');
+        if (anterior !== null && anterior !== id) {
+            log('cambio de juego (' + anterior + ' -> ' + id + '): se limpian los datos del juego anterior');
+            CLAVES_DEL_JUEGO.forEach(k => localStorage.removeItem(k));
+        }
+        CLAVES_ID_JUEGO.forEach(k => { if (k !== 'game_id' && k !== clave) localStorage.removeItem(k); });
+        localStorage.setItem('game_id', id);
+        localStorage.setItem(clave, id);
+        localStorage.setItem('url', paginaActual());
+    }
+
+    /* true si la pantalla corresponde a un juego de snap.games (o si la API no manda la lista). */
+    function paginaAutorizada(snap, pagina) {
+        if (!Array.isArray(snap.games)) return true;
+        const P = String(pagina || '').toUpperCase();
+        const codigos = CODIGOS_PAGINA[P] || [P];
+        return snap.games.some(g => g && (String(paginaDeJuego(g)).toUpperCase() === P ||
+                                          codigos.indexOf(String(g.code || '').toUpperCase()) !== -1));
+    }
+
     /* Devuelve lo que la pagina debe hacer: 'ok' | 'bloqueado' | 'sin_juego' | 'navegando' */
     function aplicarSnapshot(snap, origen) {
         if (!snap || typeof snap !== 'object') return null;
@@ -270,8 +324,11 @@
             localStorage.setItem('version', String(version));
         }
         S.snapshot = snap;
+        S.ultimaRevision = Date.now();
 
         log('snapshot aplicado (' + origen + '): version', snap.config_version, 'can_operate', snap.can_operate, 'motivos', (snap.blocked_reasons || []).join(',') || '-');
+        log('  juegos del visor:', Array.isArray(snap.games) ? (snap.games.map(g => (g && (g.code || g.id)) + (g && g.game_url ? ' -> ' + g.game_url : '')).join(', ') || 'ninguno') : 'no vienen',
+            '| config.game_url:', (snap.config || {}).game_url || '-', '| esta pagina:', paginaActual());
 
         if (snap.lugar && snap.lugar.nombre) {
             localStorage.setItem('lugar', snap.lugar.nombre);
@@ -290,16 +347,28 @@
             return 'bloqueado';
         }
 
-        /* 2. El visor tiene asignada otra pantalla. */
-        if (gameUrl && gameUrl.toUpperCase() !== paginaActual()) {
+        /* 2. El visor tiene asignada otra pantalla.
+              Si config.game_url apunta a un juego que ya no esta en snap.games (dato viejo de la API),
+              no se le hace caso: si no, el visor rebota entre las dos pantallas. */
+        const urlVigente = gameUrl && paginaAutorizada(snap, gameUrl);
+        if (gameUrl && !urlVigente) log('config.game_url (' + gameUrl + ') no esta entre los juegos del visor; se ignora');
+        if (urlVigente && gameUrl.toUpperCase() !== paginaActual()) {
             localStorage.setItem('url', gameUrl);
             log('pantalla asignada:', gameUrl);
             irA('/' + gameUrl, !S.iniciado || S.modoBloqueado);
             return 'navegando';
         }
 
-        /* 3. Juego de esta pagina dentro de los juegos efectivos del visor. */
+        /* 3. Juego de esta pagina dentro de los juegos efectivos del visor.
+              Si el panel lo cambio por otro juego, se va a ese juego en vez de bloquear. */
         if (j.conocido && !j.juego) {
+            const destino = otroJuegoAutorizado(snap);
+            if (destino) {
+                localStorage.setItem('url', destino);
+                log('este juego ya no esta asignado; se pasa al juego asignado:', destino);
+                irA('/' + destino, !S.iniciado || S.modoBloqueado);   // si hay carrera en curso, al terminar
+                return 'navegando';
+            }
             mostrarBloqueo(['sin_juegos'], 'Sin contenido autorizado');
             if (S.iniciado && !S.modoBloqueado) irA(null, true);
             return 'sin_juego';
@@ -316,10 +385,10 @@
 
         if (j.juego) {
             const clave = S.opciones.claveJuego || 'game_id';
-            if (String(localStorage.getItem(clave)) !== String(j.juego.id)) {
-                localStorage.setItem(clave, String(j.juego.id));
-                if (S.opciones.recargarSiCambiaJuego || S.iniciado) recargar = true;
-            }
+            const id    = String(j.juego.id);
+            const cambioClave = String(localStorage.getItem(clave)) !== id;
+            fijarJuego(id, clave);
+            if (cambioClave && (S.opciones.recargarSiCambiaJuego || S.iniciado)) recargar = true;
         }
 
         /* 5. Grupo virtual vigente (nunca lottery_group): define la URL del countdown. */
@@ -419,6 +488,8 @@
                 (Number.isFinite(version) && (S.aplicada === null || version > S.aplicada))) {
                 if (msg.can_operate === false) mostrarBloqueo(msg.blocked_reasons);
                 reconciliar('status ' + origen);
+            } else if (Date.now() - (S.ultimaRevision || 0) >= REVISION_MS) {
+                reconciliar('revision periodica');
             }
             return true;
         }

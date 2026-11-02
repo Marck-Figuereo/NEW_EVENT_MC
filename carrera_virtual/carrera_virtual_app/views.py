@@ -33,7 +33,7 @@ from carrera_virtual_app.helpers.display_api_client import (
 
 
 # Configuraciones de entorno
-version = "v7.2.1"
+version = "v7.3.0"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)
@@ -58,7 +58,10 @@ _ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_
                    'bingo/data/sorteos_prueba_bingo.json',
                    'bingo/screens/show-bingo/index.html', 'bingo/screens/show-bingo/js/canvas.js',
                    'bingo/screens/show-bingo/js/game.js', 'bingo/screens/show-bingo/js/main.js',
-                   'bingo/screens/show-bingo/js/loader.js']
+                   'bingo/screens/show-bingo/js/loader.js',
+                   # Loteria (static/loteria/): DEMP LottoView
+                   'loteria/css/visor_tv.css', 'loteria/js/config_visor.js', 'loteria/js/catalogo_loterias.js',
+                   'loteria/js/cone_db_loterias.js', 'loteria/js/funcionamiento_visor.js']
 
 def _version_archivos():
     try:
@@ -592,6 +595,13 @@ ROULETTE = RULETA
 # Ver herramientas/BINGO_LEEME.md
 @csrf_exempt
 def BINGO(request): return render(request, "pv_bingo.html", _contexto_visor())
+
+
+
+# Loteria: DEMP LottoView (resultados de las loterias). Sus assets viven en static/loteria/.
+# Por ahora con datos de prueba (simulados en cone_db_loterias.js). Ver herramientas/LOTERIA_LEEME.md
+@csrf_exempt
+def LOTERIA(request): return render(request, "pv_loteria.html", _contexto_visor())
 
 
 

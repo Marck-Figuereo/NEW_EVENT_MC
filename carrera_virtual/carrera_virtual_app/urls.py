@@ -18,6 +18,7 @@ urlpatterns=[
     path('ROULETTE',	views.ROULETTE,	        name="ROULETTE"),
     path('ROOSTERS',	views.ROOSTERS,	        name="ROOSTERS"),
     path('BINGO',	    views.BINGO,	        name="BINGO"),
+    path('LOTERIA',	    views.LOTERIA,	        name="LOTERIA"),
     path('configuration',            views.configuration,    name="configuration"),
     
 
