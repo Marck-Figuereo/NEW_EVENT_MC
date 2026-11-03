@@ -999,11 +999,12 @@ const ov_suerte   = document.getElementById('ov_suerte')   // solo existe en per
 const ov_replay   = document.getElementById('ov_replay')   // solo existe en caballos
 
 // REPLAY (caballos): durante la repeticion el video muestra un cuadro azul grande vacio debajo
-// de CARRERA y ahi se escribe REPLAY. Medido cuadro a cuadro en los videos de caballos: el cuadro
-// se quita SIEMPRE 15 s antes del final y aparece entre 21,2 y 23,2 s antes. Se toma 21,2 para
-// que el texto nunca salga sin el cuadro debajo.
-const REPLAY_DESDE_FIN = 21.2
-const REPLAY_HASTA_FIN = 15
+// de CARRERA y ahi se escribe REPLAY. Medido cuadro a cuadro en los 180 videos validos de H7:
+// el trackback (ovalo) se desvanece y el cuadro queda vacio entre 30,2 y 19,84 s antes del final,
+// y el cuadro se quita entre 15,04 y 14,64 s antes del final. Con 19,8 y 15,05 el texto nunca sale
+// encima del ovalo ni sin el cuadro debajo, y empieza justo despues del destello de la repeticion.
+const REPLAY_DESDE_FIN = 19.8
+const REPLAY_HASTA_FIN = 15.05
 
 const preparar_overlay_video = () => {
 
