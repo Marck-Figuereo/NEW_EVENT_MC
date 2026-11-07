@@ -1244,7 +1244,7 @@ const Chrome = {
         tracked(ctx, text, x, y, 2.4, align);
     },
 
-    /* ---- RONDA + PRÓXIMO SORTEO EN --------------------------------------- */
+    /* ---- RONDA + PRÓXIMA RONDA EN ---------------------------------------- */
     drawRoundTimer(ctx) {
         const p = L.topFrame;
         drawAsset(ctx, 'panel_round_timer', p.x, p.y, p.w, p.h);
@@ -1252,7 +1252,7 @@ const Chrome = {
         ctx.fillStyle = UI.color.textDim;
         ctx.font = '600 19px ' + UI.font.display;
         tracked(ctx, 'RONDA', L.round.x + L.round.w / 2, L.round.y + L.round.h * 0.33, 2.2, 'center');
-        tracked(ctx, 'PRÓXIMO SORTEO EN', L.timer.x + L.timer.w / 2, L.timer.y + L.timer.h * 0.33, 1.8, 'center');
+        tracked(ctx, 'PRÓXIMA RONDA EN', L.timer.x + L.timer.w / 2, L.timer.y + L.timer.h * 0.33, 1.8, 'center');
     },
 
     /* ---- ESTADÍSTICAS: shell plus the fixed cell labels ------------------ */

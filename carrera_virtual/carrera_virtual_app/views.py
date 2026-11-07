@@ -43,7 +43,7 @@ WEBSOCKET_URL = config('WEBSOCKET_URL', default=_WS_POR_DEFECTO).strip().rstrip(
 # Version de los JS y CSS del visor: cambia sola cada vez que se modifica un archivo,
 # asi el navegador nunca mezcla un archivo nuevo con otro viejo guardado en cache.
 _STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'css/style_p.css', 'css/style_p8.css',
+_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'js/monitor_video.js', 'css/style_p.css', 'css/style_p8.css',
                    'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css',
                    'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css',
                    # Pantallas de la ruleta (iframes): su HTML y sus recursos internos tambien

@@ -776,8 +776,20 @@ const excute_race = async (opciones = {}) =>{
   entra_sincro_2 = true
   entra_sincro_3 = true
 
-  // Resultado del sorteo que acaba de cerrar (el del WebSocket)
-  nup = await Consulta_resultados(sorteo_cierre)
+  diagnosticos_ciclo = 0
+
+  // Resultado del sorteo que acaba de cerrar (el del WebSocket). Si se pidio durante el
+  // intro se usa esa consulta: normalmente ya llego y la carrera arranca de inmediato.
+  const t_api = performance.now()
+  const adelantado = resultado_adelantado && resultado_adelantado.sorteo === sorteo_cierre ? resultado_adelantado : null
+  resultado_adelantado = null
+  nup = adelantado ? await adelantado.promesa : await Consulta_resultados(sorteo_cierre)
+  // Intro largo: la consulta adelantada se rindio antes de los 20 s de espera de siempre tras el intro
+  if (adelantado && !nup && intro_fin_t) {
+    const resta = 20000 - (performance.now() - intro_fin_t)
+    if (resta > 2500) nup = await Consulta_resultados(sorteo_cierre, resta)
+  }
+  monitor('marca', 'api_resultados', { ok : !!nup, ms : performance.now() - (adelantado ? adelantado.inicio : t_api), adelantado : !!adelantado })
   console.log("race",   nup);
 
   if (!nup) {
@@ -830,6 +842,9 @@ const excute_race = async (opciones = {}) =>{
   video_event.muted = true
 
   video_event.play().catch(() => {})
+
+  // Si el video se detiene sin avisar, el vigilante lo recupera o termina el ciclo
+  vigilar_video_evento(ciclo, (opciones.quedanMs > 0 && tiempo_video_api > 0) ? Math.max(0, tiempo_video_api - opciones.quedanMs / 1000) : 0)
 
   if(game_code == 5){
 
@@ -906,16 +921,169 @@ function esperar(ms) {
 
 
 
-video_intro.addEventListener('ended', async () => excute_race() )
+// ==========================================
+// VIGILANTE DE REPRODUCCION (intro y video del evento)
+// El ciclo avanza con los eventos del video ('ended' / 'error'). Si el video se queda
+// detenido (el archivo deja de llegar o el decodificador se traba) el navegador NO avisa:
+// no hay 'ended' ni 'error' y el visor se quedaba en ese cuadro para siempre, ignorando
+// los sorteos nuevos del WebSocket (ciclo_en_curso seguia en true).
+// El vigilante mira cada 0,5 s si el tiempo del video avanza:
+//   intro detenido   -> se vuelve a pedir play(); si sigue detenido, se salta a la carrera
+//   video detenido   -> play(); despues se recarga el archivo en el segundo que corresponde
+//                       por el reloj (el video sigue sincronizado con el del servidor)
+//   no se recupera   -> tras MAX_RECARGAS recargas sigue detenido: mismo camino que un video
+//                       que no se puede reproducir (aviso "Espere el proximo evento" y tabla)
+//   tiempo agotado   -> pasada la duracion oficial + margen, el ciclo termina como si el
+//                       video hubiera terminado (resultados / jackpot / bono / tabla)
+// ==========================================
+const VIGIA_MS              = 500
+const QUIETO_REINTENTO_MS   = 2000   // sin avanzar: se vuelve a pedir play()
+const QUIETO_SALTAR_INTRO   = 4000   // intro sin avanzar: se pasa a la carrera
+const INTRO_MAX_ARRANQUE_MS = 8000   // intro que nunca empieza
+const QUIETO_RECARGA_MS     = 4500   // video sin avanzar: se recarga en el segundo correcto
+const MAX_RECARGAS          = 3
+const MARGEN_FIN_MS         = 5000   // el ciclo nunca dura mas que el video oficial + margen
+
+// Monitor de video (monitor_video.js): solo observa; si no esta cargado no pasa nada
+const monitor = (fn, ...a) => { try { if (window.MonitorVideo) return window.MonitorVideo[fn](...a) } catch (e) {} }
+const como_vigilante = (fn) => window.MonitorVideo ? window.MonitorVideo.vigilante(fn) : fn()
+var diagnosticos_ciclo = 0   // diagnosticos pedidos en el ciclo (maximo 3, para no llenar el log)
+const diagnosticar = (video, motivo) => { if (diagnosticos_ciclo++ < 3) monitor('diagnosticar', video, motivo) }
+
+// Resultado pedido mientras corre el intro: al terminar el intro la carrera arranca sin
+// esperar a la API (antes el ultimo cuadro del intro quedaba quieto mientras se consultaba)
+var resultado_adelantado = null   // { sorteo, inicio, promesa }
+
+var intro_resuelto = true    // el intro del ciclo ya termino (ended, error o vigilante)
+var intro_fin_t    = null    // cuando termino el intro (performance.now)
+var vigia_intro    = null
+var vigia_video    = null
+var fin_video_hecho = -1     // ciclo cuyo final ya se proceso (evita repetirlo)
+
+// Corta la descarga de un video para que no ocupe una conexion con el servidor de videos
+const soltar_video = (v) => {
+  try { v.pause(); v.removeAttribute('src'); v.load() } catch (e) {}
+}
+
+const fin_intro = (motivo) => {
+  if (intro_resuelto) return
+  intro_resuelto = true
+  intro_fin_t = performance.now()
+  clearInterval(vigia_intro); vigia_intro = null
+  monitor('marca', 'intro_fin', motivo)
+  if (motivo === 'error') {
+    console.log('Intro no disponible, se pasa directo a la carrera:', video_intro.src)
+    video_intro.style.opacity = 0
+  } else if (motivo !== 'ended') {
+    console.log('Intro detenido (' + motivo + '), se pasa directo a la carrera:', video_intro.src)
+    como_vigilante(() => soltar_video(video_intro))
+  }
+  excute_race()
+}
+
+const vigilar_intro = () => {
+  clearInterval(vigia_intro)
+  const inicio = performance.now()
+  let ultimo_t = -1, ultimo_avance = inicio, reintento = false
+  vigia_intro = setInterval(() => {
+    if (intro_resuelto) { clearInterval(vigia_intro); vigia_intro = null; return }
+    const ahora = performance.now(), t = video_intro.currentTime
+    if (t !== ultimo_t) { ultimo_t = t; ultimo_avance = ahora; reintento = false }
+    const empezo = t > 0
+    const dur = isFinite(video_intro.duration) && video_intro.duration > 0 ? video_intro.duration : 30
+    if (!empezo && ahora - inicio > INTRO_MAX_ARRANQUE_MS && !reintento) diagnosticar(video_intro, 'intro no arranca')
+    if (!empezo && ahora - inicio > INTRO_MAX_ARRANQUE_MS) return fin_intro('no arranco en ' + INTRO_MAX_ARRANQUE_MS / 1000 + ' s')
+    if (ahora - inicio > dur * 1000 + MARGEN_FIN_MS)          return fin_intro('duracion agotada')
+    const quieto = ahora - ultimo_avance
+    if (empezo && quieto > QUIETO_SALTAR_INTRO)               return fin_intro('sin avanzar ' + (quieto / 1000).toFixed(1) + ' s en el segundo ' + t.toFixed(2))
+    if (quieto > QUIETO_REINTENTO_MS && !reintento) {
+      reintento = true
+      diagnosticar(video_intro, empezo ? 'intro sin avanzar ' + (quieto / 1000).toFixed(1) + ' s' : 'intro no arranca')
+      video_intro.play().catch(() => {})
+    }
+  }, VIGIA_MS)
+}
+
+video_intro.addEventListener('ended', () => fin_intro('ended'))
 
 // Si el intro no existe o no se puede reproducir, se pasa directo al video de la carrera
-video_intro.addEventListener('error', async () => {
-  console.log('Intro no disponible, se pasa directo a la carrera:', video_intro.src)
-  video_intro.style.opacity = 0
-  excute_race()
-})  
+video_intro.addEventListener('error', () => {
+  if (!video_intro.getAttribute('src')) return   // descarga cortada a proposito (soltar_video)
+  fin_intro('error')
+})
 
-video_event.addEventListener('ended', async () => {
+// Video del evento: inicio = segundo del video en que se empezo (incorporacion tardia)
+const vigilar_video_evento = (ciclo, inicio) => {
+  clearInterval(vigia_video)
+  const pedido = performance.now()
+  let base = null                  // { reloj, pos }: cuando empezo a verse y desde que segundo
+  let ultimo_t = -1, ultimo_avance = pedido, reintento = false, recargas = 0
+  const parar = () => { clearInterval(vigia_video); vigia_video = null }
+
+  vigia_video = setInterval(() => {
+    if (ciclo !== ciclo_video || fin_video_hecho === ciclo || video_event.style.opacity != 1 || video_event.ended) return parar()
+
+    const ahora = performance.now(), t = video_event.currentTime
+    if (t !== ultimo_t) {
+      if (!base && t > inicio) base = { reloj: ahora, pos: t }
+      ultimo_t = t; ultimo_avance = ahora; reintento = false
+    }
+    const dur = duracion_video_evento()
+    // Segundo en que deberia ir el video segun el reloj (el del servidor corre sin pausa)
+    const esperado = base ? base.pos + (ahora - base.reloj) / 1000 : inicio + (ahora - pedido) / 1000
+
+    // Tiempo agotado: el video del servidor ya termino. El ciclo sigue como si hubiera terminado.
+    if (esperado > dur + MARGEN_FIN_MS / 1000) {
+      parar()
+      console.log('Video del evento detenido en el segundo', t.toFixed(2), 'de', dur.toFixed(2), '- se termina el ciclo:', video_event.src)
+      diagnosticar(video_event, 'tiempo del video agotado')
+      como_vigilante(() => { try { video_event.pause() } catch (e) {} })
+      fin_video_evento('vigilante')
+      return
+    }
+
+    const quieto = ahora - ultimo_avance
+
+    // Ya se recargo MAX_RECARGAS veces y sigue detenido: el servidor de videos no lo entrega.
+    // Mismo camino que un video que no se puede reproducir: aviso y tabla (no se queda congelado).
+    if (recargas >= MAX_RECARGAS && quieto > QUIETO_RECARGA_MS) {
+      parar()
+      console.log('Video del evento detenido en el segundo', t.toFixed(2), 'tras', MAX_RECARGAS, 'recargas: evento fallido')
+      diagnosticar(video_event, 'no se recupero tras ' + MAX_RECARGAS + ' recargas')
+      como_vigilante(() => { try { video_event.pause() } catch (e) {} })
+      evento_fallido()
+      return
+    }
+
+    if (quieto > QUIETO_REINTENTO_MS && !reintento) {
+      reintento = true
+      console.log('Video del evento sin avanzar en el segundo', t.toFixed(2), ': se vuelve a pedir play()')
+      if (recargas === 0) diagnosticar(video_event, base ? 'carrera sin avanzar ' + (quieto / 1000).toFixed(1) + ' s' : 'carrera no arranca')
+      video_event.play().catch(() => {})
+    }
+    if (quieto > QUIETO_RECARGA_MS && recargas < MAX_RECARGAS && esperado < dur - 1) {
+      recargas++
+      const destino = Math.max(0, esperado)
+      console.log('Video del evento detenido: recarga ' + recargas + ' de ' + MAX_RECARGAS + ', continua en el segundo', destino.toFixed(2))
+      ultimo_avance = ahora; reintento = false
+      vigilando_resultado = false   // el 'playing' de la recarga vuelve a vigilar los resultados
+      const src = video_event.src
+      video_event.addEventListener('loadedmetadata', () => {
+        try { video_event.currentTime = Math.min(destino + (performance.now() - ahora) / 1000, Math.max(0, duracion_video_evento() - 0.5)) } catch (e) {}
+        video_event.play().catch(() => {})
+      }, { once : true })
+      como_vigilante(() => { video_event.src = src })
+    }
+  }, VIGIA_MS)
+}
+
+const fin_video_evento = async (origen = 'ended') => {
+
+  // Un solo final por ciclo (el 'ended' real y el vigilante no se repiten)
+  if (fin_video_hecho === ciclo_video) return
+  fin_video_hecho = ciclo_video
+  clearInterval(vigia_video); vigia_video = null
+
 
   // Gallos: mantiene su pantalla de resultados
   if (game_code == 5) {
@@ -983,7 +1151,9 @@ video_event.addEventListener('ended', async () => {
   
 
 
-})
+}
+
+video_event.addEventListener('ended', () => fin_video_evento('ended'))
 
 
 
@@ -1194,12 +1364,13 @@ const soltar_fallo = () => {
 
 // El video del evento no existe o no se puede reproducir: NO se usa ningun video de prueba.
 // Se avisa (sin mencionar el video) y se vuelve a las tablas; el visor sigue con el siguiente sorteo.
-video_event.addEventListener('error', async () => {
+const evento_fallido = async () => {
 
   // Solo cuenta mientras el video del evento esta en pantalla
   if (video_event.style.opacity != 1) return
 
   console.log('No se pudo reproducir el video del evento:', video_event.src)
+  clearInterval(vigia_video); vigia_video = null
 
   ciclo_video++                 // corta lo que esperaba a este video (conteo y peleas de gallos)
   vigilando_resultado = false
@@ -1214,7 +1385,9 @@ video_event.addEventListener('error', async () => {
   // Se queda hasta que todo se actualiza (1 minuto; gallos 2).
   mostrar_alerta_fallo()
 
-});
+}
+
+video_event.addEventListener('error', () => evento_fallido())
 
 
 
@@ -1307,7 +1480,13 @@ const intentar_evento = () => {
     screen_jp.style.opacity           = 0;
     screen_bono.style.opacity         = 0;
     video_intro.muted = true
+    intro_resuelto = false
+    diagnosticos_ciclo = 0
+    monitor('marca', 'intro_inicio', video_intro.src)
+    // El resultado se pide ya: mismo plazo total de antes (20 s despues de un intro de ~10 s)
+    resultado_adelantado = { sorteo : sorteo_cierre, inicio : performance.now(), promesa : Consulta_resultados(sorteo_cierre, 30000) }
     video_intro.play().catch(() => {})
+    vigilar_intro()   // si el intro se detiene, se pasa a la carrera
 }
 
 setInterval( async ()=> {

@@ -657,7 +657,8 @@ const consultar_evento_actual = async () => {
 // sorteo_esperado: sorteo_id del WebSocket. El resultado puede tardar unos segundos en publicarse:
 // se reintenta cada 2 s (maximo 20 s) para no reproducir el video de otro sorteo.
 // Devuelve [0 video, 1 multiplicador, 2 sorteo_id (para el bono), 3 numero de evento, 4 cuota win, 5 cuota exacta] o null.
-const Consulta_resultados = async (sorteo_esperado = null) => {
+// limite_ms: cuanto se espera a que el resultado de ESE sorteo exista (reintenta cada 2 s)
+const Consulta_resultados = async (sorteo_esperado = null, limite_ms = 20000) => {
 
     console.log('Consulta_resultados', sorteo_esperado);
 
@@ -680,7 +681,7 @@ const Consulta_resultados = async (sorteo_esperado = null) => {
 
         if (hay_video && (!sorteo_esperado || !data['sorteo_id'] || data['sorteo_id'] == sorteo_esperado)) break
 
-        if (Date.now() - inicio + 2000 > 20000) {
+        if (Date.now() - inicio + 2000 > limite_ms) {
             console.log('El resultado del sorteo no llego a tiempo', sorteo_esperado, data)
             return null
         }

@@ -407,6 +407,122 @@ const Renderer = {
         this.overlayPatched = c;
     },
 
+    /* Titulo de la banda inferior. El arte trae "MULTIPLICATIVOS GANADORES";
+       se cambia por TITULO_MULTIPLICADOR sin tocar el PNG en disco, con el
+       mismo metodo que la placa: se limpia la franja del titulo y sus dos
+       lineas, se rellena con textura limpia del propio panel (misma altura,
+       a la derecha de la linea) y se dibujan el texto nuevo y las dos lineas
+       originales, comprimidas para dejar sitio al texto.
+       Medido sobre results_overlay.png a 1920x1080:
+         texto original  x 705..1208, y 794..823 (centro x 956,5)
+         linea izquierda x 350..658, derecha x 1255..1569 (fila 808)
+         separacion texto-linea 47 px; panel limpio debajo, filas 840..878 */
+    patchMultTitle() {
+        const img = Assets.img.overlay;
+        const c = this.overlayPatched;
+        if (!img || !c) return;
+        const g = c.getContext('2d');
+        const W = CONFIG.design.width, H = CONFIG.design.height;
+        const kx = img.width / W, ky = img.height / H;
+
+        const T = {
+            texto: 'NÚMEROS SELECCIONADOS PARA EL MULTIPLICADOR',
+            original: 'MULTIPLICATIVOS GANADORES', anchoOriginal: 503,
+            cx: 956.5, base: 822, cap: 29, maxW: 900,
+            y0: 790, y1: 828,                 // franja que se reconstruye
+            fuente: 840,                      // filas de textura limpia del panel (840..878)
+            izq: [350, 658], der: [1255, 1569], linea: [800, 817], sep: 47
+        };
+
+        // Copia de las lineas originales antes de limpiar.
+        const copia = (x0, x1) => {
+            const t = document.createElement('canvas');
+            t.width = x1 - x0; t.height = T.linea[1] - T.linea[0];
+            t.getContext('2d').drawImage(c, x0, T.linea[0], t.width, t.height, 0, 0, t.width, t.height);
+            return t;
+        };
+        const lIzq = copia(T.izq[0], T.izq[1]);
+        const lDer = copia(T.der[0], T.der[1]);
+
+        /* Borra el texto y las lineas reconstruyendo el fondo columna por
+           columna: se toma la textura del mismo panel unas filas mas abajo
+           (misma columna, asi conserva el brillo horizontal del panel) y se
+           ajusta su tono para que empalme arriba y abajo con el original. */
+        const xa = T.izq[0] - 6, xb = T.der[1] + 6, w = xb - xa;
+        const Y0 = T.y0, Y1 = T.y1, hh = Y1 - Y0, SRC = T.fuente;
+        const top = Y0 - 4, alto = SRC + hh + 4 - top;
+        const d = g.getImageData(xa, top, w, alto);
+        const px = (x, y, k) => d.data[((y - top) * w + x) * 4 + k];
+        const media = (x, y, k) => (px(x, y, k) + px(x, y + 1, k) + px(x, y + 2, k) + px(x, y + 3, k)) / 4;
+        const offA = [], offB = [];
+        for (let x = 0; x < w; x++) {
+            for (let k = 0; k < 3; k++) {
+                offA.push(media(x, Y0 - 4, k) - media(x, SRC, k));
+                offB.push(media(x, Y1, k) - media(x, SRC + hh - 4, k));
+            }
+        }
+        const suave = (o, x, k) => {               // promedio de 15 columnas
+            let s = 0, n = 0;
+            for (let i = Math.max(0, x - 7); i <= Math.min(w - 1, x + 7); i++) { s += o[i * 3 + k]; n++; }
+            return s / n;
+        };
+        const sa = [], sb = [];
+        for (let x = 0; x < w; x++) for (let k = 0; k < 3; k++) { sa.push(suave(offA, x, k)); sb.push(suave(offB, x, k)); }
+        for (let y = Y0; y < Y1; y++) {
+            const f = (y - Y0) / (hh - 1);
+            for (let x = 0; x < w; x++) {
+                const i = ((y - top) * w + x) * 4;
+                const j = ((SRC + (y - Y0) - top) * w + x) * 4;
+                for (let k = 0; k < 3; k++) {
+                    const off = (1 - f) * sa[x * 3 + k] + f * sb[x * 3 + k];
+                    d.data[i + k] = Math.max(0, Math.min(255, d.data[j + k] + off));
+                }
+                d.data[i + 3] = d.data[j + 3];
+            }
+        }
+        g.putImageData(d, xa, top);
+
+        // Texto: mismo alto de mayusculas y el mismo espaciado que el original.
+        const fuente = s => '600 ' + s + 'px ' + CONFIG.font.display;
+        let size = T.cap / 0.7;
+        g.font = fuente(size);
+        const medir = (t, esp) => g.measureText(t).width + esp * (t.length - 1);
+        let esp = Math.max(0, (T.anchoOriginal - g.measureText(T.original).width) / (T.original.length - 1));
+        let ancho = medir(T.texto, esp);
+        if (ancho > T.maxW) {                  // nunca mas ancho que el hueco
+            const f = T.maxW / ancho;
+            size *= f; esp *= f; g.font = fuente(size); ancho = medir(T.texto, esp);
+        }
+        const x0 = T.cx - ancho / 2;
+        g.save();
+        g.globalAlpha = 0.8;                   // el overlay es translucido (alfa 204)
+        const grad = g.createLinearGradient(0, T.base - size * 0.72, 0, T.base);
+        grad.addColorStop(0, '#f1f5f9');
+        grad.addColorStop(0.45, '#dce4ec');
+        grad.addColorStop(1, '#8ea2bd');
+        g.fillStyle = grad;
+        g.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        g.shadowBlur = 3;
+        g.shadowOffsetY = 2;
+        g.textBaseline = 'alphabetic';
+        g.textAlign = 'left';
+        let x = x0;
+        for (const ch of T.texto) {
+            g.fillText(ch, x, T.base);
+            x += g.measureText(ch).width + esp;
+        }
+        g.restore();
+
+        // Lineas: las originales, comprimidas hasta dejar la misma separacion.
+        const finIzq = Math.max(T.izq[0] + 40, x0 - T.sep);
+        const iniDer = Math.min(T.der[1] - 40, x0 + ancho + T.sep);
+        const lh = T.linea[1] - T.linea[0];
+        g.clearRect(T.izq[0], T.linea[0], finIzq - T.izq[0], lh);
+        g.clearRect(iniDer, T.linea[0], T.der[1] - iniDer, lh);
+        g.drawImage(lIzq, 0, 0, lIzq.width, lh, T.izq[0], T.linea[0], finIzq - T.izq[0], lh);
+        g.drawImage(lDer, 0, 0, lDer.width, lh, iniDer, T.linea[0], T.der[1] - iniDer, lh);
+    },
+
     render() {
         const ctx = this.ctx;
         ctx.clearRect(0, 0, CONFIG.design.width, CONFIG.design.height);
@@ -973,6 +1089,7 @@ function main() {
 
     Assets.load().then(() => {
         Renderer.patchDrawPlaque();
+        Renderer.patchMultTitle();
         Reveal.startAmbient();
 
         /* Start from the supplied sample so the screen is faithful before any
