@@ -129,8 +129,10 @@ function randomIntFromInterval(min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+// Monto que no llego de la API -> guion (nunca un $0.00 inventado)
 const currency = function (number) {
-	return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(Number(number) || 0);
+	if (number == null || number === '' || !isFinite(Number(number))) return '\u2014';
+	return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(Number(number));
 };
 
 function shuffleArray(array) {
@@ -172,7 +174,8 @@ function tick(event) {
 	if (window.BingoScreen && !BingoScreen.hostActive) return;
 
 	if (resultScreenContainer && resultScreenContainer.visible) {
-		if (renderOnce) {
+		// SORTEOS es casi estatica: se pinta cuando algo cambia o mientras dura una animacion
+		if (renderOnce || performance.now() < renderHasta) {
 			stage.update(event);
 			renderOnce = false;
 			BingoScreen.frames++;
@@ -368,7 +371,8 @@ function prepararSorteo(result) {
 	bingoInfoTxt.text = currency(p.bingo);
 
 	// Antes los colores de los premios ganados se quedaban del sorteo anterior
-	cuatroInfoTxt.color = lineaInfoTxt.color = dobleInfoTxt.color = bingoInfoTxt.color = jkActualTxt.color = '#ffffffe0';
+	cuatroInfoTxt.color = lineaInfoTxt.color = dobleInfoTxt.color = bingoInfoTxt.color = '#ffffffe0';
+	jkActualTxt.color = colorTema('jackpot');
 
 	resetDrumGlassBonus();
 	if (popupContainer) {

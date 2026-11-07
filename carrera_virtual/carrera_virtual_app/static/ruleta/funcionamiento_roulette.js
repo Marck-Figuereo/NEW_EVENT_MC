@@ -550,9 +550,9 @@ const Puente = {
     async init() {
         const r = await Promise.all([
 
-            /* Demo.init() ya corrió: los niveles existen. */
+            /* Demo.init() ya corrió (en el visor no carga niveles de demostración). */
             listo(el.table, 'StormUI', '../../',
-                w => w.StormUI.api.data.levels.length > 0),
+                w => w.StormUI.api.data.uiLista === true || w.StormUI.api.data.levels.length > 0),
 
             /* app.js del intro expone la API antes de preloadAssets(). */
             listo(el.intro, 'RouletteMultipliers', '../../', null),
@@ -614,7 +614,8 @@ const Puente = {
 
         const f = this.feed;
 
-        if (f.jackpots)  { a.setJackpots(f.jackpots);   f.jackpots = null; }
+        if (f.jackpots)  { a.setJackpots(f.jackpots);   f.jackpots = null; f.jackpotsError = false; }
+        if (f.jackpotsError && typeof a.setJackpotsError === 'function') { a.setJackpotsError(); f.jackpotsError = false; }
         if (f.ultimo)    { a.setLastJackpot(f.ultimo);  f.ultimo = null; }
         if (f.historial) { a.setResults(f.historial);   f.historial = null; }
 
@@ -669,10 +670,17 @@ const Puente = {
         this.volcarFeed();
     },
 
+    /* Lista vacía = la API no tiene jackpots para este visor: JK SIN ASIGNAR. */
     setJackpots(niveles) {
-        if (!niveles || !niveles.length) return;
+        if (!Array.isArray(niveles)) return;
         this.niveles = niveles.slice();      // se guarda aparte: el color del ganador de jackpot sale de aqui
         this.feed.jackpots = niveles;
+        this.volcarFeed();
+    },
+
+    /* La API de jackpots falló: nada inventado (ERROR si nunca hubo montos). */
+    setJackpotsError() {
+        this.feed.jackpotsError = true;
         this.volcarFeed();
     },
 
@@ -1549,10 +1557,12 @@ const Ciclo = {
             const jpDespues = await RouletteDB.consultarJackpots(eventNumber, true);
 
             if (jpDespues) {
-                if ( Array.isArray(jpDespues.niveles) && jpDespues.niveles.length) Puente.setJackpots(jpDespues.niveles);
-                
+                Puente.setJackpots(jpDespues.niveles || []);
+
                 if (jpDespues.ultimo) Puente.setUltimoJackpot(jpDespues.ultimo);
-                
+
+            } else {
+                Puente.setJackpotsError();
             }
         }
 
@@ -1594,6 +1604,8 @@ async function sincronizar(tableOddsId, cargarHistorial = false) {
         if (jp) {
             Puente.setJackpots(jp.niveles);
             Puente.setUltimoJackpot(jp.ultimo);
+        } else {
+            Puente.setJackpotsError();
         }
 
         /*
@@ -1866,6 +1878,8 @@ async function bootstrapRuleta() {
     if (jp) {
         Puente.setJackpots(jp.niveles);
         Puente.setUltimoJackpot(jp.ultimo);
+    } else {
+        Puente.setJackpotsError();
     }
 
     const hist = await RouletteDB.consultarHistorial();

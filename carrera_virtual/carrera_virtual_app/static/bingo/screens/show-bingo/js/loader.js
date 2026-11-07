@@ -14,6 +14,13 @@
 // Rutas relativas a screens/show-bingo/index.html (assets propios de esta pantalla)
 const ASSET_PATH = '';
 
+// Diseño de la pantalla del sorteo (fondo, bombo, popups de ganador, conteo, jackpot,
+// cartones, tabla de premios y casillas). Las dos carpetas traen las mismas 14 piezas con
+// las mismas medidas, asi que cambiar de diseño es solo esta linea:
+//   'DEMP' azul marino y dorado   |   'CS' rojo con la S de fondo
+// La pantalla SORTEOS y las bolas usan siempre las piezas de DEMP.
+const TEMA = 'DEMP';
+
 /*!
  * 
  * START CANVAS PRELOADER
@@ -28,15 +35,15 @@ function initPreload(){
 
 	manifest = [
 		// Background
-		{src: ASSET_PATH + 'assets/CS/background.png', id:'background'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/background.png', id:'background'},
 
 		//popup
-		{src: ASSET_PATH + 'assets/CS/win_cuatro.png', id:'itemPopup_cuatro'},
-		{src: ASSET_PATH + 'assets/CS/win_line.png', id:'itemPopup_line'},
-		{src: ASSET_PATH + 'assets/CS/win_double_line.png', id:'itemPopup_lineD'},
-		{src: ASSET_PATH + 'assets/CS/win_bingo.png', id:'itemPopup_bingo'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/win_cuatro.png', id:'itemPopup_cuatro'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/win_line.png', id:'itemPopup_line'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/win_double_line.png', id:'itemPopup_lineD'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/win_bingo.png', id:'itemPopup_bingo'},
 		
-		{src: ASSET_PATH + 'assets/CS/win_jackpot.png', id:'itemPopup_jackpot'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/win_jackpot.png', id:'itemPopup_jackpot'},
 		
 
 		// premios
@@ -53,20 +60,20 @@ function initPreload(){
 
 		// Baners para informaciones
 		
-		{src: ASSET_PATH + 'assets/CS/itemCount.png', id:'itemTime'},
-		{src: ASSET_PATH + 'assets/CS/itemJkActual.png', id:'itemJackpotInfo'},
-		{src: ASSET_PATH + 'assets/CS/itemJkInfo.png', id:'itemJackpotResult'},
-		{src: ASSET_PATH + 'assets/CS/itemCarton.png', id:'itemCardboard'},
-		{src: ASSET_PATH + 'assets/CS/itemTable.png', id:'itemTable'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/itemCount.png', id:'itemTime'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/itemJkActual.png', id:'itemJackpotInfo'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/itemJkInfo.png', id:'itemJackpotResult'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/itemCarton.png', id:'itemCardboard'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/itemTable.png', id:'itemTable'},
 		
 
 		// Drum
-		{src: ASSET_PATH + 'assets/CS/item_drum_glass.png', id:'itmDrumGlass'},
-		{src: ASSET_PATH + 'assets/CS/item_drum_hole.png', id:'itmDrumHole'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/item_drum_glass.png', id:'itmDrumGlass'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/item_drum_hole.png', id:'itmDrumHole'},
 		{src: ASSET_PATH + 'assets/item_bg_drum.png', id:'itemBgDrum'},
 
 		// Reveal slotsa
-		{src: ASSET_PATH + 'assets/CS/item_place.png', id:'itemPlace'},
+		{src: ASSET_PATH + 'assets/' + TEMA + '/item_place.png', id:'itemPlace'},
 		{src: ASSET_PATH + 'assets/item_place_gradient.png', id:'itemPlaceGradient'}, 
 
 		// Ball masks/highlights

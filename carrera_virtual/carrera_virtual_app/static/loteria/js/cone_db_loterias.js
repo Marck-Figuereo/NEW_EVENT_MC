@@ -53,7 +53,9 @@
   };
 
   var cfg = window.VISOR_CONFIG || {};
-  var modoPrueba = params.get('test') === '1' || !(cfg.api && cfg.api.url);
+  // Datos simulados SOLO con ?test=1. Sin api.url NO se inventan resultados:
+  // la consulta falla y cada loteria queda en SIN RESULTADO.
+  var modoPrueba = params.get('test') === '1';
 
   /* ---------------- 1) API real ---------------- */
   function desdeApi() {
@@ -136,6 +138,7 @@
     modoPrueba: modoPrueba,
     obtener: function () {
       if (modoPrueba) return simular();
+      if (!(cfg.api && cfg.api.url)) return Promise.reject(new Error('API de loterias no configurada (VISOR_CONFIG.api.url)'));
       return desdeApi().then(function (d) {
         if (d.servidor && !isNaN(d.servidor)) VisorTiempo.sincronizar(d.servidor);
         return d;

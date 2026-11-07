@@ -282,12 +282,17 @@ const GAME = {
     results: [],
 
     lastJackpot: {
-        type:   'MEGA',
-        ticket: '00000000',
-        amount: 0,
+        type:   '',
+        ticket: '',
+        amount: null,
         date:   '',
         place:  ''
     },
+
+    /* Panel de jackpots sin niveles de la API: '' = todavia no hay respuesta
+       (panel vacio), 'ERROR' = la API fallo, 'JK SIN ASIGNAR' = la API no
+       devolvio jackpots. Nunca se muestran montos inventados. */
+    jackpotsMsg: '',
 
     hot:  [],
     cold: [],
@@ -387,6 +392,9 @@ const GAME = {
         }
 
         if (GAME.derived.hotcold) {
+            /* Sin historial de la API no hay calientes ni frios: casillas vacias
+               (antes salian 0 1 2 3 4 inventados). */
+            if (!win.length) { GAME.hot = []; GAME.cold = []; return; }
             const counts = new Map();
             for (let i = 0; i < win.length; i++) {
                 counts.set(win[i].n, (counts.get(win[i].n) || 0) + 1);
@@ -1794,6 +1802,19 @@ const Live = {
 
     /* ---- jackpot names and amounts, over the baked bar surfaces ---------- */
     drawJackpots(ctx) {
+        /* Sin niveles de la API: mensaje (ERROR / JK SIN ASIGNAR) o nada. */
+        if (!GAME.levels.length) {
+            if (GAME.jackpotsMsg && L.jackpots) {
+                const p = L.jackpots;
+                ctx.save();
+                ctx.textAlign = 'center';
+                fitFont(ctx, GAME.jackpotsMsg, p.w * 0.8, 30, '700', UI.font.display);
+                ctx.fillStyle = UI.color.text;
+                ctx.fillText(GAME.jackpotsMsg, p.x + p.w / 2, p.y + p.h * 0.55);
+                ctx.restore();
+            }
+            return;
+        }
         for (let i = 0; i < L.jpRows.length && i < GAME.levels.length; i++) {
             const r = L.jpRows[i];
             const lv = GAME.levels[i];
@@ -1827,7 +1848,7 @@ const Live = {
                 ctx.restore();
             }
 
-            const amount = money(lv.display);
+            const amount = lv.sinMonto ? '\u2014' : money(lv.display);
 
             ctx.textAlign = 'right';
 
@@ -1843,7 +1864,13 @@ const Live = {
             const aw = measureOdoText(ctx, amount);
             const base = r.h * 0.5 + aSize * 0.35;
 
-            drawOdometer( ctx, lv, amount, r.w - r.w * 0.045, base, aSize);
+            if (lv.sinMonto) {
+                ctx.font = '700 ' + aSize + 'px ' + UI.font.display;
+                ctx.fillStyle = UI.color.text;
+                ctx.fillText(amount, r.w - r.w * 0.045, base);
+            } else {
+                drawOdometer( ctx, lv, amount, r.w - r.w * 0.045, base, aSize);
+            }
 
             ctx.textAlign = 'left';
             const nameMax = Math.max(30, r.w * 0.9 - aw - 30);
@@ -1872,7 +1899,8 @@ const Live = {
                     ? s.total - s.verde
                     : s.total;
 
-                const text = pct(
+                /* Sin resultados de la API: guion, no un 0.00% inventado. */
+                const text = !(totalEstadistica > 0) ? '\u2014' : pct(
                     s[key] || 0,
                     totalEstadistica
                 ).toFixed(2) + '%';
@@ -1944,7 +1972,7 @@ const Live = {
         ] : [
             { text: String(lj.type || ''), color: UI.color.gold },
             { text: ticketMask(lj.ticket), color: UI.color.text },
-            { text: money(lj.amount),      color: UI.color.text },
+            { text: (lj.amount == null || lj.amount === '' || !isFinite(Number(lj.amount))) ? '\u2014' : money(lj.amount), color: UI.color.text },
             { text: String(lj.date || ''), color: UI.color.text }
         ];
 
@@ -2325,13 +2353,14 @@ const DEMO_LEVELS = [
 const Demo = {
 
     init() {
-        applyLevels(DEMO_LEVELS.slice(0, 5));
-
         if (INTEGRADO) {
-            /* Los niveles de demostración solo existen para que el visor
-               sepa que la pantalla arrancó. El primer setJackpots() real
-               los sustituye DE GOLPE (sin contar desde el monto demo). */
-            GAME.levelsDemo = true;
+            /* PRODUCCION: ningun nivel ni monto de demostracion. El panel de
+               jackpots queda vacio hasta que la API responda; si falla dice
+               ERROR y si no hay jackpots dice JK SIN ASIGNAR. */
+            GAME.levels = [];
+            GAME.jackpotsMsg = '';
+            GAME.levelsDemo = true;      // la primera carga real arranca desde su propio monto
+            GAME.uiLista = true;         // el visor espera esta marca para empezar
 
             /* Sin números inventados: la tira, las estadísticas y el último
                jackpot quedan vacíos hasta que el visor los entregue. */
@@ -2341,6 +2370,9 @@ const Demo = {
             rebuild();
             return;
         }
+
+        /* Solo la demo aislada (index.html abierto fuera del visor). */
+        applyLevels(DEMO_LEVELS.slice(0, 5));
 
         for (let i = 0; i < 60; i++) {
             const n = WHEEL[Math.floor(Math.random() * WHEEL.length)];
@@ -2683,7 +2715,9 @@ function applyLevels(list) {
     const previos = primerFeedReal ? [] : (GAME.levels || []);
 
     GAME.levels = list.slice(0, 6).map((d, i) => {
-        const amt = Number(d.amount != null ? d.amount : d.seed) || 0;
+        const bruto = d.amount != null ? d.amount : d.seed;
+        const sinMonto = bruto == null || bruto === '' || !isFinite(Number(bruto));
+        const amt = sinMonto ? 0 : Number(bruto);
         const key = d.key || d.name || ('L' + i);
 
         /* Si el nivel ya existía se conserva lo que se está mostrando, para
@@ -2697,6 +2731,7 @@ function applyLevels(list) {
             theme:   d.theme || THEME_ORDER[i % THEME_ORDER.length],
             rate:    d.rate || 1,
             amount:  amt,
+            sinMonto: sinMonto,          // la API no mando monto: se muestra un guion
             display:
                 primerFeedReal && !antes
                     ? valorInicialJackpot(amt)
@@ -2820,7 +2855,8 @@ window.StormUI = {
         api.requestRender = hostApi.requestRender;
         UIA.load();
         Demo.init();
-        bindKeys();
+        /* Las teclas de demostracion solo existen fuera del visor. */
+        if (!INTEGRADO) bindKeys();
     },
 
     /* Capa de interfaz: solo repinta lo que cambió. */
@@ -2909,8 +2945,18 @@ window.StormUI = {
            The panel re-flows and the chrome cache rebuilds itself. */
         setJackpots(list) {
             FEED = true;
+            list = Array.isArray(list) ? list : [];
             applyLevels(list);
             GAME.levelsDemo = false;
+            GAME.jackpotsMsg = list.length ? '' : 'JK SIN ASIGNAR';
+            repintar();
+        },
+
+        /* La API de jackpots fallo. Si ya se mostraron montos reales se
+           conservan (ultima pantalla valida); si nunca llegaron, ERROR. */
+        setJackpotsError() {
+            FEED = true;
+            if (!GAME.levels.length) GAME.jackpotsMsg = 'ERROR';
             repintar();
         },
 

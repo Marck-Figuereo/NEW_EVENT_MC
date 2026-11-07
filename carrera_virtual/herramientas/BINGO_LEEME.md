@@ -19,6 +19,15 @@ Parámetros de prueba: `venta=20` (el primer sorteo cierra en 20 s), `intervalo=
 
 Un visor que se enciende con el sorteo ya empezado no lo retoma: espera al siguiente.
 
+## Pantalla SORTEOS
+
+- **Anteriores** (5): número, hora y los 4 premios. **Próximos** (5): número, fecha y hora; la fila 1 es el sorteo en venta y va en dorado. **Especiales**: los 3 más cercanos que no hayan pasado; sin ninguno, el arte de "No hay sorteos especiales". **Último jackpot**: ticket, monto, lugar y fecha.
+- Cada dato va en su hueco del arte y nunca se sale (se comprime si no cabe). Un número de sorteo de más de 5 dígitos se muestra con sus 3 últimos, como los últimos sorteos de los demás juegos.
+- Sin dato (API caída, sin historial): guion tenue en cada hueco; el conteo muestra `--:--:--`.
+- Al volver de un sorteo el tablero avanza: cada tarjeta cambia su dato en cascada y la del sorteo recién jugado se ilumina en dorado. En el último minuto de venta el conteo se pone dorado. Con "reducir movimiento" del sistema solo hay fundidos.
+- El jackpot sube en pantalla y nunca se ve bajar: cuando se gana, arranca desde la base.
+- Se refresca sola cada 60 s (un especial nuevo del panel aparece sin esperar un sorteo) y en cuanto el socket informa el sorteo en venta o el intervalo. Si nada cambió, no se redibuja.
+
 ## Archivos
 
 ```

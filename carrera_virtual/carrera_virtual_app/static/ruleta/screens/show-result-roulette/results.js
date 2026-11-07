@@ -983,7 +983,8 @@ function main() {
             .then(j => renderResult(j))
             .catch(() => renderResult(DEMO.base));
 
-        DEMO.keys();
+        /* Teclas de demostracion: solo con la pantalla abierta fuera del visor. */
+        if (window.parent === window) DEMO.keys();
 
         /* El callback de render se registra una vez y el ticker se duerme.
            Solo despierta mientras dura la entrada del resultado. */

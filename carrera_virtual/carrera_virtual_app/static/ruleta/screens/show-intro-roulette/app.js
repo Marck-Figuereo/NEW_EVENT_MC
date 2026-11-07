@@ -986,6 +986,7 @@
   });
 
   addEventListener("keydown", event => {
+    if (window.parent !== window) return;   // dentro del visor: sin demo por teclado
     if (event.code === "Space") {
       event.preventDefault();
       play(DEMO);

@@ -63,11 +63,14 @@ function formatoTiempo(segundos) {
     return String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
 }
 
-const moneda = number => new Intl.NumberFormat('es-US', {
+/* Monto que no llegó de la API -> guion. Nunca se muestra un $0.00 inventado. */
+const montoONull = v => (v == null || v === '' || !isFinite(Number(v))) ? null : Number(v);
+
+const moneda = number => montoONull(number) === null ? '\u2014' : new Intl.NumberFormat('es-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 2
-}).format(Number(number) || 0);
+}).format(Number(number));
 
 /* Los últimos 6 dígitos, igual que hacía el visor anterior. */
 function ticketCorto(id) {
@@ -756,7 +759,7 @@ const RouletteDB = {
             const niveles = lista.slice(0, 6).map(j => ({
                 key:    String(j.jackpot_id),
                 name:   String(j.level_name || j.name || 'JACKPOT').toUpperCase(),
-                amount: Number(j.current_amount) || 0
+                amount: montoONull(j.current_amount)
             })).map(decorarNivel);
 
             /* ULTIMO JACKPOT: el ganador mas reciente entre los jackpots del visor. */
@@ -768,7 +771,7 @@ const RouletteDB = {
                 ultimo: reciente ? {
                     type:   String(reciente.level_name || reciente.name || 'JACKPOT').toUpperCase(),
                     ticket: reciente.last_winner_ticket_id,
-                    amount: Number(reciente.last_winner_amount) || 0,
+                    amount: montoONull(reciente.last_winner_amount),
                     place:  reciente.last_winner_lugar,
                     date:   String(reciente.last_winner_at).slice(0, 10).split('-').reverse().join('/')
                 } : null
@@ -1038,7 +1041,7 @@ const RouletteDB = {
                     tipo:   String(item.level_name || item.name || 'JACKPOT').toUpperCase(),
                     lugar:  ev.winner_lugar,
                     ticket: ev.ticket_code,
-                    monto:  Number(ev.winner_amount) || 0,
+                    monto:  montoONull(ev.winner_amount),
                     fecha:  ev.selected_at
                 };
             });
@@ -1080,7 +1083,7 @@ const RouletteDB = {
 
                     /* Un solo ganador de bono por localidad y sorteo. */
                     const g = data.winners[0];
-                    return [{ ticket: g.masked_ticket_code || g.short_code, monto: Number(g.bonus_amount) || 0 }];
+                    return [{ ticket: g.masked_ticket_code || g.short_code, monto: montoONull(g.bonus_amount) }];
                 }
 
             } catch (e) {

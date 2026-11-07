@@ -35,6 +35,7 @@ const CONFIG = {
     alertaMs: 12000,               // aviso "Error al comenzar el sorteo"
     esperaTrasSorteoMs: 15000,     // bolas en pantalla al terminar, antes de volver a SORTEOS
     sincroJackpotMs: 20000,        // cada cuánto sube el jackpot en SORTEOS
+    refrescoSorteosMs: 60000,      // cada cuánto se revisan anteriores / próximos / especiales en SORTEOS
     sinDatosMs: 5000,              // sin countdown en 5 s -> el conteo se muestra sin datos
     socket: { host: '127.0.0.1:8500', reintento: 1000 },
 
@@ -53,7 +54,8 @@ const STATE = {
     ultimoCierre: null,     // para deducir el intervalo entre sorteos si el socket no lo manda
     ultimoConteo: 0,
     sinDatos: false,
-    sorteoActual: null
+    sorteoActual: null,
+    firmaReloj: null        // sorteo en venta + intervalo con que se armó PRÓXIMOS
 };
 
 const el = {
@@ -172,6 +174,16 @@ function pintarConteo() {
     const r = STATE.reloj;
     const seg = r && !STATE.sinDatos ? Math.max(0, Math.ceil((r.cierre - Date.now()) / 1000)) : null;
     pantalla.actualizarReloj({ hora: horaActual(), conteo: conteo(seg) });
+}
+
+/* Mientras se ve SORTEOS: un especial nuevo del panel, un cambio en el historial o en los
+   próximos aparece sin esperar al siguiente sorteo. Si nada cambió, la pantalla no se toca. */
+async function refrescarSorteos() {
+    if (!pantalla || STATE.vista !== 'programacion' || STATE.ciclando) return;
+    const datos = await BingoDB.consultarProgramacion(STATE.reloj);
+    if (datos && STATE.vista === 'programacion' && !STATE.ciclando && pantalla.refrescarProgramacion(datos)) {
+        console.log('[flow] SORTEOS actualizada con datos nuevos');
+    }
 }
 
 async function sincroJackpot() {
@@ -298,6 +310,15 @@ function onCountdown(data, origen = 'ws') {
         }
         STATE.ultimoCierre = { event_number: data.event_number, cierre: ctx.cierre };
         STATE.reloj = { sorteo: data.event_number, sorteo_id: ctx.sorteo_id, cierre: ctx.cierre, intervaloMs: iv, segundos: segundos, abierto: true };
+
+        // Cambió el sorteo en venta o se conoció el intervalo: los PRÓXIMOS de SORTEOS dependen
+        // de eso. Se refresca en el acto (al arrancar la lista se armaba antes del primer mensaje
+        // del socket y quedaba vacía hasta el siguiente refresco).
+        const firma = data.event_number + '|' + iv;
+        if (firma !== STATE.firmaReloj) {
+            STATE.firmaReloj = firma;
+            refrescarSorteos();
+        }
     } else if (STATE.reloj) {
         STATE.reloj.segundos = 0;
     }
@@ -530,6 +551,7 @@ async function main() {
 
     setInterval(pintarConteo, 1000);
     setInterval(sincroJackpot, CONFIG.sincroJackpotMs);
+    setInterval(refrescarSorteos, CONFIG.refrescoSorteosMs);
 }
 
 

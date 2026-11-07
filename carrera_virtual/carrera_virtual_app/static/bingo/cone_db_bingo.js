@@ -88,6 +88,9 @@ function ticketCorto(t) {
 }
 
 const num = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+/* Montos de la API: si no llegan quedan en null y la pantalla muestra un guion
+   (nunca un $0.00 inventado). */
+const montoONull = v => (v == null || v === '' || !Number.isFinite(Number(v))) ? null : Number(v);
 const ls = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
 
 function getCookie(name) {
@@ -207,7 +210,7 @@ function validarSorteo(s, cfg) {
 function normalizarUltimo(u) {
     if (!u) return null;
     return {
-        monto: num(u.monto != null ? u.monto : u.amount),
+        monto: montoONull(u.monto != null ? u.monto : u.amount),
         fecha: fechaCorta(aFecha(u.fecha || u.date)),
         lugar: u.lugar || u.place || '',
         ticket: ticketCorto(u.ticket)
@@ -235,7 +238,7 @@ function normalizarSorteo(d, contexto) {
         ticket: ticketCorto(g.ticket),
         ticket_completo: g.ticket,
         numeros: g.numeros,
-        monto: g.monto != null ? num(g.monto) : (g.tipo === 'JACKPOT' ? num(jk.monto) : 0)
+        monto: g.monto != null ? montoONull(g.monto) : (g.tipo === 'JACKPOT' ? montoONull(jk.monto) : null)
     }));
 
     return {
@@ -244,7 +247,7 @@ function normalizarSorteo(d, contexto) {
         codigo: s.codigo || null,
         bolas: (s.bolas || []).map(Number),
         premios: s.premios || {},
-        jackpot: num(jk.monto != null ? jk.monto : jk.monto_actual),
+        jackpot: montoONull(jk.monto != null ? jk.monto : jk.monto_actual),
         ultimo_jackpot: normalizarUltimo(s.ultimo_jackpot || jk.ultimo),
         ganadores: ganadores,
         seguimiento: (s.seguimiento || []).map(c => ({ lugar: c.lugar, ticket: ticketCorto(c.ticket), numeros: c.numeros })),
@@ -297,7 +300,7 @@ function normalizarProgramacion(d, reloj) {
         }));
 
     return {
-        jackpot: num(jk.monto_actual != null ? jk.monto_actual : jk.monto),
+        jackpot: montoONull(jk.monto_actual != null ? jk.monto_actual : jk.monto),
         ultimo_jackpot: normalizarUltimo(jk.ultimo || d.ultimo_jackpot),
         anteriores: anteriores,
         proximos: proximos,

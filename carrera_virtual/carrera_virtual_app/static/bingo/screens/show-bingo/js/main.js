@@ -134,6 +134,12 @@ window.BingoScreen = {
 		actualizarJackpotProgramacion(monto);
 	},
 
+	/* Refresco periodico de SORTEOS: solo redibuja si los datos cambiaron. */
+	refrescarProgramacion(datos) {
+		if (curPage !== 'results') return false;
+		return refrescarProgramacion(datos);
+	},
+
 	jugarSorteo(sorteo) {
 		goPage('game');
 		return jugarSorteo(sorteo);
@@ -152,5 +158,8 @@ window.BingoScreen = {
 		} catch (e) {}
 	},
 
-	get vista() { return curPage; }
+	get vista() { return curPage; },
+
+	/* Diagnostico: si el ultimo armado de SORTEOS hizo el avance (anteriores / proximos) */
+	get ultimoCambio() { return ultimoCambio; }
 };

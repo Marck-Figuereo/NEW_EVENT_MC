@@ -29,7 +29,10 @@ function formatoTiempo(segundos) {
 
 
 
-const moneda = (number) => new Intl.NumberFormat('es-US', {style: 'currency',currency: 'USD', minimumFractionDigits: 2}).format(number);
+// Monto o cuota que no llego de la API -> '- - -' (nunca un valor inventado ni NaN)
+const sin_dato = (v) => v == null || v === '' || !isFinite(Number(v))
+const moneda = (number) => sin_dato(number) ? '- - -' : new Intl.NumberFormat('es-US', {style: 'currency',currency: 'USD', minimumFractionDigits: 2}).format(Number(number));
+const cuota_txt = (v) => sin_dato(v) ? '- - -' : parseFloat(v).toFixed(1)
 
 
 // ==========================================
@@ -163,6 +166,14 @@ const pintar_caja_jackpot = (id_html, clave, jackpot) => {
 
     const datoss = localStorage.getItem(clave)
     const jack   = jackpot['current_amount']
+
+    // El jackpot llego sin monto: ERROR, no se inventa ninguna cifra
+    if (sin_dato(jack)) {
+        detener_animacion_jack(id_html)
+        $(id_html).text('ERROR').css('font-size', '22px')
+        localStorage.removeItem(clave)
+        return
+    }
 
     if(datoss == undefined){ 
         
@@ -448,7 +459,7 @@ const Consulta_Tabla = async (id_table, game) => {
         
             Object.entries(data).forEach(([cmb, odds])=>{
     
-                if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(parseFloat(odds).toFixed(1))
+                if      (cmb.length == 3 && [2, 3, 4].includes(game)) $('#'+ cmb[0] +'-' + cmb[2]).text(cuota_txt(odds))
                 else if (game == 5)                                   $('#ods_' + cmb).text(isNaN(parseFloat(odds)) ? odds : parseFloat(odds).toFixed(1));
                 else                                                  $(`#${cmb[4]}-${cmb[4]}` ).text(isNaN(parseFloat(odds)) ? odds : parseFloat(odds).toFixed(1))
     
@@ -696,8 +707,8 @@ const Consulta_resultados = async (sorteo_esperado = null) => {
         let pos1 = odds[1]['selection_key'][0] 
         let pos2 = odds[1]['selection_key'][2]
         
-        pago_win  = parseFloat(odds[0]['odds']).toFixed(1)
-        pago_pale = parseFloat(odds[1]['odds']).toFixed(1)
+        pago_win  = cuota_txt(odds[0]['odds'])
+        pago_pale = cuota_txt(odds[1]['odds'])
 
         if (document.getElementById("n_race")) {
 
@@ -954,12 +965,12 @@ const pintar_ultimas_carreras = (data) => {
 
             document.getElementById(`numero_race${cont}`).innerHTML = races['event_number'] 
             document.getElementById(`lugarimg_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][0]['selection_key']}.svg`
-            document.getElementById(`lugarprc_1er${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][0]['odds']).toFixed(1) 
+            document.getElementById(`lugarprc_1er${cont}`).innerHTML = cuota_txt(races['settlement']['result_odds'][0]['odds']) 
 
 
             document.getElementById(`lugarimg_pls_1er${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][1]['selection_key'][0]}.svg`
             document.getElementById(`lugarimg_pls_2do${cont}`).src =  `static/img/numeros/${dc[races['game_id']]}/n${races['settlement']['result_odds'][1]['selection_key'][2]}.svg`
-            document.getElementById(`lugarprc_pls${cont}`).innerHTML = parseFloat(races['settlement']['result_odds'][1]['odds']).toFixed(1) 
+            document.getElementById(`lugarprc_pls${cont}`).innerHTML = cuota_txt(races['settlement']['result_odds'][1]['odds']) 
 
 
         })
