@@ -28,7 +28,8 @@
   var DIAS = ['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'];
   var DIAS_LARGOS = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
   var MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-  var PREMIOS = ['1ER PREMIO', '2DO PREMIO', '3ER PREMIO'];
+  var PREMIOS = ['1.er premio', '2.º premio', '3.er premio'];
+  var dia = function (n) { return DIAS[n].toLowerCase(); };
 
   /* ------------------------------------------------------------------ iconos */
   var IC = {
@@ -52,7 +53,7 @@
     var p = hhmm.split(':'), h = +p[0], ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
     return h + ':' + p[1] + ' ' + ap;
   }
-  function fechaCorta(iso) { var p = iso.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]); return DIAS[d.getDay()] + ' ' + (+p[2]) + ' ' + MESES[d.getMonth()]; }
+  function fechaCorta(iso) { var p = iso.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]); return dia(d.getDay()) + ' ' + (+p[2]) + ' ' + MESES[d.getMonth()].toLowerCase(); }
   function cuenta(ms) {
     var s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
     return (h ? h + ':' + T.pad(m) : m) + ':' + T.pad(x);
@@ -112,11 +113,11 @@
     return null;
   }
   function chipDe(e) {
-    if (e.estado === 'resultado') return { cls: 'chip chip-resultado', txt: 'RESULTADO' };
-    if (e.estado === 'esperando') return { cls: 'chip chip-esperando', txt: 'ESPERANDO' };
-    if (e.estado === 'libre') return { cls: 'chip chip-libre', txt: 'PRÓXIMO ' + (e.proxDia ? DIAS[e.proxDia.getDay()] : '') };
-    if (e.falta <= 60 * 60000) return { cls: 'chip chip-cierra' + (e.falta <= 5 * 60000 ? ' urgente' : ''), txt: 'CIERRA EN ' + cuenta(e.falta) };
-    return { cls: 'chip chip-proximo', txt: 'CIERRE ' + hora12(e.hz.cierreTxt) };
+    if (e.estado === 'resultado') return { cls: 'chip chip-resultado', txt: 'Resultado' };
+    if (e.estado === 'esperando') return { cls: 'chip chip-esperando', txt: 'Esperando' };
+    if (e.estado === 'libre') return { cls: 'chip chip-libre', txt: 'Próximo ' + (e.proxDia ? dia(e.proxDia.getDay()) : '') };
+    if (e.falta <= 60 * 60000) return { cls: 'chip chip-cierra' + (e.falta <= 5 * 60000 ? ' urgente' : ''), txt: 'Cierra en ' + cuenta(e.falta) };
+    return { cls: 'chip chip-proximo', txt: 'Cierra ' + hora12(e.hz.cierreTxt) };
   }
   function vistaBolas(e, cantidad) {
     var vacia = []; for (var i = 0; i < cantidad; i++) vacia.push('--');
@@ -147,9 +148,7 @@
     t.style.setProperty('--ac', rgb(casa.acento)); t.style.setProperty('--i', i);
     var cols = ancha && n > 1 ? 2 : 1, filas = Math.ceil(n / cols);
     t.innerHTML = (casa.fondo ? '<div class="tarjeta-fondo" style="background-image:url(' + casa.fondo + ')' + (casa.fondo_pos ? ';background-position:' + casa.fondo_pos : '') + '"></div>' : '') +
-      '<div class="tarjeta-brillo"></div>' +
-      '<div class="t-cab">' + placaHtml(casa) + '<div><div class="t-nombre">' + esc(casa.nombre) + '</div>' +
-      '<div class="t-sub">Quiniela · ' + n + (n === 1 ? ' sorteo' : ' sorteos') + '</div></div></div>';
+      '<div class="t-cab">' + placaHtml(casa) + '<div class="t-nombre">' + esc(casa.nombre) + '</div></div>';
     var cuerpo = el('div', 't-cuerpo' + (cols === 2 ? ' cols-2' : ''));
     cuerpo.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0,1fr))';
     cuerpo.style.gridTemplateRows = 'repeat(' + filas + ', minmax(0,1fr))';
@@ -168,8 +167,8 @@
   function tarjetaModalidad(m, i) {
     var t = el('div', 'tarjeta modalidad ' + (m.ancho ? 'ancha ' : '') + (m.tipo === 'kino' ? 'kino ' : '') + 'n-' + m.cantidad);
     t.style.setProperty('--ac', rgb(m.acento)); t.style.setProperty('--i', i);
-    var dias = m.dias.length === 7 ? 'Todos los días' : m.dias.map(function (d) { return DIAS[d]; }).join(' · ');
-    t.innerHTML = '<div class="tarjeta-brillo"></div>' +
+    var dias = m.dias.length === 7 ? 'Todos los días' : m.dias.map(function (d) { return dia(d); }).join(', ');
+    t.innerHTML = '' +
       '<div class="t-cab">' + placaHtml(m) + '<div style="min-width:0"><div class="t-nombre">' + esc(m.nombre) + '</div>' +
       '<div class="t-sub">' + esc(m.casa) + ' · ' + dias + '</div></div></div>' +
       '<div class="m-cuerpo"><div class="m-bolas-fila"></div><div class="m-pie"><div class="m-fecha"></div><span class="chip"></span></div></div>';
@@ -188,17 +187,17 @@
           casas.forEach(function (c, i) { g.appendChild(tarjetaCasa(c, i, alta)); });
           e.appendChild(g); escenasEl.appendChild(e);
           ESCENAS.push({ tipo: 'quinielas', pagina: p + 1, el: e, segundos: r.segundos,
-            kicker: 'RESULTADOS DE HOY · QUINIELAS', titulo: pg.titulo });
+            titulo: pg.titulo });
         });
       } else if (r.escena === 'modalidades') {
         var e = el('section', 'escena'), g = el('div', 'grilla');
         MODS.forEach(function (m, i) { g.appendChild(tarjetaModalidad(m, i)); });
         e.appendChild(g); escenasEl.appendChild(e);
-        ESCENAS.push({ tipo: 'modalidades', el: e, segundos: r.segundos, kicker: 'SORTEOS ESPECIALES', titulo: 'Kino, Loto, Pool y más' });
+        ESCENAS.push({ tipo: 'modalidades', el: e, segundos: r.segundos, titulo: 'Sorteos especiales' });
       } else if (r.escena === 'horarios') {
         var h = el('section', 'escena'); h.innerHTML = '<div class="horarios"><div class="h-panel"></div><div class="h-panel"></div></div>';
         escenasEl.appendChild(h);
-        ESCENAS.push({ tipo: 'horarios', el: h, segundos: r.segundos, kicker: 'PROGRAMACIÓN DE HOY', titulo: 'Horarios de cierre y sorteo' });
+        ESCENAS.push({ tipo: 'horarios', el: h, segundos: r.segundos, titulo: 'Horarios de hoy' });
       }
     });
     var pag = $('paginador');
@@ -217,18 +216,18 @@
       c.firma = firma;
       c.bolas.innerHTML = bolasHtml(vb.nums, c.color, vb.cls);
       var m2;
-      if (e.estado === 'resultado') m2 = '<div class="m2 hoy">HOY · ' + fechaCorta(e.hoy) + '</div>';
-      else if (e.estado === 'esperando') m2 = '<div class="m2">CERRÓ ' + hora12(e.hz.cierreTxt) + '</div>';
-      else m2 = '<div class="m2">' + (e.res ? 'ANTERIOR · ' + fechaCorta(e.res.fecha) : 'SIN RESULTADO') + '</div>';
-      c.meta.innerHTML = (e.hz.sinHora ? '<div class="m1">CIERRE<b>' + hora12(e.hz.cierreTxt) + '</b></div>'
-                                      : '<div class="m1">SORTEO<b>' + hora12(e.hz.horaTxt) + '</b></div>') + m2;
+      if (e.estado === 'resultado') m2 = '';
+      else if (e.estado === 'esperando') m2 = '<div class="m2">Cerró ' + hora12(e.hz.cierreTxt) + '</div>';
+      else m2 = '<div class="m2">' + (e.res ? 'Anterior · ' + fechaCorta(e.res.fecha) : 'Sin resultado') + '</div>';
+      c.meta.innerHTML = (e.hz.sinHora ? '<div class="m1">Cierre<b>' + hora12(e.hz.cierreTxt) + '</b></div>'
+                                      : '<div class="m1">Sorteo<b>' + hora12(e.hz.horaTxt) + '</b></div>') + m2;
     });
   }
 
   function pintarModalidades(ahora) {
     modCeldas.forEach(function (c) {
       var e = estadoDe(c.id, ahora), ch = chipDe(e), m = c.m;
-      if (e.estado === 'libre' && e.proxDia) ch.txt = 'PRÓXIMO ' + DIAS[e.proxDia.getDay()] + ' ' + hora12(m.hora);
+      if (e.estado === 'libre' && e.proxDia) ch.txt = 'Próximo ' + dia(e.proxDia.getDay()) + ' ' + hora12(m.hora);
       if (c.chip.className !== ch.cls) c.chip.className = ch.cls;
       if (c.chip.textContent !== ch.txt) c.chip.textContent = ch.txt;
       var vb = vistaBolas(e, m.cantidad);
@@ -245,10 +244,10 @@
       }
       c.bolas.innerHTML = html;
       var f;
-      if (e.estado === 'resultado') f = 'SORTEO DE HOY<b>' + hora12(e.hz.horaTxt) + '</b>';
-      else if (e.res && vb.cls !== 'vacia') f = 'ÚLTIMO SORTEO<b>' + fechaCorta(e.res.fecha) + '</b>';
-      else if (e.estado === 'esperando') f = 'SORTEO DE HOY<b>' + hora12(e.hz.horaTxt) + '</b>';
-      else f = 'SORTEO<b>' + hora12(m.hora) + '</b>';
+      if (e.estado === 'resultado') f = 'Sorteo de hoy<b>' + hora12(e.hz.horaTxt) + '</b>';
+      else if (e.res && vb.cls !== 'vacia') f = 'Último sorteo<b>' + fechaCorta(e.res.fecha) + '</b>';
+      else if (e.estado === 'esperando') f = 'Sorteo de hoy<b>' + hora12(e.hz.horaTxt) + '</b>';
+      else f = 'Sorteo<b>' + hora12(m.hora) + '</b>';
       c.meta.innerHTML = f;
     });
   }
@@ -270,7 +269,7 @@
     // Las próximas en cerrar: todas las que comparten la primera hora de cierre pendiente
     for (var i = 0; i < lista.length; i++) if (lista[i].e.estado === 'proximo') { cierreSig = +lista[i].e.hz.cierre; break; }
     var mitad = Math.ceil(lista.length / 2), paneles = esc_.el.querySelectorAll('.h-panel');
-    var cab = '<div class="h-fila h-cab"><span></span><span>LOTERÍA</span><span>CIERRE</span><span>SORTEO</span><span style="text-align:right">ESTADO</span></div>';
+    var cab = '<div class="h-fila h-cab"><span></span><span>Lotería</span><span>Cierre</span><span>Sorteo</span><span style="text-align:right">Estado</span></div>';
     [lista.slice(0, mitad), lista.slice(mitad)].forEach(function (parte, k) {
       var cuentas = [];
       var html = cab + parte.map(function (f) {
@@ -278,13 +277,15 @@
         var esSig = e.estado === 'proximo' && +e.hz.cierre === cierreSig;
         if (e.estado === 'resultado' && !f.mod) estado = bolasHtml(e.res.numeros, f.color);
         else if (e.estado === 'resultado') estado = '<span class="' + ch.cls + '">' + ch.txt + '</span>';
-        else if (e.estado === 'proximo' && !esSig) estado = '<span class="chip chip-proximo">EN VENTA</span>';
+        else if (e.estado === 'proximo' && !esSig) estado = '<span class="chip chip-venta">En venta</span>';
         else if (e.estado === 'proximo') { cuentas.push(ch.txt); estado = '<span class="' + ch.cls + '" data-cd="1">@@CD@@</span>'; }
         else estado = '<span class="' + ch.cls + '">' + ch.txt + '</span>';
+        // 'Loteka Noche' en vez de 'Loteka  Loteka Noche'; 'Nacional  Noche' cuando hace falta la casa
         var nombreCasa = f.mod ? f.nombre : f.casa, detalle = f.mod ? f.casa : f.nombre;
+        if (!f.mod && f.o && nombreCorto(f.o) === f.nombre) { nombreCasa = f.nombre; detalle = ''; }
         var cls = 'h-fila' + (e.estado !== 'proximo' ? ' pasado' : '') + (esSig ? ' siguiente' : '');
-        return '<div class="' + cls + '" style="--ac:' + rgb(f.ac) + '"><span class="h-barra"></span>' +
-          '<div class="h-nombre">' + esc(nombreCasa) + '<small>' + esc(detalle) + '</small></div>' +
+        return '<div class="' + cls + '" style="--ac:' + rgb(f.ac) + '"><span class="h-punto"></span>' +
+          '<div class="h-nombre">' + esc(nombreCasa) + (detalle ? '<small>' + esc(detalle) + '</small>' : '') + '</div>' +
           '<div class="h-hora">' + hora12(e.hz.cierreTxt) + '</div><div class="h-hora tenue">' + (e.hz.sinHora ? '—' : hora12(e.hz.horaTxt)) + '</div>' +
           '<div class="h-estado">' + estado + '</div></div>';
       }).join('');
@@ -341,7 +342,6 @@
     idx = (i + ESCENAS.length) % ESCENAS.length;
     var esc_ = ESCENAS[idx];
     ESCENAS.forEach(function (x) { x.el.classList.toggle('activa', x === esc_); });
-    $('tituloKicker').textContent = esc_.kicker;
     $('tituloPrincipal').textContent = esc_.titulo;
     var ahora = T.ahora();
     ponerFondo(esc_.tipo === 'horarios' ? 'programado' : fondoPorHora(ahora));
@@ -408,8 +408,8 @@
       var r = lista[0], nums = r.res.numeros, grande = nums.length > 3;
       var etq = r.o.tipo === 'quiniela' ? '<div class="spot-etq">' + PREMIOS.map(function (p) { return '<span>' + p + '</span>'; }).join('') + '</div>' : '';
       return { tipo: 'resultado', segundos: seg,
-        html: '<div class="rayos" style="--ac:' + r.ac + '"></div><div class="spot" style="--ac:' + r.ac + '">' +
-          '<div class="spot-kicker">¡NUEVO RESULTADO!</div>' +
+        html: '<div class="spot" style="--ac:' + r.ac + '">' +
+          '<div class="spot-kicker">Nuevo resultado</div>' +
           '<div class="spot-cab">' + placaHtml(r.casa) + '<div><div class="spot-titulo">' + esc(r.nombre) + '</div><div class="spot-sub">' + esc(r.sub) + ' · ' + r.hora + '</div></div></div>' +
           bolasHtml(nums, r.color) + etq +
           '<div class="spot-pie">Sorteo del <b>' + fechaCorta(r.res.fecha) + '</b> · Juega ya en este punto de venta</div></div>',
@@ -417,10 +417,10 @@
     }
     // Varios a la vez: cuadrícula en la misma pantalla
     var n = lista.length, cols = n <= 3 ? n : n === 4 ? 2 : 3, filas = Math.ceil(n / cols);
-    var anchoCelda = (1760 - (cols - 1) * 24) / cols - 48;
+    var anchoCelda = (1760 - (cols - 1) * 24) / cols - 48 - 4;   // 4 px de bordes y redondeo
     var base = filas === 1 ? (cols === 2 ? 150 : 124) : filas === 2 ? 104 : 72;
-    var html = '<div class="rayos"></div><div class="spot multi">' +
-      '<div class="spot-kicker">¡NUEVOS RESULTADOS!</div>' +
+    var html = '<div class="spot multi">' +
+      '<div class="spot-kicker">Nuevos resultados</div>' +
       '<div class="res-grilla" style="grid-template-columns:repeat(' + cols + ',minmax(0,1fr))">' +
       lista.map(function (r, k) {
         var nums = r.res.numeros, porFila = Math.min(nums.length, 10);
@@ -442,8 +442,8 @@
     var casa = null;
     if (j.loteria) CASAS.forEach(function (c) { if (c.id === j.loteria || c.nombre.toLowerCase() === String(j.loteria).toLowerCase()) casa = c; });
     var ac = casa ? rgb(casa.acento) : '242,199,92';
-    var html = '<div class="rayos" style="--ac:' + ac + '"></div><div class="spot jugada" style="--ac:' + ac + '">' +
-      '<div class="spot-kicker">NÚMEROS DE LA SUERTE</div>' +
+    var html = '<div class="spot jugada" style="--ac:' + ac + '">' +
+      '<div class="spot-kicker">Números de la suerte</div>' +
       '<div class="spot-nombre">La jugada de<b>' + esc((j.nombre || 'un cliente').toUpperCase()) + '</b></div>' +
       '<div class="bolas">' + nums.map(function (n, i) { return '<div class="bola b-' + COLORES_JUGADA[i % COLORES_JUGADA.length] + '" style="--n:' + i + '"><span data-n="' + n + '">00</span></div>'; }).join('') + '</div>' +
       '<div class="spot-pie">' + (casa ? 'Para <b>' + esc(casa.nombre) + '</b> · ' : '') + 'Escanea el QR y genera la tuya</div></div>';
@@ -481,7 +481,7 @@
     if (ESCENAS[idx] && ESCENAS[idx].tipo === 'horarios') pintarHorarios(ahora);
     else if (ESCENAS[idx]) ponerFondo(fondoPorHora(ahora));
     pintarPie(ahora);
-    $('tituloDia').textContent = ultimaCarga ? 'ACTUALIZADO ' + hora12(T.pad(ultimaCarga.getHours()) + ':' + T.pad(ultimaCarga.getMinutes())) : '';
+    $('tituloDia').textContent = ultimaCarga ? 'Actualizado ' + hora12(T.pad(ultimaCarga.getHours()) + ':' + T.pad(ultimaCarga.getMinutes())) : '';
   }
 
   /* ------------------------------------------------------------------ escala 1920x1080 */
@@ -499,17 +499,6 @@
     $('marcaNombre').textContent = mk.nombre || '';
     $('marcaSub').textContent = mk.sub || '';
     if (!mk.nombre && !mk.sub) document.querySelector('.marca-texto').style.display = 'none';
-    // La línea de abajo ocupa el mismo ancho que el nombre
-    function ajustarSub() {
-      var n = $('marcaNombre'), b = $('marcaSub'), txt = (mk.sub || '').length;
-      if (!mk.nombre || !txt) return;
-      b.style.letterSpacing = '0px'; b.style.marginRight = '0px';
-      var sobra = n.offsetWidth - b.offsetWidth;
-      var ls = Math.max(0, sobra / (txt - 1));
-      b.style.letterSpacing = ls + 'px'; b.style.marginRight = -ls + 'px';
-    }
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarSub); else setTimeout(ajustarSub, 500);
-    $('lema').innerHTML = (mk.lema || []).map(function (l) { return '<div>' + esc(l) + '</div>'; }).join('');
     $('qrTexto').innerHTML = (CFG.qr.titulo || []).map(function (l) { return '<span>' + esc(l) + '</span>'; }).join('');
     try {
       var qr = window.qrcode(0, 'M'); qr.addData(CFG.qr.url); qr.make();
@@ -553,5 +542,9 @@
   }
 
   window.VisorTV = { mostrarJugada: mostrarJugada, anunciarResultado: anunciarResultado, recargar: cargar, irA: irA };
+
+  // Prueba local: la página del QR (/LOTERIA/suerte) abierta en este mismo navegador manda su jugada aquí.
+  // En producción la jugada llega por el WebSocket del punto de venta y se llama a VisorTV.mostrarJugada.
+  try { if ('BroadcastChannel' in window) new BroadcastChannel('lottoview-jugadas').onmessage = function (ev) { mostrarJugada(ev.data); }; } catch (_) {}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

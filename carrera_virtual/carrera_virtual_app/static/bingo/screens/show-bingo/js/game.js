@@ -40,11 +40,11 @@ const HIDE_POPUP_SECONDS = 1.2;        // desvanecido del popup
 
 // Figura -> arte (mismos assets del proyecto original)
 const ARTE_FIGURA = {
-	CUATRO:      { assetId: 'itemSelectBonus1', drumGlassId: 'itmDrumGlassBonus1', popUp: 'itemPopup_cuatro', color: '#36eb22e0' },
-	LINEA:       { assetId: 'itemSelectBonus2', drumGlassId: 'itmDrumGlassBonus2', popUp: 'itemPopup_line',   color: '#3195ed' },
-	DOBLE_LINEA: { assetId: 'itemSelectBonus3', drumGlassId: 'itmDrumGlassBonus3', popUp: 'itemPopup_lineD',  color: '#ff3737' },
-	BINGO:       { assetId: 'itemSelectBonus4', drumGlassId: 'itmDrumGlassBonus4', popUp: 'itemPopup_bingo',  color: '#f2c356ea' },
-	JACKPOT:     { assetId: 'itemSelectBonus4', drumGlassId: 'itmDrumGlassBonus4', popUp: 'itemPopup_jackpot', color: '#f2c356ea' }
+	CUATRO:      { assetId: 'itemSelectBonus1', drumGlassId: 'itmDrumGlassBonus1', popUp: 'itemPopup_cuatro', color: '#4ade5a' },
+	LINEA:       { assetId: 'itemSelectBonus2', drumGlassId: 'itmDrumGlassBonus2', popUp: 'itemPopup_line',   color: '#5aa9ff' },
+	DOBLE_LINEA: { assetId: 'itemSelectBonus3', drumGlassId: 'itmDrumGlassBonus3', popUp: 'itemPopup_lineD',  color: '#ff5a5a' },
+	BINGO:       { assetId: 'itemSelectBonus4', drumGlassId: 'itmDrumGlassBonus4', popUp: 'itemPopup_bingo',  color: '#f2c356' },
+	JACKPOT:     { assetId: 'itemSelectBonus4', drumGlassId: 'itmDrumGlassBonus4', popUp: 'itemPopup_jackpot', color: '#f2c356' }
 };
 const ORDEN_FIGURAS = ['CUATRO', 'LINEA', 'DOBLE_LINEA', 'BINGO', 'JACKPOT'];
 
@@ -156,12 +156,14 @@ function cancelarSorteo() {
 	gameData.paused = true;
 	gameData.drawing = false;
 	stopSoundLoop('soundDrum');
+	if (window.Vida) Vida.reflejosSueltos(false);
 }
 
 
 //////////////////////// RENDER ////////////////////////
 
 var renderActive = true;
+var ultimoPintado = 0;
 var renderOnce = false;
 
 function requestRender() { renderOnce = true; }
@@ -173,9 +175,14 @@ function tick(event) {
 	// El visor decide que vista trabaja: con el host inactivo no se pinta nada.
 	if (window.BingoScreen && !BingoScreen.hostActive) return;
 
+	const ahora = performance.now();
+
 	if (resultScreenContainer && resultScreenContainer.visible) {
-		// SORTEOS es casi estatica: se pinta cuando algo cambia o mientras dura una animacion
-		if (renderOnce || performance.now() < renderHasta) {
+		// SORTEOS se pinta cuando algo cambia, mientras dura una animacion y, con el ambiente
+		// vivo (brillos y destellos), a 30 cuadros por segundo: alcanza y cuida la maquina.
+		const vivo = window.Ambiente && Ambiente.paso('results', ahora) && (ahora - ultimoPintado >= 32);
+		if (renderOnce || ahora < renderHasta || vivo) {
+			ultimoPintado = ahora;
 			stage.update(event);
 			renderOnce = false;
 			BingoScreen.frames++;
@@ -183,6 +190,7 @@ function tick(event) {
 		return;
 	}
 
+	if (window.Ambiente && (renderActive || renderOnce)) Ambiente.paso('game', ahora);
 	updateGame(event.delta);
 
 	if (renderActive || renderOnce) {
@@ -252,11 +260,13 @@ function hidePopupCarton() {
 	if (!popupContainer || !popupContainer.visible) return;
 
 	TweenMax.killTweensOf(popupContainer);
+	if (popupMarco) Vida.salidaPopup(popupMarco, popupOverlay, HIDE_POPUP_SECONDS);
 
 	TweenMax.to(popupContainer, HIDE_POPUP_SECONDS, {
 		alpha: 0,
 		ease: Power2.easeIn,
 		onComplete: function () {
+			if (window.Ambiente) Ambiente.cerrarPopup();
 			popupContainer.visible = false;
 			popupContainer.removeAllChildren();
 			popupContainer.alpha = 1;
@@ -270,48 +280,49 @@ function hidePopupCarton() {
 	});
 }
 
-/* Popup del ganador. Mismas posiciones que el proyecto original sobre sus PNG. */
+/* Popup del ganador.
+   El carton del popup se marca con lo que de verdad salio: hasta la bola en que se
+   completo la figura (g.bola). Las figuras pueden estar en cualquier fila:
+     CUATRO       4 numeros de una misma fila (cualquiera de las 3)
+     LINEA        una fila completa (cualquiera)
+     DOBLE_LINEA  dos filas completas (cualesquiera)
+     BINGO        el carton lleno
+   El arte trae el carton sin aros; aqui se suma el aro del arte sobre cada casilla de la
+   figura. Los numeros que salieron van en blanco y los que no salieron, tenues. */
 function exitBonus(tipo_bns, dts) {
+	const salidas = gameData.revealNumbers.slice(0, Math.max(0, Number(dts.bola) || 0));
+	mostrarPopupGanador(tipo_bns, dts, salidas);
+	popupOverlay.graphics.clear().beginFill("rgba(2,6,14,0.72)").drawRect(0, 0, canvasW, canvasH);
+}
 
-	if (tipo_bns == 'itemPopup_jackpot') {
+/* Numeros del carton que forman la figura ganadora (Set vacio si los datos no cuadran:
+   en ese caso no se marca ninguna figura, solo se muestra que numeros salieron). */
+function casillasGanadoras(tipo, numeros, salidas, numeroBola) {
+	const salio = new Set(salidas);
+	const filas = [0, 1, 2].map(r => (numeros || []).slice(r * 5, r * 5 + 5));
+	const salieron = r => filas[r].filter(n => salio.has(n));
+	const tieneBola = r => filas[r].indexOf(numeroBola) !== -1 ? 1 : 0;
 
-		Nums_carton(dts.monto, dts.ticket, dts.lugar, 'itemPopup_jackpot', true);
+	const minimo = tipo === 'CUATRO' ? 4 : 5;
+	const filasNecesarias = tipo === 'DOBLE_LINEA' ? 2 : tipo === 'BINGO' ? 3 : 1;
 
-		itemPopup.x = canvasW / 2;
-		itemPopup.y = canvasH / 2;
-		itemPopup.scaleX = itemPopup.scaleY = 0.5;
-
-		let b = itemPopup.getBounds();
-		let x0 = itemPopup.x - ((b.width * itemPopup.scaleX) / 2);
-		let y0 = itemPopup.y - ((b.height * itemPopup.scaleY) / 2);
-
-		popupTextID.x = x0 + 170;      popupTextID.y = y0 + 320;
-		popupTextJK.x = x0 + 415;      popupTextJK.y = y0 + 328;
-		popupTextAgencia.x = x0 + 655; popupTextAgencia.y = y0 + 315;
-
-	} else {
-
-		Nums_carton(dts.numeros, dts.ticket, dts.lugar, tipo_bns, false);
-
-		itemPopup.x = canvasW / 2;
-		itemPopup.y = canvasH / 2;
-		itemPopup.scaleX = itemPopup.scaleY = 0.5;
-
-		let b = itemPopup.getBounds();
-		let x0 = itemPopup.x - ((b.width * itemPopup.scaleX) / 2);
-		let y0 = itemPopup.y - ((b.height * itemPopup.scaleY) / 2);
-
-		popupTextID.x = x0 + 250;      popupTextID.y = y0 + 435;
-		popupTextAgencia.x = x0 + 510; popupTextAgencia.y = y0 + 435;
-
-		// 3 filas de 5 numeros
-		for (var i = 0; i < popupTextNums.length; i++) {
-			popupTextNums[i].x = x0 + 195 + (i % 5) * 107;
-			popupTextNums[i].y = y0 + 155 + Math.floor(i / 5) * 70;
-		}
+	// Primero la fila donde cayo la bola ganadora
+	const candidatas = [0, 1, 2].filter(r => salieron(r).length >= minimo).sort((x, y) => tieneBola(y) - tieneBola(x));
+	if (candidatas.length < filasNecesarias) {
+		console.warn('[bingo] el carton del ganador no completa ' + tipo + ' con las bolas que salieron', numeros);
+		return new Set();
 	}
 
-	popupOverlay.graphics.clear().beginFill("rgba(0,0,0,0.65)").drawRect(0, 0, canvasW, canvasH);
+	const marcas = new Set();
+	candidatas.slice(0, filasNecesarias).forEach(r => {
+		let nums = salieron(r);
+		if (tipo === 'CUATRO' && nums.length > 4) {
+			// La bola ganadora siempre va entre las 4 marcadas
+			nums = [numeroBola].concat(nums.filter(n => n !== numeroBola)).slice(0, 4);
+		}
+		nums.forEach(n => marcas.add(n));
+	});
+	return marcas;
 }
 
 
@@ -319,7 +330,7 @@ function exitBonus(tipo_bns, dts) {
 
 /* Recalcula cuantos numeros le faltan a cada carton seguido y pinta los 12 mejores. */
 function actualizarSeguimiento() {
-	if (!cartonInfoTexts.length) return;
+	if (!listaCartones) return;
 
 	const salidas = new Set(gameData.revealNumbers.slice(0, gameData.revealIndex));
 	const lista = ((currentDrawData && currentDrawData.seguimiento) || []).map(function (c) {
@@ -331,23 +342,9 @@ function actualizarSeguimiento() {
 		return a.faltan.length - b.faltan.length || String(a.ticket).localeCompare(String(b.ticket));
 	});
 
-	for (var i = 0; i < cartonInfoTexts.length; i++) {
-		const fila = cartonInfoTexts[i];
-		const c = lista[i];
-
-		if (!c) {
-			fila.lugar.text = fila.ticket.text = fila.faltan.text = '';
-			continue;
-		}
-
-		const n = c.faltan.length;
-		const color = n <= 1 ? '#fcc65b' : '#fff';
-
-		fila.lugar.text = sinAcentos(c.lugar);
-		fila.ticket.text = c.ticket;
-		fila.faltan.text = n === 0 ? 'BINGO' : n <= 4 ? c.faltan.join('  ') : 'FALTAN ' + n;
-		fila.lugar.color = fila.ticket.color = fila.faltan.color = color;
-	}
+	// Las filas se deslizan a su nuevo puesto y la cifra de lo que falta destella (vida.js).
+	// La columna se rotula FALTAN: con 4 o menos se muestran los numeros que faltan.
+	listaCartones.actualizar(lista);
 }
 
 
@@ -375,6 +372,7 @@ function prepararSorteo(result) {
 	jkActualTxt.color = colorTema('jackpot');
 
 	resetDrumGlassBonus();
+	if (window.Ambiente) Ambiente.cerrarPopup();
 	if (popupContainer) {
 		TweenMax.killTweensOf(popupContainer);
 		popupContainer.visible = false;
@@ -396,6 +394,8 @@ function prepararSorteo(result) {
 	}
 
 	drawDrumBallContainer.removeAllChildren();
+	Vida.reiniciar();
+	if (listaCartones) listaCartones.limpiar();
 
 	// Bolas del bombo de vuelta a su sitio (al final se acomodan abajo)
 	TweenMax.killTweensOf(drawDrumBallsContainer);
@@ -446,6 +446,7 @@ async function jugarSorteo(result) {
 		setSoundLoopVolume('soundDrum', .5);
 	}
 	playSound('soundStart');
+	Vida.reflejosSueltos(true);
 
 	console.log('[bingo] sorteo', result.sorteo, '-', gameData.revealNumbers.length, 'bolas,',
 		(result.ganadores || []).length, 'ganadores');
@@ -468,7 +469,8 @@ async function jugarSorteo(result) {
 	// Fin de las bolas
 	playSound('soundEnd');
 	stopSoundLoop('soundDrum');
-	drawDrumBallContainer.removeAllChildren();
+	Vida.reflejosSueltos(false);
+	Vida.retirarBolaGrande();
 
 	gameData.drawing = false;
 	gameData.paused = true;
@@ -493,7 +495,8 @@ function revelarBola(indice, token) {
 			overwrite: true
 		});
 
-		drawDrumBallContainer.removeAllChildren();
+		// La bola grande anterior vuelve al bombo
+		Vida.retirarBolaGrande();
 
 		TweenMax.to(itmDrumHole, gameSettings.revealSpeed, {
 			delay: gameSettings.revealSpeed, rotation: 360, overwrite: true, ease: Sine.easeOut,
@@ -513,28 +516,29 @@ function revelarBola(indice, token) {
 			newBall.bgBall.y = randomIntFromInterval(gameSettings.bigBallRadius, -gameSettings.bigBallRadius);
 			drawDrumBallContainer.addChild(newBall);
 
-			TweenMax.to(newBall, gameSettings.revealSpeed, {
-				bezier: { type: "thru", values: [{ x: 0, y: 150 }, { x: -60, y: 70 }, { x: 0, y: 0 }], curviness: 2, autoRotate: false },
-				y: 0, scaleX: 1, scaleY: 1, rotation: 0, overwrite: true
-			});
-			TweenMax.to(newBall.bgBall, gameSettings.revealSpeed, { x: 0, y: 0, overwrite: true });
-
-			var newRevealBall = createBall('ballReveal', ballNumber);
-			newRevealBall.rotation = randomIntFromInterval(-45, 45);
-			newRevealBall.y = -100;
-			$.draw['drop' + indice].addChild(newRevealBall);
+			// Sale del bombo girando y se asienta con rebote
+			Vida.salidaBolaGrande(newBall);
 
 			gameData.revealIndex = indice + 1;
-			if (timeValueTxt) timeValueTxt.text = gameData.revealIndex < 10 ? '0' + gameData.revealIndex : String(gameData.revealIndex);
+			if (timeValueTxt) {
+				timeValueTxt.text = gameData.revealIndex < 10 ? '0' + gameData.revealIndex : String(gameData.revealIndex);
+				TweenMax.fromTo(timeValueTxt, 0.4, { scaleX: 1.25, scaleY: 1.25 }, { scaleX: 1, scaleY: 1, ease: Back.easeOut.config(2) });
+			}
 
-			TweenMax.delayedCall(gameSettings.delaySpeed / 4, function () {
+			// Una copia vuela a su casilla; al llegar rebota y una onda de luz recorre el tablero
+			TweenMax.delayedCall(0.6, function () {
+				if (token !== tokenSorteo) return resolve(false);
 				playSound('soundReveal');
-				playSound('soundDrop');
-			});
-
-			TweenMax.to(newRevealBall, gameSettings.revealSpeed, {
-				delay: gameSettings.delaySpeed, y: 0, rotation: 0, ease: Bounce.easeOut,
-				onComplete: function () { resolve(token === tokenSorteo); }
+				Vida.volarACasilla(ballNumber, indice, function () {
+					if (token !== tokenSorteo) return resolve(false);
+					var newRevealBall = createBall('ballReveal', ballNumber);
+					$.draw['drop' + indice].addChild(newRevealBall);
+					playSound('soundDrop');
+					Vida.aterrizar(indice, newRevealBall);
+					const casilla = $.draw['placed' + indice];
+					if (window.Ambiente && casilla) Ambiente.casilla(drawNumbersContainer, casilla.x, casilla.y);
+					TweenMax.delayedCall(0.35, function () { resolve(token === tokenSorteo); });
+				});
 			});
 		});
 	});
@@ -579,6 +583,10 @@ async function mostrarGanadores(indice, ganadores, token) {
 			// Suspenso solo la primera vez que aparece la figura (empates seguidos)
 			if (tipoAnterior !== g.tipo) {
 				showDrumGlassBonus(arte.drumGlassId);
+				// las bolas del tablero que forman la figura laten durante el suspenso
+				const salidas = gameData.revealNumbers.slice(0, Number(g.bola) || 0);
+				const nb = g.numero_bola != null ? Number(g.numero_bola) : salidas[salidas.length - 1];
+				Vida.resaltar(g.tipo === 'BINGO' ? (g.numeros || []) : Array.from(casillasGanadoras(g.tipo, g.numeros, salidas, nb)));
 				if (!(await espera(BONUS_SUSPENSE_SECONDS, token))) return false;
 			}
 			exitBonus(arte.popUp, g);
@@ -592,6 +600,7 @@ async function mostrarGanadores(indice, ganadores, token) {
 	}
 
 	resetDrumGlassBonus();
+	Vida.calmar();
 
 	if (audioOn) {
 		playSoundLoop('soundDrum');

@@ -672,11 +672,13 @@ const RouletteDB = {
         if (this.testMode) return;
 
         try {
-            const data = await post('/games', {
+            /* device_mac e image_version de la caja cuando se conocen (identidad_caja.js) */
+            const cuerpo = {
                 realizar: 'display_heartbeat',
                 device_token: ls('dkg'),
                 config_version: ls('version')
-            });
+            };
+            const data = await post('/games', window.IdentidadCaja ? window.IdentidadCaja.con(cuerpo) : cuerpo);
 
             const intervalo = Number(((data || {}).heartbeat || {}).heartbeat_interval_seconds);
             if (intervalo > 0) this.heartbeatSegundos = intervalo;

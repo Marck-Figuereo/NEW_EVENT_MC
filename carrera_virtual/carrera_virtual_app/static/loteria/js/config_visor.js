@@ -12,14 +12,14 @@ window.VISOR_CONFIG = Object.assign(window.VISOR_CONFIG || {}, {
   marca: {
     nombre: 'LOTTOVIEW',  // va al lado del logo DEMP, en dorado
     sub: 'RESULTADOS DE LOTERÍAS',
-    lema: ['TU SUERTE', 'SIEMPRE', 'CONTIGO'],
     logo: 'img/marca/demp.svg'   // ruta dentro de la carpeta `static`
   },
 
-  // Lo que abre el QR en el celular del cliente (visor móvil)
+  // Lo que abre el QR en el celular del cliente.
+  // La página móvil ya existe en /LOTERIA/suerte (puede llevar ?pv=PV-0001 para saber de qué local viene).
   qr: {
     url: 'https://dempinnovations.com/',
-    titulo: ['ESCANEA', 'PARA JUGAR']
+    titulo: ['Escanea', 'para jugar']
   },
 
   // Escenas que rotan en la TV y cuántos segundos dura cada una.

@@ -277,6 +277,7 @@ function normalizarProgramacion(d, reloj) {
         const p = h.premios || {};
         return {
             sorteo: h.sorteo != null ? h.sorteo : h.event_number,
+            fecha: fechaCorta(aFecha(h.fecha || h.resulted_at, h.hora)),
             hora: hora12(aFecha(h.fecha || h.resulted_at, h.hora)),
             cuatro: p.cuatro, linea: p.linea, doble_linea: p.doble_linea, bingo: p.bingo
         };

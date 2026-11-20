@@ -100,9 +100,12 @@ function horaActual() {
     return pad(h) + ':' + pad(d.getMinutes()) + ' ' + ampm;
 }
 
+/* La fuente Bebas no trae tildes ni Ñ: se quitan antes de pintar, como en el canvas. */
+const sinAcentos = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
 function alerta(titulo, texto) {
-    el.alertaTitulo.textContent = titulo || '';
-    el.alertaTexto.textContent = texto || '';
+    el.alertaTitulo.textContent = sinAcentos(titulo);
+    el.alertaTexto.textContent = sinAcentos(texto);
     el.alerta.hidden = !titulo;
 }
 
@@ -189,7 +192,7 @@ async function refrescarSorteos() {
 async function sincroJackpot() {
     if (!pantalla || STATE.vista !== 'programacion') return;
     const monto = await BingoDB.consultarJackpot();
-    if (monto != null && STATE.vista === 'programacion') pantalla.actualizarJackpot(monto);
+    if (monto != null && STATE.vista === 'programacion') pantalla.actualizarJackpot(monto, CONFIG.sincroJackpotMs);
 }
 
 
@@ -504,6 +507,8 @@ function hud() {
 el.hint.addEventListener('click', () => { el.hint.hidden = true; if (pantalla) pantalla.reanudarAudio(); });
 
 async function main() {
+    // El aviso usa la Bebas: se carga desde el arranque para que no salga con otra fuente
+    try { document.fonts && document.fonts.load('40px bebasregular'); } catch (_) {}
 
     BingoDB.testMode = TEST_MODE;
 

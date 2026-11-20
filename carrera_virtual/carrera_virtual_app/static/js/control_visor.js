@@ -608,7 +608,9 @@
     async function latido() {
         if (S.detenido) return;
         try {
-            const r = await postVisor({ realizar: 'display_heartbeat', device_token: S.token, config_version: S.aplicada });
+            // device_mac e image_version de la caja cuando se conocen (identidad_caja.js)
+            const cuerpo = { realizar: 'display_heartbeat', device_token: S.token, config_version: S.aplicada };
+            const r = await postVisor(window.IdentidadCaja ? window.IdentidadCaja.con(cuerpo) : cuerpo);
             if (!vigente()) return;
 
             if (r.status === 404) {

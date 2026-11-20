@@ -8,6 +8,7 @@ Cliente HTTP del visor hacia la API central (guia: "Integracion del visor con la
   como excepciones de requests; views.py decide que responder al navegador.
 """
 
+import re
 from urllib.parse import urljoin
 
 import requests
@@ -94,11 +95,39 @@ def get_display_config(*, device_token):
     return api_get("api/core/display/config/", params={"device_token": device_token})
 
 
-def send_display_heartbeat(*, device_token, app_version):
-    return api_post("api/core/display/heartbeat/", json={
+_MAC = re.compile(r"^(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}$")
+
+
+def identidad_caja(device_mac, image_version):
+    """Guia V2.2.2.7.6: identidad de la caja (ODROID) para el heartbeat.
+    Solo devuelve los campos validos; un valor desconocido o invalido se omite
+    (la API conserva la ultima identidad conocida). Nunca se inventa un valor."""
+    campos = {}
+    if isinstance(device_mac, str) and _MAC.match(device_mac.strip()):
+        campos["device_mac"] = device_mac.strip().lower()
+    if isinstance(image_version, str) and 0 < len(image_version.strip()) <= 50:
+        campos["image_version"] = image_version.strip()
+    return campos
+
+
+def send_display_heartbeat(*, device_token, app_version, identidad=None):
+    cuerpo = {
         "device_token": device_token,
         "app_version": app_version,
-    })
+    }
+    cuerpo.update(identidad or {})
+    try:
+        return api_post("api/core/display/heartbeat/", json=cuerpo)
+    except requests.HTTPError as error:
+        # 400 por device_mac o image_version: el dato opcional esta mal. El visor no debe
+        # perder su presencia por eso: se avisa y se repite el heartbeat habitual.
+        if identidad and error.response is not None and error.response.status_code == 400:
+            print(f"Heartbeat 400 con identidad {identidad}: {error.response.text[:300]}")
+            return api_post("api/core/display/heartbeat/", json={
+                "device_token": device_token,
+                "app_version": app_version,
+            })
+        raise
 
 
 # ==========================================

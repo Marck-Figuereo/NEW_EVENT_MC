@@ -55,7 +55,17 @@ async function initMain() {
 
 var windowW = 0, windowH = 0;
 var scalePercent = 0;
-const dpr = 1;
+/* Resolucion real del canvas. El arte esta pensado para 1600x900 pero la TV muestra
+   1920x1080: si el canvas se pinta a 1600x900 y el navegador lo estira, textos y bordes
+   salen borrosos. Se pinta a la resolucion final (escala del iframe x escala del visor x
+   densidad de pixeles) y el stage de CreateJS se escala igual. */
+let dpr = 1;
+function escalaVisor() {
+	try {
+		const s = parseFloat(window.parent.document.getElementById('stage').style.getPropertyValue('--s'));
+		return isFinite(s) && s > 0 ? s : 1;
+	} catch (e) { return 1; }
+}
 const offset = { x: 0, y: 0, left: 0, top: 0 };
 
 /*!
@@ -89,6 +99,9 @@ function resizeGameFunc() {
 		gameCanvas.style.height = cssHeight + "px";
 		gameCanvas.style.left = (offset.left / 2) + "px";
 		gameCanvas.style.top = (offset.top / 2) + "px";
+
+		dpr = Math.min(2, Math.max(1, scalePercent * escalaVisor() * (window.devicePixelRatio || 1)));
+		if (typeof stage !== 'undefined' && stage) stage.scaleX = stage.scaleY = dpr;
 
 		const realWidth = Math.round(stageW * dpr);
 		const realHeight = Math.round(stageH * dpr);
@@ -130,8 +143,8 @@ window.BingoScreen = {
 		actualizarRelojProgramacion(reloj || {});
 	},
 
-	actualizarJackpot(monto) {
-		actualizarJackpotProgramacion(monto);
+	actualizarJackpot(monto, duracionMs) {
+		actualizarJackpotProgramacion(monto, duracionMs);
 	},
 
 	/* Refresco periodico de SORTEOS: solo redibuja si los datos cambiaron. */

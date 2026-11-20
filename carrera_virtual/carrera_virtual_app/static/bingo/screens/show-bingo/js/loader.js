@@ -14,9 +14,8 @@
 // Rutas relativas a screens/show-bingo/index.html (assets propios de esta pantalla)
 const ASSET_PATH = '';
 
-// Diseño de la pantalla del sorteo (fondo, bombo, popups de ganador, conteo, jackpot,
-// cartones, tabla de premios y casillas). Las dos carpetas traen las mismas 14 piezas con
-// las mismas medidas, asi que cambiar de diseño es solo esta linea:
+// Arte de la pantalla del sorteo (bombo, popups de ganador y casillas). Los marcos y el
+// fondo ya no son PNG: se dibujan en canvas.js. Cambiar de diseño es solo esta linea:
 //   'DEMP' azul marino y dorado   |   'CS' rojo con la S de fondo
 // La pantalla SORTEOS y las bolas usan siempre las piezas de DEMP.
 const TEMA = 'DEMP';
@@ -34,8 +33,7 @@ function initPreload(){
 	loader = new createjs.LoadQueue(false);
 
 	manifest = [
-		// Background
-		{src: ASSET_PATH + 'assets/' + TEMA + '/background.png', id:'background'},
+		// Fondo y marcos se dibujan en codigo (canvas.js): ya no se cargan sus PNG
 
 		//popup
 		{src: ASSET_PATH + 'assets/' + TEMA + '/win_cuatro.png', id:'itemPopup_cuatro'},
@@ -58,15 +56,6 @@ function initPreload(){
 		{src: ASSET_PATH + 'assets/itmDrumGlassLineaD.png', id:'itmDrumGlassBonus3'},
 		{src: ASSET_PATH + 'assets/itmDrumGlassBingo.png', id:'itmDrumGlassBonus4'},
 
-		// Baners para informaciones
-		
-		{src: ASSET_PATH + 'assets/' + TEMA + '/itemCount.png', id:'itemTime'},
-		{src: ASSET_PATH + 'assets/' + TEMA + '/itemJkActual.png', id:'itemJackpotInfo'},
-		{src: ASSET_PATH + 'assets/' + TEMA + '/itemJkInfo.png', id:'itemJackpotResult'},
-		{src: ASSET_PATH + 'assets/' + TEMA + '/itemCarton.png', id:'itemCardboard'},
-		{src: ASSET_PATH + 'assets/' + TEMA + '/itemTable.png', id:'itemTable'},
-		
-
 		// Drum
 		{src: ASSET_PATH + 'assets/' + TEMA + '/item_drum_glass.png', id:'itmDrumGlass'},
 		{src: ASSET_PATH + 'assets/' + TEMA + '/item_drum_hole.png', id:'itmDrumHole'},
@@ -74,28 +63,19 @@ function initPreload(){
 
 		// Reveal slotsa
 		{src: ASSET_PATH + 'assets/' + TEMA + '/item_place.png', id:'itemPlace'},
-		{src: ASSET_PATH + 'assets/item_place_gradient.png', id:'itemPlaceGradient'}, 
 
 		// Ball masks/highlights
 		{src: ASSET_PATH + 'assets/item_ball_white.png', id:'itemBallWhite'},
 		{src: ASSET_PATH + 'assets/item_ball_h.png', id:'itemBallH'},
 		{src: ASSET_PATH + 'assets/item_ball_white_b.png', id:'itemBallWhiteB'},
 
+		// Marca DEMP (misma del visor de loterias). 'BINGO' se escribe al lado en codigo.
+		{ src: ASSET_PATH + 'assets/DEMP/logo_demp.png', id:'logo'},
 
-		
-		{ src: ASSET_PATH + 'assets/DEMP/logo.png', id:'logo'},
-		{ src: ASSET_PATH + 'assets/DEMP/count_time.png', id: 'countTime' },
-		{ src: ASSET_PATH + 'assets/DEMP/time.png', id: 'TimeR' },
-		{ src: ASSET_PATH + 'assets/DEMP/item_jk.png', id: 'itemJk' },
-		{ src: ASSET_PATH + 'assets/DEMP/previous_draws2.png', id: 'previousDraw' },
-		{ src: ASSET_PATH + 'assets/DEMP/next_draws2.png', id: 'nextDraw' },
-		
-		{ src: ASSET_PATH + 'assets/DEMP/special_draws.png', id: 'specialDraw' },
-		{ src: ASSET_PATH + 'assets/DEMP/item_draw_special6.png', id: 'itemDrawSpecial' }, 
-		{ src: ASSET_PATH + 'assets/DEMP/notDrawSpecial.png', id: 'notDrawSpecial' }, 
-
-		{ src: ASSET_PATH + 'assets/DEMP/itemJkInfo_result.png', id: 'itemJkInfoResult' }
-
+		// Aro de la casilla ganadora del carton (capa de brillo que se suma sobre el arte)
+		{ src: ASSET_PATH + 'assets/aro_cuatro.png', id: 'aroCuatro' },
+		{ src: ASSET_PATH + 'assets/aro_linea.png', id: 'aroLinea' },
+		{ src: ASSET_PATH + 'assets/aro_doble_linea.png', id: 'aroDobleLinea' }
 	];
 
 	for(var n=0; n<ballAssets.length; n++){

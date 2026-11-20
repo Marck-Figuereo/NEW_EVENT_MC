@@ -19,6 +19,7 @@ urlpatterns=[
     path('ROOSTERS',	views.ROOSTERS,	        name="ROOSTERS"),
     path('BINGO',	    views.BINGO,	        name="BINGO"),
     path('LOTERIA',	    views.LOTERIA,	        name="LOTERIA"),
+    path('LOTERIA/suerte',	views.LOTERIA_SUERTE,	name="LOTERIA_SUERTE"),
     path('configuration',            views.configuration,    name="configuration"),
     
 

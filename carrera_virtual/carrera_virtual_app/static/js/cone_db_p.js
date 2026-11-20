@@ -608,7 +608,9 @@ const enviar_heartbeat = async () => {
 
     try {
 
-        const response = await post_visor({'realizar':'display_heartbeat', "device_token" : localStorage.getItem('dkg'), "config_version" : localStorage.getItem('version')})
+        // device_mac e image_version de la caja cuando se conocen (identidad_caja.js)
+        const cuerpo = {'realizar':'display_heartbeat', "device_token" : localStorage.getItem('dkg'), "config_version" : localStorage.getItem('version')}
+        const response = await post_visor(window.IdentidadCaja ? window.IdentidadCaja.con(cuerpo) : cuerpo)
 
         // 404: se confirma con la configuracion antes de sacar al visor
         if (response.status == 404) { await confirmar_configuracion(); return }

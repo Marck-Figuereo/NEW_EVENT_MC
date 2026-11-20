@@ -17,6 +17,7 @@ from carrera_virtual_app.helpers.display_api_client import (
     get_pairing_status,
     get_display_config,
     send_display_heartbeat,
+    identidad_caja,
     get_current_event,
     get_paytable_for_display,
     get_display_results,
@@ -33,7 +34,7 @@ from carrera_virtual_app.helpers.display_api_client import (
 
 
 # Configuraciones de entorno
-version = "v7.4.1"
+version = "v7.5.0"
 
 # Unica conexion directa del navegador (tiempo real). Se inyecta en las plantillas.
 _WS_POR_DEFECTO = API_URL.replace('https://', 'wss://', 1).replace('http://', 'ws://', 1)
@@ -43,7 +44,7 @@ WEBSOCKET_URL = config('WEBSOCKET_URL', default=_WS_POR_DEFECTO).strip().rstrip(
 # Version de los JS y CSS del visor: cambia sola cada vez que se modifica un archivo,
 # asi el navegador nunca mezcla un archivo nuevo con otro viejo guardado en cache.
 _STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'js/monitor_video.js', 'css/style_p.css', 'css/style_p8.css',
+_ARCHIVOS_VISOR = ['js/control_visor.js', 'js/identidad_caja.js', 'js/cone_db_p.js', 'js/funcionamiento_p.js', 'js/monitor_video.js', 'css/style_p.css', 'css/style_p8.css',
                    'css/style_c.css', 'css/style_g.css', 'css/overlay_video.css',
                    'ruleta/cone_db_roulette.js', 'ruleta/funcionamiento_roulette.js', 'ruleta/roulette_integration.css',
                    # Pantallas de la ruleta (iframes): su HTML y sus recursos internos tambien
@@ -61,7 +62,8 @@ _ARCHIVOS_VISOR = ['js/control_visor.js', 'js/cone_db_p.js', 'js/funcionamiento_
                    'bingo/screens/show-bingo/js/loader.js',
                    # Loteria (static/loteria/): DEMP LottoView
                    'loteria/css/visor_tv.css', 'loteria/js/config_visor.js', 'loteria/js/catalogo_loterias.js',
-                   'loteria/js/cone_db_loterias.js', 'loteria/js/funcionamiento_visor.js']
+                   'loteria/js/cone_db_loterias.js', 'loteria/js/funcionamiento_visor.js',
+                   'loteria/css/movil.css', 'loteria/js/movil.js']
 
 def _version_archivos():
     try:
@@ -371,7 +373,9 @@ def games(request):
 
             # Guia 5.5: mantiene el visor visible en soporte y detecta cambios de configuracion
             try:
-                heartbeat = send_display_heartbeat(device_token=device_token, app_version=version)
+                # Guia V2.2.2.7.6: MAC e imagen de la caja (las lee el navegador de 127.0.0.1:3000)
+                identidad = identidad_caja(datos.get('device_mac'), datos.get('image_version'))
+                heartbeat = send_display_heartbeat(device_token=device_token, app_version=version, identidad=identidad)
             except requests.HTTPError as error:
                 return _error_http(error, 'send_display_heartbeat')
             except (requests.RequestException, ValueError):
@@ -602,6 +606,10 @@ def BINGO(request): return render(request, "pv_bingo.html", _contexto_visor())
 # Por ahora con datos de prueba (simulados en cone_db_loterias.js). Ver herramientas/LOTERIA_LEEME.md
 @csrf_exempt
 def LOTERIA(request): return render(request, "pv_loteria.html", _contexto_visor())
+
+# Lo que abre el QR del visor de loteria en el celular del cliente (elige loteria, nombre y genera la jugada).
+@csrf_exempt
+def LOTERIA_SUERTE(request): return render(request, "pv_loteria_movil.html", _contexto_visor())
 
 
 

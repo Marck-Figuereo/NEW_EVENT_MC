@@ -34,9 +34,12 @@ var popupTextNums = [];
 var guideline, bg, transitionOverlay;
 var drawDrumContainer, drawNumbersContainer, drawDrumBallsContainer, drawDrumBallContainer, drawContainer;
 var itmDrum, itmDrumGlass, itmDrumGlassBonus, itmDrumHole, itemBgDrum, itemTime, itemJackpotInfo, itemJackpotResult, itemCardboard, itemTable;
-var timeValueTxt, jkActualTxt, cuatroInfoTxt, lineaInfoTxt, dobleInfoTxt, bingoInfoTxt;
+var timeValueTxt, bolaLbl, jkActualLbl, jkActualTxt, cuatroInfoTxt, lineaInfoTxt, dobleInfoTxt, bingoInfoTxt;
 var txtJkTk, txtJkMt, txtJkMnt, txtJkDt;
-var cartonInfoTexts = [];         // [{lugar, ticket, faltan}] x 12
+var cartonInfoTexts = [];
+var listaCartones = null;        // MEJORES CARTONES animado (vida.js)
+var popupMarco = null;           // todo el popup menos el oscurecido (para escalarlo al entrar)
+var cartonCabecera = [];         // [{lugar, ticket, faltan}] x 12
 
 var itemPopup = null;
 var popupOverlay = null;
@@ -144,7 +147,7 @@ function medirDigito(font) {
 	return anchoDigito[font];
 }
 
-function crearTabular(font, color, maxWidth, proporcional) {
+function crearTabular(font, color, maxWidth, proporcional, centrado) {
 	const c = new createjs.Container();
 	c.font = font;
 	c.color = color;
@@ -164,6 +167,7 @@ function crearTabular(font, color, maxWidth, proporcional) {
 			this.addChild(t);
 			const w = t.getMeasuredWidth();
 			this.scaleX = this.maxWidth && w > this.maxWidth ? this.maxWidth / w : 1;
+			if (centrado) this.regX = w / 2;
 			return;
 		}
 
@@ -177,6 +181,7 @@ function crearTabular(font, color, maxWidth, proporcional) {
 			this.addChild(t);
 		}
 		this.scaleX = this.maxWidth && x > this.maxWidth ? this.maxWidth / x : 1;
+		if (centrado) this.regX = x / 2;
 	};
 
 	c.setColor = function (color) {
@@ -203,7 +208,7 @@ const monto = v => (v == null || v === '' || !isFinite(Number(v))) ? '' : curren
 
 //////////////////////// JACKPOT ANIMADO, HORA Y CONTEO ////////////////////////
 
-const aumento_jack = (num_inicio, num_fn, duration) => {
+const aumento_jack = (num_inicio, num_fn, duration, continuo) => {
 
 	detener_aumento_jack();
 
@@ -214,7 +219,8 @@ const aumento_jack = (num_inicio, num_fn, duration) => {
 	let startTime = performance.now();
 	jackpotRunning = true;
 
-	const easeOutQuad = t => t * (2 - t);
+	// continuo: sube a ritmo parejo hasta la siguiente consulta (no frena ni se queda quieto)
+	const easeOutQuad = continuo ? (t => t) : (t => t * (2 - t));
 
 	function updateCount(timestamp) {
 		if (!jackpotRunning || !txtJk) return;
@@ -245,11 +251,29 @@ const detener_aumento_jack = () => {
 	}
 };
 
-function actualizarJackpotProgramacion(monto) {
+/* Pinta el jackpot sin inventar montos: solo cuenta hacia arriba entre el ultimo monto real
+   mostrado y el nuevo. La primera vez, o si el monto bajo (se gano y volvio a la base), se
+   pinta el monto real de una vez: nunca se ve un numero que la API no mando. */
+function pintarJackpot(monto, duracion, continuo) {
+	if (!txtJk) return;
+	txtJk.setColor(BLANCO);
+	if (jackpotMostrado > 0 && monto > jackpotMostrado) {
+		txtJk.setText(currency(jackpotMostrado));
+		aumento_jack(jackpotMostrado, monto, duracion, continuo);
+	} else {
+		detener_aumento_jack();
+		jackpotMostrado = monto;
+		txtJk.setText(currency(monto));
+	}
+	requestRender();
+}
+
+/* Cada consulta del jackpot trae un monto nuevo: se sube hasta el en el mismo tiempo que falta
+   para la siguiente consulta (duracionMs), a ritmo parejo. Asi el monto no para de subir. */
+function actualizarJackpotProgramacion(monto, duracionMs) {
 	monto = Number(monto);
 	if (!isFinite(monto) || !txtJk) return;
-	// Un jackpot nunca se ve bajar en pantalla (ver buildResultScreen)
-	aumento_jack(jackpotMostrado > 0 && jackpotMostrado <= monto ? jackpotMostrado : monto * 0.9, monto, 3000);
+	pintarJackpot(monto, Number(duracionMs) > 0 ? Number(duracionMs) : 20000, true);
 }
 
 /* "hh:mm:ss" -> segundos (null si no hay dato) */
@@ -265,7 +289,8 @@ function actualizarRelojProgramacion(reloj) {
 	if (txtTimeActual) txtTimeActual.setText(relojActual.hora || SIN_DATO);
 	if (txtCount) {
 		const seg = segundosDe(relojActual.conteo);
-		txtCount.setText(seg == null ? '--:--:--' : relojActual.conteo);
+		// Con menos de una hora basta MM:SS (las horas serian siempre 00)
+		txtCount.setText(seg == null ? '--:--' : (seg < 3600 ? relojActual.conteo.slice(-5) : relojActual.conteo));
 		// Ultimo minuto de venta: el conteo pasa a dorado
 		txtCount.setColor(seg == null ? TENUE : (seg > 0 && seg <= 60 ? DORADO : BLANCO));
 	}
@@ -281,6 +306,15 @@ const ANT = { paso: 117, base: 98,
 	izq1: 79, izq2: 110, finIzq: 244, der: 316, finDer: 479 };
 const PROX = { paso: 112, base: 132, numero: 121, anchoNumero: 64, fecha: 239, anchoFecha: 140, hora: 389, anchoHora: 126 };
 
+/* Hora de un sorteo anterior. Si no fue hoy se antepone dia/mes: si no, un sorteo de ayer
+   a las 02:30 PM parece de hoy, antes del que se acaba de jugar. */
+function horaConFecha(v) {
+	if (!v.hora) return v.hora;
+	const d = new Date(), p = n => String(n).padStart(2, '0');
+	const hoy = p(d.getDate()) + '/' + p(d.getMonth() + 1) + '/' + d.getFullYear();
+	return v.fecha && v.fecha !== hoy ? v.fecha.slice(0, 5) + '   ' + v.hora : v.hora;
+}
+
 /* Una tarjeta de SORTEOS ANTERIORES (d = null: tarjeta sin datos). */
 function filaAnterior(o, i, d) {
 	const fila = new createjs.Container();
@@ -289,7 +323,7 @@ function filaAnterior(o, i, d) {
 
 	fila.addChild(
 		textoEnHueco("25px bebasregular", BLANCO, 'left', d ? '# ' + numeroCorto(v.sorteo) : '', o.x + ANT.numero, y, ANT.finNumero - ANT.numero),
-		textoEnHueco("25px bebasregular", BLANCO, 'left', v.hora, o.x + ANT.hora, y, ANT.finHora - ANT.hora),
+		textoEnHueco("25px bebasregular", BLANCO, 'left', horaConFecha(v), o.x + ANT.hora, y, ANT.finHora - ANT.hora),
 		// El arte dice "Linea:" y "Doble Linea:" a la izquierda, "Cuatro:" y "Bingo:" a la derecha
 		textoEnHueco("20px bebasregular", BLANCO, 'left', monto(v.linea), o.x + ANT.izq1, y + 35, ANT.finIzq - ANT.izq1),
 		textoEnHueco("20px bebasregular", BLANCO, 'left', monto(v.doble_linea), o.x + ANT.izq2, y + 65, ANT.finIzq - ANT.izq2),
@@ -395,10 +429,18 @@ function buildResultScreen(resultsData) {
 	const previo = programacionMostrada;
 	programacionMostrada = resultsData ? JSON.parse(JSON.stringify(resultsData)) : null;
 
-	var logo = new createjs.Bitmap(loader.getResult('logo'));
-	centerReg(logo);
-	logo.x = canvasW / 100 * 13; logo.y = canvasH / 100 * 7;
-	logo.scaleX = logo.scaleY = .15;
+	// Marca: DEMP (arte de la marca) + BINGO en la Bebas del juego, a la altura de "EMP"
+	var logo = new createjs.Container();
+	var marca = new createjs.Bitmap(loader.getResult('logo'));
+	const altoMarca = 66;
+	marca.scaleX = marca.scaleY = altoMarca / marca.image.height;
+	const anchoMarca = marca.image.width * marca.scaleX;
+	// Mont Heavy: mismo peso que las letras de la marca (la Bebas al lado se veia delgada)
+	const nombre = nuevoTexto("40px montheavy_demo", DORADO, 'left', 'alphabetic', 'BINGO');
+	nombre.x = anchoMarca + 18;
+	nombre.y = altoMarca * 0.628;          // base de las letras EMP en el arte de la marca
+	logo.addChild(marca, nombre);
+	logo.x = 58; logo.y = 34;
 
 	var itemJk = new createjs.Bitmap(loader.getResult('itemJk'));
 	centerReg(itemJk);
@@ -476,17 +518,22 @@ function buildResultScreen(resultsData) {
 	const especiales = (datos.especiales || []).slice(0, 3);
 	const cambiaEsp = !previo || !mismo((previo.especiales || []).slice(0, 3), especiales);
 
+	const tarjetasArte = [];
 	especiales.forEach((esp, i) => {
 		const tarjeta = tarjetaEspecial(i, esp);
+		tarjetasArte.push(tarjeta.children[0]);
 		resultScreenContainer.addChild(tarjeta);
 		if (cambiaEsp) entrar(tarjeta, i * 0.08, MOV_REDUCIDO ? 0 : 10);
 	});
 	if (especiales.length === 0) {
-		var vacio = new createjs.Bitmap(loader.getResult('notDrawSpecial'));
-		centerReg(vacio);
+		// Sin datos de la API no se sabe si hay especiales: guion. Con datos y ninguno: se dice.
+		var vacio = resultsData && Array.isArray(datos.especiales)
+			? nuevoTexto("30px bebasregular", '#dca342', 'center', 'middle', 'NO HAY SORTEOS ESPECIALES PROGRAMADOS')
+			: nuevoTexto("40px bebasregular", TENUE, 'center', 'middle', SIN_DATO);
 		vacio.x = canvasW * 0.82;
-		vacio.y = canvasH * 0.52;
-		vacio.scaleX = vacio.scaleY = .48;
+		vacio.y = canvasH * 0.5;
+		vacio.maxWidth = 460;
+		if (resultsData) vacio.alpha = 0.85;
 		resultScreenContainer.addChild(vacio);
 		if (cambiaEsp && previo) entrar(vacio, 0, 0);
 	}
@@ -512,8 +559,8 @@ function buildResultScreen(resultsData) {
 	txtTimeActual.x = canvasW / 100 * 75.5;
 	txtTimeActual.y = canvasH / 100 * 10;
 
-	txtCount = crearTabular("38px bebasregular", BLANCO, 150);
-	txtCount.x = canvasW / 100 * 88;
+	txtCount = crearTabular("40px bebasregular", BLANCO, 150, false, true);
+	txtCount.x = canvasW / 100 * 92.2;
 	txtCount.y = canvasH / 100 * 10;
 
 	resultScreenContainer.addChild(txtJk, txtTimeActual, txtCount);
@@ -521,15 +568,19 @@ function buildResultScreen(resultsData) {
 
 	const jackpot = resultsData && datos.jackpot != null && isFinite(Number(datos.jackpot)) ? Number(datos.jackpot) : null;
 	if (jackpot != null) {
-		// El contador sigue subiendo desde lo ultimo mostrado. Si el monto nuevo es menor (se gano
-		// y volvio a la base) no se le ve bajar: arranca un 10% abajo de la base y sube.
-		const desde = jackpotMostrado > 0 && jackpotMostrado <= jackpot ? jackpotMostrado : jackpot * 0.9;
-		txtJk.setText(currency(desde));
-		aumento_jack(desde, jackpot, 10000);
+		pintarJackpot(jackpot, 2500);
 	} else {
 		txtJk.setText(SIN_DATO);
 		txtJk.setColor(TENUE);
 	}
+
+	// La luz del arte (ambiente.js): solo se refleja en el dorado de los PNG, asi que puede ir
+	// encima de todo sin tocar los datos (que estan sobre el azul oscuro).
+	if (window.Ambiente) Ambiente.montarSorteos(resultScreenContainer, null, {
+		anteriores: previousDraw, proximos: nextDraw, especiales: specialDraw, ultimo: itemJkInfoResult,
+		jackpot: itemJk, hora: TimeR, conteo: countTime, tarjetas: tarjetasArte,
+		logo: { image: marca.image, x: logo.x, y: logo.y, regX: 0, regY: 0, scaleX: marca.scaleX, scaleY: marca.scaleY }
+	});
 
 	animarDurante(1200);
 }
@@ -550,35 +601,121 @@ function refrescarProgramacion(datos) {
 
 //////////////////////// POPUPS ////////////////////////
 
-function Nums_carton(nums, ticket, local, Popup, JK) {
+/* Geometria del arte de cada popup, en pixeles del PNG (el popup se pinta a escala 0.5).
+   fila1/paso/alto: casillas del carton. barra: borde de arriba de la barra TICKET | SUCURSAL.
+   etiqueta: base de las etiquetas pintadas en esa barra. */
+const POPUP_ESCALA = 0.5;
+const POPUP_COLS = [286, 500, 714, 930, 1144];      // borde izquierdo de cada columna
+const POPUP_ANCHO_CELDA = 208;
+const POPUP_GEO = {
+	itemPopup_cuatro: { fila1: 282, paso: 142,   alto: 131, barra: 787, etiqueta: 829, aro: 'aroCuatro' },
+	itemPopup_line:   { fila1: 281, paso: 140.5, alto: 131, barra: 782, etiqueta: 825, aro: 'aroLinea' },
+	itemPopup_lineD:  { fila1: 282, paso: 139,   alto: 129, barra: 788, etiqueta: 830, aro: 'aroDobleLinea' },
+	itemPopup_bingo:  { fila1: 297, paso: 134,   alto: 125, barra: 798, etiqueta: 834, aro: null }
+};
+
+function mostrarPopupGanador(popupId, g, salidas) {
 
 	popupContainer.visible = true;
 	popupContainer.removeAllChildren();
-
 	popupTextJK = null;
 	popupTextNums = [];
 
-	itemPopup = new createjs.Bitmap(loader.getResult(Popup));
+	itemPopup = new createjs.Bitmap(loader.getResult(popupId));
 	centerReg(itemPopup);
-	itemPopup.visible = true;
+	itemPopup.x = canvasW / 2;
+	itemPopup.y = canvasH / 2;
+	itemPopup.scaleX = itemPopup.scaleY = POPUP_ESCALA;
 	popupOverlay.visible = true;
 
-	popupContainer.alpha = 0;
-	TweenMax.killTweensOf(popupContainer);
-	TweenMax.to(popupContainer, 1.5, { alpha: 1 });
+	const b = itemPopup.getBounds();
+	const x0 = itemPopup.x - (b.width * POPUP_ESCALA) / 2;
+	const y0 = itemPopup.y - (b.height * POPUP_ESCALA) / 2;
+	const P = (px, py) => ({ x: x0 + px * POPUP_ESCALA, y: y0 + py * POPUP_ESCALA });
 
-	popupTextID = nuevoTexto(JK ? "30px bebasregular" : "15px bebasregular", "#ffffffe0", "center", "alphabetic", ticket);
-	popupTextAgencia = nuevoTexto(JK ? "20px bebasregular" : "15px bebasregular", "#ffffffe0", "center", "alphabetic", local);
+	// Todo el popup va en un marco que se escala desde el centro al entrar y al salir
+	popupMarco = new createjs.Container();
+	popupMarco.regX = popupMarco.x = canvasW / 2;
+	popupMarco.regY = popupMarco.y = canvasH / 2;
+	popupMarco.addChild(itemPopup);
+	popupContainer.addChild(popupOverlay, popupMarco);
+	const encendidos = [];
+	let premio = null;
 
-	if (JK) {
-		popupTextJK = nuevoTexto("50px bebasregular", "#f2c356ea", "center", "alphabetic", currency(nums));
+	if (popupId === 'itemPopup_jackpot') {
+		// Arte propio: ticket | monto | sucursal (mismas posiciones del proyecto original)
+		popupTextID = Object.assign(nuevoTexto("30px bebasregular", "#ffffffe0", "center", "alphabetic", g.ticket), { x: x0 + 170, y: y0 + 320, maxWidth: 140 });
+		popupTextJK = Object.assign(nuevoTexto("50px bebasregular", "#f2c356", "center", "alphabetic", currency(g.monto)), { x: x0 + 415, y: y0 + 328, maxWidth: 330 });
+		popupTextAgencia = Object.assign(nuevoTexto("22px bebasregular", "#ffffffe0", "center", "alphabetic", g.lugar), { x: x0 + 655, y: y0 + 315, maxWidth: 150 });
+		popupMarco.addChild(popupTextID, popupTextJK, popupTextAgencia);
+		premio = popupTextJK;
 	} else {
-		(nums || []).forEach(n => popupTextNums.push(nuevoTexto("50px bebasregular", "#ffffffe0", "center", "top", n)));
+		const geo = POPUP_GEO[popupId];
+		const color = (ARTE_FIGURA[g.tipo] || {}).color || DORADO;
+		const numeros = g.numeros || [];
+		const salio = new Set(salidas);
+		const numeroBola = g.numero_bola != null ? Number(g.numero_bola) : salidas[salidas.length - 1];
+		const marcas = g.tipo === 'BINGO' ? salio : casillasGanadoras(g.tipo, numeros, salidas, numeroBola);
+
+		for (let i = 0; i < 15; i++) {
+			const c = i % 5, r = Math.floor(i / 5), n = numeros[i];
+
+			if (geo.aro && marcas.has(n)) {
+				const aro = new createjs.Bitmap(loader.getResult(geo.aro));
+				const o = P(494 + (POPUP_COLS[c] - 500), geo.fila1 - 14 + r * geo.paso);
+				aro.x = o.x; aro.y = o.y;
+				aro.scaleX = aro.scaleY = POPUP_ESCALA;
+				aro.compositeOperation = 'lighter';
+				popupMarco.addChild(aro);
+				encendidos.push({ aro: aro });
+			}
+
+			const centro = P(POPUP_COLS[c] + POPUP_ANCHO_CELDA / 2, geo.fila1 + geo.alto / 2 + r * geo.paso);
+			const t = nuevoTexto("50px bebasregular",
+				marcas.has(n) ? '#ffffff' : salio.has(n) ? '#ffffffc4' : '#ffffff4d',
+				"center", "middle", n == null ? SIN_DATO : n);
+			t.x = centro.x; t.y = centro.y + 3;
+			popupTextNums.push(t);
+			popupMarco.addChild(t);
+			if (marcas.has(n)) {
+				if (geo.aro && encendidos.length && !encendidos[encendidos.length - 1].num) encendidos[encendidos.length - 1].num = t;
+				else encendidos.push({ num: t });
+			}
+		}
+
+		// Ticket y sucursal: alineados con sus etiquetas, a un tamaño que se lea de lejos
+		const base = geo.etiqueta + 50;
+		const tk = P(435, base), su = P(899, base);
+		popupTextID = Object.assign(nuevoTexto("27px bebasregular", "#ffffff", "left", "alphabetic", g.ticket || SIN_DATO), { x: tk.x, y: tk.y, maxWidth: 128 });
+		popupTextAgencia = Object.assign(nuevoTexto("27px bebasregular", "#ffffff", "left", "alphabetic", g.lugar || SIN_DATO), { x: su.x, y: su.y, maxWidth: 188 });
+		popupMarco.addChild(popupTextID, popupTextAgencia);
+
+		// Monto del premio, en la placa entre el carton y la barra (lo manda la API por ganador)
+		const centroPlaca = P(820, geo.barra - 37);
+		const etiqueta = nuevoTexto("18px bebasregular", color, "left", "middle", 'PREMIO');
+		const valor = nuevoTexto("30px bebasregular", g.monto != null ? '#ffffff' : TENUE, "left", "middle", currency(g.monto));
+		const anchoTexto = etiqueta.getMeasuredWidth() + 10 + valor.getMeasuredWidth();
+		const ancho = anchoTexto + 40, alto = 36;
+		const placa = new createjs.Shape();
+		placa.graphics.beginFill('#050a14').beginStroke(color).setStrokeStyle(1.5)
+			.drawRoundRect(centroPlaca.x - ancho / 2, centroPlaca.y - alto / 2, ancho, alto, 7);
+		etiqueta.x = centroPlaca.x - anchoTexto / 2; etiqueta.y = centroPlaca.y + 1;
+		valor.x = etiqueta.x + etiqueta.getMeasuredWidth() + 10; valor.y = centroPlaca.y + 1;
+		premio = new createjs.Container();
+		premio.regX = premio.x = centroPlaca.x; premio.regY = premio.y = centroPlaca.y;
+		premio.addChild(placa, etiqueta, valor);
+		popupMarco.addChild(premio);
 	}
 
-	popupContainer.addChild(popupOverlay, itemPopup, popupTextID, popupTextAgencia);
-	if (popupTextJK) popupContainer.addChild(popupTextJK);
-	popupTextNums.forEach(t => popupContainer.addChild(t));
+	// Entrada: el marco crece y se asienta, las casillas ganadoras se encienden en orden
+	// y el premio aparece al final (vida.js)
+	TweenMax.killTweensOf(popupContainer);
+	popupContainer.alpha = 1;
+	Vida.entradaPopup(popupMarco, popupOverlay, encendidos, premio);
+
+	// La luz cruza el marco y el titulo del popup; en el JACKPOT ademas cae confeti
+	if (window.Ambiente) Ambiente.popup(popupMarco, itemPopup,
+		{ x: x0, y: y0, w: b.width * POPUP_ESCALA, h: b.height * POPUP_ESCALA }, popupId === 'itemPopup_jackpot');
 }
 
 //////////////////////// PAGINA DEL SORTEO ////////////////////////
@@ -642,15 +779,11 @@ function buildGameCanvas() {
 	// un nombre largo se salga del recuadro.
 	const oc = origen(itemCardboard);
 	cartonInfoTexts = [];
-	for (var i = 0; i < 12; i++) {
-		const y = oc.y + 90 + i * 30;
-		const fila = {
-			lugar: Object.assign(nuevoTexto("20px bebasregular", "#fff", "left", "top", ''), { x: oc.x + 30, y: y, maxWidth: 150 }),
-			ticket: Object.assign(nuevoTexto("20px bebasregular", "#fff", "left", "top", ''), { x: oc.x + 190, y: y, maxWidth: 70 }),
-			faltan: Object.assign(nuevoTexto("20px bebasregular", "#fff", "left", "top", ''), { x: oc.x + 270, y: y, maxWidth: 95 })
-		};
-		cartonInfoTexts.push(fila);
-	}
+	cartonCabecera = [['SUCURSAL', 30], ['TICKET', 190], ['FALTAN', 270]].map(c =>
+		Object.assign(nuevoTexto("15px bebasregular", '#c9a35a', "left", "alphabetic", c[0]), { x: oc.x + c[1], y: oc.y + 82, alpha: 0.9 }));
+	// Las 12 filas las arma la lista animada (vida.js) mas abajo, encima del arte
+	const geoCartones = { x: oc.x, y: oc.y + 90, paso: 30, ancho: 346,
+		cols: { lugar: 30, ticket: 190, faltan: 270 }, anchos: { lugar: 146, ticket: 70, faltan: 95 } };
 
 	// Tabla de premios
 	itemTable = new createjs.Bitmap(loader.getResult('itemTable'));
@@ -664,13 +797,24 @@ function buildGameCanvas() {
 	dobleInfoTxt = Object.assign(nuevoTexto("30px bebasregular", "#ffffffe0", "left", "top"), { x: ot.x + 350, y: ot.y + 100 });
 	bingoInfoTxt = Object.assign(nuevoTexto("30px bebasregular", "#ffffffe0", "left", "top"), { x: ot.x + 350, y: ot.y + 140 });
 
-	timeValueTxt = nuevoTexto("70px bebasregular", colorTema('conteo'), "center", "alphabetic", "00");
+	timeValueTxt = nuevoTexto("60px bebasregular", colorTema('conteo'), "center", "alphabetic", "00");
 	timeValueTxt.x = itemTime.x;
-	timeValueTxt.y = itemTime.y + 25;
+	timeValueTxt.y = itemTime.y + 34;
 
-	jkActualTxt = nuevoTexto("55px bebasregular", colorTema('jackpot'), "left", "alphabetic", '');
-	jkActualTxt.x = itemJackpotInfo.x - 30;
+	bolaLbl = nuevoTexto("17px bebasregular", '#c9a35a', "center", "alphabetic", 'BOLA');
+	bolaLbl.x = itemTime.x;
+	bolaLbl.y = itemTime.y - 18;
+
+	// La placa trae solo el marco: la etiqueta va en la Bebas, a la izquierda, y el monto a la derecha
+	const ancho_jk = itemJackpotInfo.image.width * itemJackpotInfo.scaleX;
+	jkActualLbl = nuevoTexto("30px bebasregular", '#c9a35a', "left", "alphabetic", 'JACKPOT');
+	jkActualLbl.x = itemJackpotInfo.x - ancho_jk / 2 + 40;
+	jkActualLbl.y = itemJackpotInfo.y + 19;
+
+	jkActualTxt = nuevoTexto("55px bebasregular", colorTema('jackpot'), "right", "alphabetic", '');
+	jkActualTxt.x = itemJackpotInfo.x + ancho_jk / 2 - 38;
 	jkActualTxt.y = itemJackpotInfo.y + 20;
+	jkActualTxt.maxWidth = ancho_jk - 160;
 
 	// Ultimo jackpot: TICKET | MONTO | LUGAR | FECHA, cada uno centrado entre los separadores
 	// que trae pintados el PNG (la casilla mas ancha es la tercera: ahi va el lugar).
@@ -699,10 +843,11 @@ function buildGameCanvas() {
 
 	infoContainer.addChild(
 		itemTime, itemJackpotInfo, itemJackpotResult, itemCardboard, itemTable,
-		timeValueTxt, jkActualTxt, txtJkTk, txtJkMt, txtJkMnt, txtJkDt,
+		timeValueTxt, bolaLbl, jkActualLbl, jkActualTxt, txtJkTk, txtJkMt, txtJkMnt, txtJkDt,
 		cuatroInfoTxt, lineaInfoTxt, dobleInfoTxt, bingoInfoTxt
 	);
-	cartonInfoTexts.forEach(f => infoContainer.addChild(f.lugar, f.ticket, f.faltan));
+	listaCartones = Vida.ListaCartones(infoContainer, geoCartones);
+	cartonCabecera.forEach(t => infoContainer.addChild(t));
 
 	drawContainer.addChild(itemBgDrum, drawDrumContainer, drawNumbersContainer, drawDrumBallContainer, infoContainer, popupContainer);
 
@@ -733,6 +878,14 @@ function buildGameCanvas() {
 	gameContainer.addChild(drawContainer);
 
 	canvasContainer.addChild(bg, gameContainer, resultScreenContainer, guideline, transitionOverlay);
+
+	// Vida del arte (ambiente.js): destellos del fondo y brillos de los marcos del sorteo
+	if (window.Ambiente) {
+		Ambiente.montarFondo(canvasContainer, 1, bg);
+		Ambiente.montarSorteo(infoContainer, 5, {
+			jackpot: itemJackpotInfo, ultimo: itemJackpotResult, cartones: itemCardboard, premios: itemTable, bola: itemTime
+		});
+	}
 	stage.addChild(canvasContainer);
 
 	changeViewport(viewport.isLandscape);
